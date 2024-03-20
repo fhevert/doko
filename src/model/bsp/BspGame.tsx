@@ -1,6 +1,6 @@
 import {Game} from "../Game";
 import {Player} from "../Player";
-import {Round} from "../Round";
+import {ResultType, Round} from "../Round";
 
 const fabi: Player = {
     id: '1',
@@ -24,13 +24,13 @@ const marci: Player = {
 }
 
 const createRound = (id: string, points: number): Round => {
-    const  resultsMap= new Map<Player, number>();
+    const  resultsMap= new Map<Player, ResultType>();
 
-    resultsMap.set(fabi, points);
-    resultsMap.set(chrissi, 0);
-    resultsMap.set(joschi, points);
-    resultsMap.set(marcus, 0);
-    resultsMap.set(marci, points);
+    resultsMap.set(fabi, ResultType.LOSE);
+    resultsMap.set(chrissi, ResultType.UNCHANGED);
+    resultsMap.set(joschi, ResultType.UNCHANGED);
+    resultsMap.set(marcus, ResultType.UNCHANGED);
+    resultsMap.set(marci, ResultType.LOSE);
 
     return {
         id: id,

@@ -11,6 +11,7 @@ import TableRow from '@mui/material/TableRow';
 import ResultCell from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
 import PointCell from "../pointcell/PointCell";
+import {ResultType} from "../../../model/Round";
 
 function ResultTable(parameters: { gameId: string }) {
     const {game, setGame} = useGameContext();
@@ -31,8 +32,15 @@ function ResultTable(parameters: { gameId: string }) {
             let playerResult: number = 0;
             game.rounds.forEach((round) => {
                 const point = round.results.get(p);
-                if (point) {
-                    playerResult += point;
+                switch (point){
+                    case ResultType.WIN:
+                        playerResult += round.roundPoints;
+                        break;
+                    case ResultType.LOSE:
+                        playerResult -= round.roundPoints;
+                        break;
+                    default:
+                        break;
                 }
             });
             game.result.set(p, playerResult);
