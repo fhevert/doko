@@ -32,15 +32,8 @@ function ResultTable(parameters: { gameId: string }) {
             let playerResult: number = 0;
             game.rounds.forEach((round) => {
                 const point = round.results.get(p);
-                switch (point){
-                    case ResultType.WIN:
-                        playerResult += round.roundPoints;
-                        break;
-                    case ResultType.LOSE:
-                        playerResult -= round.roundPoints;
-                        break;
-                    default:
-                        break;
+                if(point){
+                    playerResult += point;
                 }
             });
             game.result.set(p, playerResult);

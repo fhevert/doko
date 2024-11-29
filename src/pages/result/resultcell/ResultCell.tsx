@@ -11,7 +11,7 @@ function ResultCell(parameters: { round: Round, player: Player }) {
     const {game, setGame} = useGameContext()
 
 
-    const onChange = (event: ChangeEvent<HTMLSelectElement>) => {
+    const onChange = (event: ChangeEvent<HTMLInputElement>) => {
         parameters.round.results.set(parameters.player, Number(event.currentTarget.value));
         setGame({
             ...game
@@ -21,19 +21,11 @@ function ResultCell(parameters: { round: Round, player: Player }) {
     return (
         <TableCell key={'TC-' + parameters.round.id + '-' + parameters.player.id}>
             <FormControl fullWidth>
-                <NativeSelect
-                    onChange={onChange}
-                    defaultValue={ResultType.UNCHANGED}
-                    inputProps={{
-                        name: 'age',
-                        id: 'uncontrolled-native',
-                    }}
-                    value={parameters.round.results.get(parameters.player)}
-                >
-                    <option value={ResultType.UNCHANGED}></option>
-                    <option value={ResultType.WIN}>/</option>
-                    <option value={ResultType.LOSE}>X</option>
-                </NativeSelect>
+                <InputBase onChange={onChange}
+                                       sx={{ ml: 1, flex: 1 }}
+                                       type="number"
+                                       value={parameters.round.results.get(parameters.player)}
+                            />
             </FormControl>
         </TableCell>
     )
