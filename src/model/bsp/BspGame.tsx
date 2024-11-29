@@ -24,13 +24,13 @@ const marci: Player = {
 }
 
 const createRound = (id: string, points: number): Round => {
-    const  resultsMap= new Map<Player, ResultType>();
+    const  resultsMap= new Map<Player, number>();
 
-    resultsMap.set(fabi, ResultType.LOSE);
-    resultsMap.set(chrissi, ResultType.UNCHANGED);
-    resultsMap.set(joschi, ResultType.UNCHANGED);
-    resultsMap.set(marcus, ResultType.UNCHANGED);
-    resultsMap.set(marci, ResultType.LOSE);
+    resultsMap.set(fabi, -1);
+    resultsMap.set(chrissi, 0);
+    resultsMap.set(joschi, 0);
+    resultsMap.set(marcus, 0);
+    resultsMap.set(marci, -1);
 
     return {
         id: id,
