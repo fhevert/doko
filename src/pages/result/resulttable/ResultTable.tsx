@@ -13,6 +13,8 @@ import {useGameContext} from "../../../model/context/GameContext";
 import PointCell from "../pointcell/PointCell";
 import DialogComponent from "../dialog/DialogComponent";
 import {ResultType} from "../../../model/Round";
+import { firebaseApp, firebaseDB, analytics } from "../../../firebase-config";
+import {ref, set} from "firebase/database";
 
 function ResultTable(parameters: { gameId: string }) {
     const {game, setGame} = useGameContext();
@@ -57,12 +59,12 @@ function ResultTable(parameters: { gameId: string }) {
                game.result.set(p, gesamtPunkte / anzahlAktiveSpieler);
             }
         });
-        console.log("test");
         setGame({
             ...game,
             result: game.result
         })
-    }, [game]);
+         set(ref(firebaseDB, 'game/'), game);
+    }, [game.rounds]);
 
     return <>
         <TableContainer>

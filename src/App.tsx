@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import './App.css';
 import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
 import ResultTable from "./pages/result/resulttable/ResultTable";
@@ -6,6 +6,8 @@ import {bspGame} from "./model/bsp/BspGame";
 import {GameContext} from './model/context/GameContext';
 import PlayersPage from "./pages/player/player/PlayersPage";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
+import { firebaseApp, firebaseDB, analytics } from "./firebase-config";
+import {ref, set} from "firebase/database";
 
 function App() {
     const [gameId, setGameId] = useState('gameId');
@@ -16,6 +18,10 @@ function App() {
             mode: 'light',
         },
     });
+
+     useEffect(() => {
+       set(ref(firebaseDB, 'game/'), game);
+     }, []);
 
     return (
         <>
