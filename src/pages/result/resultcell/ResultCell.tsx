@@ -20,13 +20,7 @@ function ResultCell(parameters: { round: Round, player: Player }) {
 
     return (
         <TableCell key={'TC-' + parameters.round.id + '-' + parameters.player.id}>
-            <FormControl fullWidth>
-                <InputBase onChange={onChange}
-                                       sx={{ ml: 1, flex: 1 }}
-                                       type="number"
-                                       value={parameters.round.results.get(parameters.player)}
-                            />
-            </FormControl>
+            {parameters.round.results.get(parameters.player)}
         </TableCell>
     )
 }
