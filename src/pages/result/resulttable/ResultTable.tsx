@@ -11,6 +11,7 @@ import TableRow from '@mui/material/TableRow';
 import ResultCell from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
 import PointCell from "../pointcell/PointCell";
+import DialogComponent from "../dialog/DialogComponent";
 import {ResultType} from "../../../model/Round";
 
 function ResultTable(parameters: { gameId: string }) {
@@ -29,15 +30,34 @@ function ResultTable(parameters: { gameId: string }) {
 
     useEffect(() => {
         game.players.forEach(p => {
-            let playerResult: number = 0;
-            game.rounds.forEach((round) => {
-                const point = round.results.get(p);
-                if(point){
-                    playerResult += point;
-                }
-            });
-            game.result.set(p, playerResult);
+            if(p.aktiv){
+               let playerResult: number = 0;
+               game.rounds.forEach((round) => {
+                   const point = round.results.get(p);
+                   if(point){
+                       playerResult += point;
+                   }
+               });
+               game.result.set(p, playerResult);
+            }
         });
+        let gesamtPunkte: number = 0;
+        let anzahlAktiveSpieler: number = 0;
+        game.players.forEach(p => {
+            if(p.aktiv){
+                anzahlAktiveSpieler++;
+                var playerScore = game.result?.get(p);
+                if(playerScore){
+                   gesamtPunkte+= playerScore;
+                }
+            }
+        });
+        game.players.forEach(p => {
+            if(!p.aktiv){
+               game.result.set(p, gesamtPunkte / anzahlAktiveSpieler);
+            }
+        });
+        console.log("test");
         setGame({
             ...game,
             result: game.result
@@ -45,7 +65,7 @@ function ResultTable(parameters: { gameId: string }) {
     }, [game]);
 
     return <>
-        <TableContainer sx={{maxHeight: 440}}>
+        <TableContainer>
             <Table stickyHeader aria-label="sticky table">
                 <TableHead>
                     <TableRow>
@@ -55,10 +75,12 @@ function ResultTable(parameters: { gameId: string }) {
                         <TableCell align={'center'} className='cellWithRightLine' key='pointTC'>
                             Punkte
                         </TableCell>
-                        {game.players.map((player) => (
-                            <TableCell key='pointTC'>
-                                {player.name + ': ' + game.result.get(player)}
-                            </TableCell>
+                        {game.players.map(player => (
+                            player.aktiv === true ?
+                                <TableCell key='pointTC'>
+                                    {player.name + ': ' + game.result.get(player)}
+                                </TableCell>
+                            : null
                         ))}
                     </TableRow>
                 </TableHead>
@@ -68,14 +90,14 @@ function ResultTable(parameters: { gameId: string }) {
                         .map((round) => (
                                 <TableRow tabIndex={-1} key={round.id}>
                                     <TableCell align={'center'} className='cellWithRightLine' key={'TC-ROUND' + round.id}>
-                                        {round.id}
+                                        <DialogComponent round={round} />
                                     </TableCell>
                                     <PointCell round={round}/>
-                                    {game.players.map(player => {
-                                        return (
+                                    {game.players.map(player => (
+                                        player.aktiv === true ?
                                             <ResultCell round={round} player={player}/>
-                                        );
-                                    })}
+                                        : null
+                                    ))}
                                 </TableRow>
                             )
                         )}

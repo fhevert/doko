@@ -19,11 +19,7 @@ function PointCell(parameters: { round: Round}) {
 
     return (
         <TableCell className='cellWithRightLine' key={'TC' + key}>
-            <InputBase onChange={updateState}
-                       sx={{ ml: 1, flex: 1 }}
-                       type="number"
-                       value={parameters.round.roundPoints}
-            />
+            {parameters.round.roundPoints}
         </TableCell>
     )
 }
