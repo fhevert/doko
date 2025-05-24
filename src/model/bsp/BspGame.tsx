@@ -62,7 +62,6 @@ export const bspGame = {
     players: [fabi, chrissi, marcus, joschi, marci, johannes, basti],
     rounds: [
         createRound('1', 2),
-
     ],
     result: new Map<Player, number | undefined>()
 } as Game;

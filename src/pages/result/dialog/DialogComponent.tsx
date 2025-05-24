@@ -52,9 +52,10 @@ function DialogComponent(parameters: { round: Round}) {
             if(anzahlVerlierer == 4){
                 parameters.round.results.set(player, 0)
             }
-             setGame({
-                 ...game
-             })
+            setGame({
+                ...game,
+                result: parameters.round.results
+            })
         }
     };
 
