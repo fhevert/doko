@@ -3,11 +3,12 @@ import './App.css';
 import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
 import ResultTable from "./pages/result/resulttable/ResultTable";
 import {bspGame} from "./model/bsp/BspGame";
+import {Game} from "./model/Game";
 import {GameContext} from './model/context/GameContext';
 import PlayersPage from "./pages/player/player/PlayersPage";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import { firebaseApp, firebaseDB, analytics } from "./firebase-config";
-import {ref, set} from "firebase/database";
+import {ref, set, onValue, DataSnapshot } from "firebase/database";
 
 function App() {
     const [gameId, setGameId] = useState('gameId');
@@ -20,7 +21,22 @@ function App() {
     });
 
      useEffect(() => {
-       set(ref(firebaseDB, 'game/'), game);
+        const collectionRef = ref(firebaseDB, "game/");
+        const fetchData = () => {
+             // Listen for changes in the collection
+             onValue(collectionRef, (snapshot: DataSnapshot) => {
+                 if (snapshot.exists()) {
+                     const dataItem = snapshot.val() as Game
+                     // Check if dataItem exists
+                     if (dataItem) {
+                       //setGame(dataItem);
+                     }
+                }
+             });
+           };
+
+           // Fetch data when the component mounts
+           fetchData();
      }, []);
 
     return (
