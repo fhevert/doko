@@ -21,22 +21,24 @@ function App() {
     });
 
      useEffect(() => {
+        set(ref(firebaseDB, 'game/'), game);
+
         const collectionRef = ref(firebaseDB, "game/");
         const fetchData = () => {
-             // Listen for changes in the collection
-             onValue(collectionRef, (snapshot: DataSnapshot) => {
-                 if (snapshot.exists()) {
-                     const dataItem = snapshot.val() as Game
-                     // Check if dataItem exists
-                     if (dataItem) {
-                       //setGame(dataItem);
-                     }
-                }
-             });
-           };
+            // Listen for changes in the collection
+            onValue(collectionRef, (snapshot: DataSnapshot) => {
+                if (snapshot.exists()) {
+                    const dataItem = snapshot.val() as Game
+                    // Check if dataItem exists
+                    if (dataItem) {
+                      //setGame(dataItem);
+                    }
+               }
+            });
+          };
 
-           // Fetch data when the component mounts
-           fetchData();
+          // Fetch data when the component mounts
+          fetchData();
      }, []);
 
     return (
