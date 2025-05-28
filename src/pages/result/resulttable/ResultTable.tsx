@@ -7,6 +7,7 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
+import Button from '@mui/material/Button'
 
 import ResultCell from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
@@ -29,6 +30,27 @@ function ResultTable(parameters: { gameId: string }) {
     const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
         setRowsPerPage(+event.target.value);
         setPage(0);
+    };
+
+    const createRound = (): Round => {
+        const  resultsMap= new Map<string, number>();
+
+        game.players.forEach((player) => {
+            resultsMap.set(player.id, 0);
+        });
+
+        return {
+            id: game.rounds.length,
+            roundPoints: 0,
+            results: resultsMap
+        }
+    }
+
+    const handleNeueZeileClick = () => {
+        game.rounds.push(createRound());
+        setGame({
+            ...game
+        })
     };
 
     useEffect(() => {
@@ -60,7 +82,10 @@ function ResultTable(parameters: { gameId: string }) {
                p.result = gesamtPunkte / anzahlAktiveSpieler;
             }
         });
-        saveGameToFirebase(game)
+
+        if(game.rounds && game.rounds.length > 0 ){
+          saveGameToFirebase(game)
+        }
     }, [game]);
 
   function saveGameToFirebase(game: Game): Promise<void> {
@@ -136,6 +161,7 @@ function ResultTable(parameters: { gameId: string }) {
             onPageChange={handleChangePage}
             onRowsPerPageChange={handleChangeRowsPerPage}
         />
+        <Button onClick={handleNeueZeileClick}>Neue Runde</Button>
     </>
 }
 
