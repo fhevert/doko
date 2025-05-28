@@ -12,7 +12,8 @@ import ResultCell from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
 import PointCell from "../pointcell/PointCell";
 import DialogComponent from "../dialog/DialogComponent";
-import {ResultType} from "../../../model/Round";
+import {Round} from "../../../model/Round";
+import {Game} from "../../../model/Game";
 import { firebaseApp, firebaseDB, analytics } from "../../../firebase-config";
 import {ref, set} from "firebase/database";
 
@@ -35,12 +36,12 @@ function ResultTable(parameters: { gameId: string }) {
             if(p.aktiv){
                let playerResult: number = 0;
                game.rounds.forEach((round) => {
-                   const point = round.results.get(p);
+                   const point = round.results.get(p.id);
                    if(point){
                        playerResult += point;
                    }
                });
-               game.result.set(p, playerResult);
+               p.result = playerResult;
             }
         });
         let gesamtPunkte: number = 0;
@@ -48,7 +49,7 @@ function ResultTable(parameters: { gameId: string }) {
         game.players.forEach(p => {
             if(p.aktiv){
                 anzahlAktiveSpieler++;
-                var playerScore = game.result?.get(p);
+                var playerScore = p.result;
                 if(playerScore){
                    gesamtPunkte+= playerScore;
                 }
@@ -56,15 +57,35 @@ function ResultTable(parameters: { gameId: string }) {
         });
         game.players.forEach(p => {
             if(!p.aktiv){
-               game.result.set(p, gesamtPunkte / anzahlAktiveSpieler);
+               p.result = gesamtPunkte / anzahlAktiveSpieler;
             }
         });
-        setGame({
-            ...game,
-            result: game.result
-        })
-         set(ref(firebaseDB, 'game/'), game);
-    }, [game.rounds]);
+        saveGameToFirebase(game)
+    }, [game]);
+
+  function saveGameToFirebase(game: Game): Promise<void> {
+        const firebaseResult: { [playerId: string]: number | undefined } = {};
+
+        const gameRef = ref(firebaseDB, 'game'); // Pfad in der Datenbank
+        const gameToSave = {
+            players: game.players.map(player => ({
+                                 id: player.id,
+                                 name: player.name,
+                                 result: player.result,
+                                 aktiv: player.aktiv
+                             })),
+            rounds: game.rounds.map(round => {
+                var result = {
+                    id: round.id,
+                    roundPoints: round.roundPoints,
+                    results: Array.from(round.results, ([key, value]) => ({ key, value }))
+                }
+                return result;
+            })
+        }
+
+        return set(gameRef, gameToSave);
+    }
 
     return <>
         <TableContainer>
@@ -80,7 +101,7 @@ function ResultTable(parameters: { gameId: string }) {
                         {game.players.map(player => (
                             player.aktiv === true ?
                                 <TableCell key='pointTC'>
-                                    {player.name + ': ' + game.result.get(player)}
+                                    {player.name + ': ' + ' ' + player.result}
                                 </TableCell>
                             : null
                         ))}
