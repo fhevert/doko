@@ -79,7 +79,7 @@ function App() {
                 <GameContext.Provider value={{game, setGame}}>
                     <BrowserRouter>
                         <Routes>
-                            <Route index path="doko" element={<PlayersPage/>}/>
+                            <Route index element={<PlayersPage/>}/>
                             <Route path="results" element={<ResultTable gameId={gameId}/>}/>
                         </Routes>
                     </BrowserRouter>
