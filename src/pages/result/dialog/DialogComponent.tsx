@@ -17,6 +17,15 @@ function DialogComponent(parameters: { round: Round}) {
         setOpen(false);
     };
 
+    const handleDeleteClick = () => {
+        game.rounds.splice(parameters.round.id, 1);
+        setGame({
+            ...game
+        })
+        setOpen(false);
+    };
+
+
     function changeListener(event: React.ChangeEvent<HTMLInputElement>) {
         parameters.round.roundPoints = Number(event.currentTarget.value);
         setGame({
@@ -82,6 +91,9 @@ function DialogComponent(parameters: { round: Round}) {
                        ) : null
                     ))
                 }
+                <Button variant="outlined" onClick={handleDeleteClick}>
+                    Delete
+                </Button>
             </Dialog>
         </>
     )

@@ -3,17 +3,18 @@ import './App.css';
 import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
 import ResultTable from "./pages/result/resulttable/ResultTable";
 import {bspGame} from "./model/bsp/BspGame";
+import {emptyGame} from "./model/EmptyGame";
 import {Game} from "./model/Game";
 import {Round} from "./model/Round";
 import {GameContext} from './model/context/GameContext';
 import PlayersPage from "./pages/player/player/PlayersPage";
 import {BrowserRouter, Route, Routes} from "react-router-dom";
 import { firebaseApp, firebaseDB, analytics } from "./firebase-config";
-import {ref, set, onValue, DataSnapshot } from "firebase/database";
+import {ref, get, set, onValue, DataSnapshot } from "firebase/database";
 
 function App() {
     const [gameId, setGameId] = useState('gameId');
-    const [game, setGame] = React.useState(bspGame);
+    const [game, setGame] = React.useState(emptyGame);
 
     const darkTheme = createTheme({
         palette: {
@@ -29,21 +30,25 @@ function App() {
       return resultsMap;
     }
 
-    function convertToRoundsResultsMaps(game: any): Game {
-        var rounds: Round[] = new Array(game.rounds.length);
-
-        var i: number =0
-        for (const round of game.rounds) {
-            rounds[i] = {
-                id: round.id,
-                roundPoints: round.roundPoints,
-                results: resultsArrayToMap(round.results)
-            }as Round
-            i++;
+    function convertToRoundsResultsMaps(gameToConvert: any): Game {
+         var rounds: Round[];
+        if(gameToConvert.rounds){
+            rounds= new Array(gameToConvert.rounds.length);
+            var i: number =0
+            for (const round of gameToConvert.rounds) {
+                rounds[i] = {
+                    id: round.id,
+                    roundPoints: round.roundPoints,
+                    results: resultsArrayToMap(round.results)
+                }as Round
+                i++;
+            }
+        }else{
+            rounds = new Array(0);
         }
 
         var result = {
-           players: game.players,
+           players: gameToConvert.players,
            rounds: rounds
         } as Game;
         return result;
