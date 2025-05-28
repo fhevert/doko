@@ -28,20 +28,20 @@ function DialogComponent(parameters: { round: Round}) {
         const playerId = event.currentTarget.name;
         const player = game.players.find((p) => p.id ===playerId);
         if (player){
-            if(parameters.round.results.get(player) === 0){
-                parameters.round.results.set(player, -parameters.round.roundPoints)
+            if(parameters.round.results.get(player.id) === 0){
+                parameters.round.results.set(player.id, -parameters.round.roundPoints)
             }else{
-                parameters.round.results.set(player, 0)
+                parameters.round.results.set(player.id, 0)
             }
 
             var anzahlVerlierer:number = 0;
             var soloSpieler;
             //Solo beruecksichtigen
-            parameters.round.results.forEach((value: number, key: Player) => {
+            parameters.round.results.forEach((value: number, id: string) => {
                 if(value != 0){
-                    soloSpieler = key;
+                    soloSpieler = id;
                     anzahlVerlierer++;
-                    parameters.round.results.set(key, -parameters.round.roundPoints);
+                    parameters.round.results.set(id, -parameters.round.roundPoints);
                 }
             });
 
@@ -50,11 +50,10 @@ function DialogComponent(parameters: { round: Round}) {
             }
 
             if(anzahlVerlierer == 4){
-                parameters.round.results.set(player, 0)
+                parameters.round.results.set(player.id, 0)
             }
             setGame({
-                ...game,
-                result: parameters.round.results
+                ...game
             })
         }
     };
@@ -73,7 +72,7 @@ function DialogComponent(parameters: { round: Round}) {
                            <Typography>{player.name}</Typography>
                            <ToggleButton
                              value="check"
-                             selected={parameters.round.results.get(player) !== 0}
+                             selected={parameters.round.results.get(player.id) !== 0}
                              name={player.id}
                              onChange={handleChangeVerloren}
                            >

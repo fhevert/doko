@@ -12,7 +12,7 @@ function ResultCell(parameters: { round: Round, player: Player }) {
 
 
     const onChange = (event: ChangeEvent<HTMLInputElement>) => {
-        parameters.round.results.set(parameters.player, Number(event.currentTarget.value));
+        parameters.round.results.set(parameters.player.id, Number(event.currentTarget.value));
         setGame({
             ...game
         })
@@ -20,7 +20,7 @@ function ResultCell(parameters: { round: Round, player: Player }) {
 
     return (
         <TableCell key={'TC-' + parameters.round.id + '-' + parameters.player.id}>
-            {parameters.round.results.get(parameters.player)}
+            {parameters.round.results.get(parameters.player.id)}
         </TableCell>
     )
 }
