@@ -7,22 +7,28 @@ import {useGameContext} from "../../../model/context/GameContext";
 import ClearIcon from '@mui/icons-material/Clear';
 import CheckIcon from '@mui/icons-material/Check';
 
-function ResultCell(parameters: { round: Round, player: Player }) {
+    export function getResult(round: Round, playerId: string): number {
+        var result: ResultType | undefined = round.results.get(playerId);
+        switch(result) {
+           case ResultType.WIN: {
+              return round.cowardicePoints;
+           }
+           case ResultType.LOSE: {
+                return round.roundPoints;
+           }
+           default: {
+               return 0;
+           }
+        }
+    }
+
+export function ResultCell(parameters: { round: Round, player: Player }) {
     const {game, setGame} = useGameContext()
 
 
-    const onChange = (event: ChangeEvent<HTMLInputElement>) => {
-        parameters.round.results.set(parameters.player.id, Number(event.currentTarget.value));
-        setGame({
-            ...game
-        })
-    }
-
     return (
         <TableCell key={'TC-' + parameters.round.id + '-' + parameters.player.id}>
-            {parameters.round.results.get(parameters.player.id)}
+            {getResult(parameters.round, parameters.player.id)}
         </TableCell>
     )
 }
-
-export default ResultCell;

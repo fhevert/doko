@@ -1,7 +1,6 @@
 import React, {ChangeEvent} from 'react';
 import '../css/Result.css';
-import {Stack, ToggleButton, Typography, TextField, Button, Dialog, DialogTitle} from "@mui/material";
-import CheckIcon from '@mui/icons-material/Check';
+import {ToggleButtonGroup, Stack, ToggleButton, Typography, TextField, Button, Dialog, DialogTitle} from "@mui/material";
 import {ResultType, Round} from "../../../model/Round";
 import {Player} from "../../../model/Player";
 import {useGameContext} from "../../../model/context/GameContext";
@@ -47,34 +46,10 @@ function DialogComponent(parameters: { round: Round}) {
         })
     }
 
-    const handleChangeVerloren = (event: React.ChangeEvent<any>): void => {
-        const playerId = event.currentTarget.name;
+    const handleToggleGroupChange = (playerId: string) =>(event: React.ChangeEvent<any>): void => {
         const player = game.players.find((p) => p.id ===playerId);
         if (player){
-            if(parameters.round.results.get(player.id) === 0){
-                parameters.round.results.set(player.id, -parameters.round.roundPoints)
-            }else{
-                parameters.round.results.set(player.id, 0)
-            }
-
-            var anzahlVerlierer:number = 0;
-            var soloSpieler;
-            //Solo beruecksichtigen
-            parameters.round.results.forEach((value: number, id: string) => {
-                if(value != 0){
-                    soloSpieler = id;
-                    anzahlVerlierer++;
-                    parameters.round.results.set(id, -parameters.round.roundPoints);
-                }
-            });
-
-            if(anzahlVerlierer == 1 && soloSpieler){
-                parameters.round.results.set(soloSpieler, -parameters.round.roundPoints *3);
-            }
-
-            if(anzahlVerlierer == 4){
-                parameters.round.results.set(player.id, 0)
-            }
+             parameters.round.results.set(player.id, Number(event.currentTarget.value));
             setGame({
                 ...game
             })
@@ -95,14 +70,23 @@ function DialogComponent(parameters: { round: Round}) {
                        player.aktiv ? (
                            <Stack key={player.id}> {/* Wichtig: key muss im äussersten Element sein */}
                              <Typography>{player.name}</Typography>
-                             <ToggleButton
-                               value="check"
-                               selected={parameters.round.results.get(player.id) !== 0}
-                               name={player.id}
-                               onChange={handleChangeVerloren}
-                             >
-                               <CheckIcon />
-                             </ToggleButton>
+                            <ToggleButtonGroup
+                                   value={parameters.round.results.get(player.id)}
+                                   exclusive
+                                   id={player.id}
+                                   onChange={handleToggleGroupChange(player.id)}
+                                   aria-label="text alignment"
+                                 >
+                                   <ToggleButton value={ResultType.WIN} aria-label="left aligned">
+                                   +
+                                   </ToggleButton>
+                                   <ToggleButton value={ResultType.UNCHANGED} aria-label="centered">
+                                     0
+                                   </ToggleButton>
+                                   <ToggleButton value={ResultType.LOSE} aria-label="right aligned">
+                                    -
+                                   </ToggleButton>
+                                 </ToggleButtonGroup>
                            </Stack>
                          ) : null
                       ))

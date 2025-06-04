@@ -9,7 +9,7 @@ import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button'
 
-import ResultCell from "../resultcell/ResultCell";
+import {ResultCell, getResult} from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
 import PointCell from "../pointcell/PointCell";
 import DialogComponent from "../dialog/DialogComponent";
@@ -59,7 +59,7 @@ function ResultTable(parameters: { gameId: string }) {
             if(p.aktiv){
                let playerResult: number = 0;
                game.rounds.forEach((round) => {
-                   const point = round.results.get(p.id);
+                   const point = getResult(round, p.id);
                    if(point){
                        playerResult += point;
                    }
@@ -104,6 +104,7 @@ function ResultTable(parameters: { gameId: string }) {
                 var result = {
                     id: round.id,
                     roundPoints: round.roundPoints,
+                    cowardicePoints: round.cowardicePoints,
                     results: Array.from(round.results, ([key, value]) => ({ key, value }))
                 }
                 return result;
@@ -118,18 +119,17 @@ function ResultTable(parameters: { gameId: string }) {
             <Table stickyHeader aria-label="sticky table">
                 <TableHead>
                     <TableRow>
-                        <TableCell align={'center'} className='cellWithRightLine' key='roundTC'>
+                        <TableCell align={'center'} className='cellWithRightLine'>
                             Runde
                         </TableCell>
-                        <TableCell align={'center'} className='cellWithRightLine' key='pointTC'>
+                        <TableCell align={'center'} className='cellWithRightLine'>
                             Punkte
                         </TableCell>
-                        {game.players.map(player => (
-                            player.aktiv === true ?
-                                <TableCell key='pointTC'>
+                        {game?.rounds?.length > 0 && game.players.map(player => (
+                            player.aktiv === true &&
+                                <TableCell>
                                     {player.name + ': ' + ' ' + player.result}
                                 </TableCell>
-                            : null
                         ))}
                     </TableRow>
                 </TableHead>

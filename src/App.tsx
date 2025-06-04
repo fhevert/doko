@@ -39,6 +39,7 @@ function App() {
                 rounds[i] = {
                     id: round.id,
                     roundPoints: round.roundPoints,
+                    cowardicePoints: round.cowardicePoints,
                     results: resultsArrayToMap(round.results)
                 }as Round
                 i++;
@@ -48,7 +49,7 @@ function App() {
         }
 
         var result = {
-           players: gameToConvert.players,
+           players: JSON.parse(JSON.stringify(gameToConvert.players)),
            rounds: rounds
         } as Game;
         return result;

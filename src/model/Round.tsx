@@ -8,6 +8,6 @@ export interface Round {
     id: number
     roundPoints: number;
     cowardicePoints: number;
-    results: Map<string, number>;
+    results: Map<string, ResultType>;
 }
 
