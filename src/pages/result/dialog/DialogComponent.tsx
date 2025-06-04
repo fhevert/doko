@@ -19,6 +19,13 @@ function DialogComponent(parameters: { round: Round}) {
 
     const handleDeleteClick = () => {
         game.rounds.splice(parameters.round.id, 1);
+        game.rounds = game.rounds.filter(obj => obj.id !== parameters.round.id)
+        var i = 0;
+        game.rounds.forEach((round) =>{
+            round.id = i;
+            i++;
+        });
+
         setGame({
             ...game
         })
@@ -26,7 +33,14 @@ function DialogComponent(parameters: { round: Round}) {
     };
 
 
-    function changeListener(event: React.ChangeEvent<HTMLInputElement>) {
+    function handeCowardicePointsChange(event: React.ChangeEvent<HTMLInputElement>) {
+        parameters.round.cowardicePoints = Number(event.currentTarget.value);
+        setGame({
+            ...game
+        })
+    }
+
+    function handeRoundPointsChange(event: React.ChangeEvent<HTMLInputElement>) {
         parameters.round.roundPoints = Number(event.currentTarget.value);
         setGame({
             ...game
@@ -70,30 +84,34 @@ function DialogComponent(parameters: { round: Round}) {
     return (
         <>
             <Button variant="outlined" onClick={handleClickOpen}>
-                {parameters.round.id}
+                {parameters.round.id + 1}
               </Button>
             <Dialog onClose={handleClose} open={open}>
-              <TextField type="number" onChange={changeListener} value={parameters.round.roundPoints}/>
-                {
-                    game.players.map((player) => (
-                     player.aktiv ? (
-                         <Stack key={player.id}> {/* Wichtig: key muss im äussersten Element sein */}
-                           <Typography>{player.name}</Typography>
-                           <ToggleButton
-                             value="check"
-                             selected={parameters.round.results.get(player.id) !== 0}
-                             name={player.id}
-                             onChange={handleChangeVerloren}
-                           >
-                             <CheckIcon />
-                           </ToggleButton>
-                         </Stack>
-                       ) : null
-                    ))
-                }
-                <Button variant="outlined" onClick={handleDeleteClick}>
-                    Delete
-                </Button>
+              <Stack sx={{padding:1}} spacing={1}>
+                  <TextField type="number" label="Punkte" onChange={handeRoundPointsChange} value={parameters.round.roundPoints}/>
+                  <TextField type="number" label="Feigheit" onChange={handeCowardicePointsChange} value={parameters.round.cowardicePoints}/>
+                  {
+                      game.players.map((player) => (
+                       player.aktiv ? (
+                           <Stack key={player.id}> {/* Wichtig: key muss im äussersten Element sein */}
+                             <Typography>{player.name}</Typography>
+                             <ToggleButton
+                               value="check"
+                               selected={parameters.round.results.get(player.id) !== 0}
+                               name={player.id}
+                               onChange={handleChangeVerloren}
+                             >
+                               <CheckIcon />
+                             </ToggleButton>
+                           </Stack>
+                         ) : null
+                      ))
+                  }
+                  <Button variant="outlined" onClick={handleDeleteClick}>
+                      Delete
+                  </Button>
+              </Stack>
+
             </Dialog>
         </>
     )

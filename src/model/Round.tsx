@@ -7,6 +7,7 @@ export enum ResultType {
 export interface Round {
     id: number
     roundPoints: number;
+    cowardicePoints: number;
     results: Map<string, number>;
 }
 

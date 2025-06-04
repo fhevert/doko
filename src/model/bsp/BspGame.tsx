@@ -47,20 +47,21 @@ const basti: Player = {
     result: 0
 }
 
-const createRound = (id: number, points: number): Round => {
+const createRound = (id: number): Round => {
     const  resultsMap= new Map<string, number>();
 
-    resultsMap.set(fabi.id, -points);
+    resultsMap.set(fabi.id, 0);
     resultsMap.set(chrissi.id, 0);
     resultsMap.set(joschi.id, 0);
     resultsMap.set(marcus.id, 0);
-    resultsMap.set(marci.id, -points);
+    resultsMap.set(marci.id, 0);
     resultsMap.set(johannes.id, 0);
     resultsMap.set(basti.id, 0);
 
     return {
         id: id,
-        roundPoints: points,
+        roundPoints: 0,
+        cowardicePoints: 0,
         results: resultsMap
     }
 }
@@ -68,7 +69,7 @@ const createRound = (id: number, points: number): Round => {
 export const bspGame = {
     players: [fabi, chrissi, marcus, joschi, marci, johannes, basti],
     rounds: [
-        createRound(0, 0),
+        createRound(0),
     ],
     result: new Map<Player, number | undefined>()
 } as Game;
