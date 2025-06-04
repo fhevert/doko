@@ -36,7 +36,7 @@ function PlayersPage() {
     return (
         <>
             <Layout>
-                <Stack height="100%" direction="column" sx={{padding: 5, display:'flex', flexWrap:'wrap', alignContent:'center',  alignItems:'center', justifyContent:'space-between'}}>
+                <Stack  direction="row" sx={{padding: 5, display:'flex', flexWrap:'wrap', alignContent:'center',  alignItems:'center'}}>
                    {
                        game.players.map((player) => (
                            <Card variant="outlined" sx={{padding:1}} >
