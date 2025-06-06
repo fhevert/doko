@@ -15,7 +15,7 @@ import PointCell from "../pointcell/PointCell";
 import DialogComponent from "../dialog/DialogComponent";
 import {Round} from "../../../model/Round";
 import {Game} from "../../../model/Game";
-import { firebaseApp, firebaseDB, analytics } from "../../../firebase-config";
+import {firebaseDB} from "../../../firebase-config";
 import {ref, set} from "firebase/database";
 
 function ResultTable(parameters: { gameId: string }) {
@@ -90,8 +90,6 @@ function ResultTable(parameters: { gameId: string }) {
     }, [game]);
 
   function saveGameToFirebase(game: Game): Promise<void> {
-        const firebaseResult: { [playerId: string]: number | undefined } = {};
-
         const gameRef = ref(firebaseDB, 'game'); // Pfad in der Datenbank
         const gameToSave = {
             players: game.players.map(player => ({

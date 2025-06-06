@@ -33,6 +33,13 @@ function PlayersPage() {
          }
     };
 
+    const calculateTotalResults = (): number => {
+        return game.players.reduce((total, player) => {
+            return total + (player.result || 0);
+        }, 0);
+    };
+
+
     return (
         <>
             <Layout>
@@ -45,10 +52,11 @@ function PlayersPage() {
                                </CardContent>
                                <CardActions>
                                    <ToggleButton
-                                      value="check"
-                                      selected={player.aktiv}
-                                      key={player.id} name={player.id}
-                                      onChange={handleChangeAktiv}
+                                       disabled={calculateTotalResults() > 0}
+                                       value="check"
+                                       selected={player.aktiv}
+                                       key={player.id} name={player.id}
+                                       onChange={handleChangeAktiv}
                                    >
                                         <CheckIcon />
                                    </ToggleButton>
