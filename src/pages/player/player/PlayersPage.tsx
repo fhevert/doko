@@ -9,7 +9,7 @@ import {Link} from "react-router-dom";
 import Layout from "../../../layout/Layout";
 
 function PlayersPage() {
-    const {game, setGame} = useGameContext()
+    const {game, setGame, isLoading} = useGameContext()
 
     function changeListener(event: React.ChangeEvent<HTMLInputElement>) {
         const playerId = event.currentTarget.name;
@@ -48,11 +48,11 @@ function PlayersPage() {
                        game.players.map((player) => (
                            <Card variant="outlined" sx={{padding:1}} >
                                <CardContent>
-                                    <TextField fullWidth onChange={changeListener} key={player.id} name={player.id}  type="text" InputLabelProps={{shrink: true}} variant="standard" value={player.name}/>
+                                    <TextField fullWidth onChange={changeListener} key={player.id} name={player.id}  type="text" InputLabelProps={{shrink: true}} variant="standard" value={player.name} disabled={isLoading}/>
                                </CardContent>
                                <CardActions>
                                    <ToggleButton
-                                       disabled={calculateTotalResults() > 0}
+                                       disabled={calculateTotalResults() > 0 || isLoading}
                                        value="check"
                                        selected={player.aktiv}
                                        key={player.id} name={player.id}
@@ -64,8 +64,8 @@ function PlayersPage() {
                            </Card>
                        ))
                    }
-                  <Link to="/results">
-                       <Button>
+                  <Link to={isLoading ? "#" : "/results"}>
+                       <Button disabled={isLoading}>
                            <p>Ergebnisse</p>
                        </Button>
                    </Link>

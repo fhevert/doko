@@ -62,6 +62,7 @@ const PrivateRoute: React.FC<PrivateRouteProps> = memo(({ children }) => {
 function App() {
     const [gameId, setGameId] = useState('gameId');
     const [game, setGame] = React.useState(emptyGame);
+    const [isLoading, setIsLoading] = React.useState(true);
 
 
     const darkTheme = createTheme({
@@ -106,6 +107,7 @@ function App() {
      useEffect(() => {
          const collectionRef = ref(firebaseDB, 'game');
          const fetchData = () => {
+            setIsLoading(true);
             // Listen for changes in the collection
             onValue(collectionRef, (firebaseDbSnapshot: DataSnapshot) => {
                 if (firebaseDbSnapshot.exists()) {
@@ -114,6 +116,7 @@ function App() {
                         setGame(convertToRoundsResultsMaps(game));
                     }
                }
+               setIsLoading(false);
             });
           };
 
@@ -125,7 +128,7 @@ function App() {
         <>
             <CssBaseline/>
             <ThemeProvider theme={darkTheme}>
-                <GameContext.Provider value={{game, setGame}}>
+                <GameContext.Provider value={{game, setGame, isLoading}}>
                     <MemoryRouter>
                         <AppBar position="static">
                             <AuthStatusBar />
