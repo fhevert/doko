@@ -18,7 +18,7 @@ import {Round} from "../../../model/Round";
 function ResultTable(parameters: { gameId: string }) {
     const {game, setGame} = useGameContext();
     const [page, setPage] = React.useState(0);
-    const [rowsPerPage, setRowsPerPage] = React.useState(8);
+    const [rowsPerPage, setRowsPerPage] = React.useState(9);
 
     const handleChangePage = (event: unknown, newPage: number) => {
         setPage(newPage);
@@ -121,7 +121,7 @@ function ResultTable(parameters: { gameId: string }) {
             </Table>
         </TableContainer>
         <TablePagination
-            rowsPerPageOptions={[8, 25, 100]}
+            rowsPerPageOptions={[9, 25, 100]}
             component="div"
             count={game.rounds.length}
             rowsPerPage={rowsPerPage}
