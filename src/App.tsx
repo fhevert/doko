@@ -1,4 +1,4 @@
-import React, {ReactNode, useEffect, useState} from 'react';
+import React, {ReactNode, useEffect, useState, memo} from 'react';
 import './App.css';
 import {AppBar, Button, createTheme, CssBaseline, ThemeProvider, Toolbar, Typography} from "@mui/material";
 import ResultTable from "./pages/result/resulttable/ResultTable";
@@ -14,10 +14,8 @@ import {AuthProvider, useAuth} from './firebase/AuthContext';
 import { signOut } from 'firebase/auth';
 import Login from "./pages/login";
 
-function App() {
-    const [gameId, setGameId] = useState('gameId');
-    const [game, setGame] = React.useState(emptyGame);
-
+// Separate component for auth-dependent UI parts
+const AuthStatusBar = memo(() => {
     const { currentUser } = useAuth();
 
     const handleLogout = async () => {
@@ -27,6 +25,39 @@ function App() {
             console.error('Fehler beim Abmelden:', error);
         }
     };
+
+    return (
+        <Toolbar>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                Doko
+            </Typography>
+            {currentUser ? (
+                <Button color="inherit" onClick={handleLogout}>
+                    Logout ({currentUser.email})
+                </Button>
+            ) : (
+                <Button color="inherit" href="/login">
+                    Login
+                </Button>
+            )}
+        </Toolbar>
+    );
+});
+
+// Definieren Sie den Typ für die Props der PrivateRoute
+interface PrivateRouteProps {
+    children: ReactNode;
+}
+
+// Separate component for private routes
+const PrivateRoute: React.FC<PrivateRouteProps> = memo(({ children }) => {
+    const { currentUser } = useAuth();
+    return currentUser ? <>{children}</> : <Navigate to="/login" />; // Verwende <></> für fragment
+});
+
+function App() {
+    const [gameId, setGameId] = useState('gameId');
+    const [game, setGame] = React.useState(emptyGame);
 
 
     const darkTheme = createTheme({
@@ -68,17 +99,6 @@ function App() {
         return result;
       }
 
-// Definieren Sie den Typ für die Props der PrivateRoute
-    interface PrivateRouteProps {
-        children: ReactNode;
-    }
-
-// Eine private Route, die nur zugänglich ist, wenn der Benutzer eingeloggt ist
-    const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
-        const { currentUser } = useAuth();
-        return currentUser ? <>{children}</> : <Navigate to="/login" />; // Verwende <></> für fragment
-    };
-
      useEffect(() => {
          const collectionRef = ref(firebaseDB, 'game');
          const fetchData = () => {
@@ -104,20 +124,7 @@ function App() {
                 <GameContext.Provider value={{game, setGame}}>
                     <BrowserRouter>
                         <AppBar position="static">
-                            <Toolbar>
-                                <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                                    Doko
-                                </Typography>
-                                {currentUser ? (
-                                    <Button color="inherit" onClick={handleLogout}>
-                                        Logout ({currentUser.email})
-                                    </Button>
-                                ) : (
-                                    <Button color="inherit" href="/login">
-                                        Login
-                                    </Button>
-                                )}
-                            </Toolbar>
+                            <AuthStatusBar />
                         </AppBar>
                         <Routes>
                             <Route path="/login" element={<Login />} />

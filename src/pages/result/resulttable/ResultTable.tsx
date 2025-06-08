@@ -14,9 +14,6 @@ import {useGameContext} from "../../../model/context/GameContext";
 import PointCell from "../pointcell/PointCell";
 import DialogComponent from "../dialog/DialogComponent";
 import {Round} from "../../../model/Round";
-import {Game} from "../../../model/Game";
-import {firebaseDB} from "../../../firebase/firebase-config";
-import {ref, set} from "firebase/database";
 
 function ResultTable(parameters: { gameId: string }) {
     const {game, setGame} = useGameContext();
@@ -83,34 +80,9 @@ function ResultTable(parameters: { gameId: string }) {
                p.result = gesamtPunkte / anzahlAktiveSpieler;
             }
         });
-
-        if(game.rounds && game.rounds.length > 0 ){
-          saveGameToFirebase(game)
-        }
     }, [game]);
 
-  function saveGameToFirebase(game: Game): Promise<void> {
-        const gameRef = ref(firebaseDB, 'game'); // Pfad in der Datenbank
-        const gameToSave = {
-            players: game.players.map(player => ({
-                                 id: player.id,
-                                 name: player.name,
-                                 result: player.result,
-                                 aktiv: player.aktiv
-                             })),
-            rounds: game.rounds.map(round => {
-                var result = {
-                    id: round.id,
-                    roundPoints: round.roundPoints,
-                    cowardicePoints: round.cowardicePoints,
-                    results: Array.from(round.results, ([key, value]) => ({ key, value }))
-                }
-                return result;
-            })
-        }
 
-        return set(gameRef, gameToSave);
-    }
 
     return <>
         <TableContainer>
@@ -123,12 +95,9 @@ function ResultTable(parameters: { gameId: string }) {
                         <TableCell align={'center'} className='cellWithRightLine'>
                             Punkte
                         </TableCell>
-                        {game?.rounds?.length > 0 && game.players.map(player => (
-                            player.aktiv === true &&
-                                <TableCell>
-                                    {player.name + ': ' + ' ' + player.result}
-                                </TableCell>
-                        ))}
+                        {game?.rounds?.length > 0 && game.players.map(player => (player.aktiv && <TableCell>
+                            {player.name + ': ' + ' ' + player.result}
+                        </TableCell>))}
                     </TableRow>
                 </TableHead>
                 <TableBody>
@@ -141,7 +110,7 @@ function ResultTable(parameters: { gameId: string }) {
                                     </TableCell>
                                     <PointCell round={round}/>
                                     {game.players.map(player => (
-                                        player.aktiv === true ?
+                                        player.aktiv ?
                                             <ResultCell round={round} player={player}/>
                                         : null
                                     ))}

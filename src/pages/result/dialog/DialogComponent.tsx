@@ -4,6 +4,7 @@ import {ToggleButtonGroup, Stack, ToggleButton, Typography, TextField, Button, D
 import {ResultType, Round} from "../../../model/Round";
 import {Player} from "../../../model/Player";
 import {useGameContext} from "../../../model/context/GameContext";
+import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 
 function DialogComponent(parameters: { round: Round}) {
     const {game, setGame} = useGameContext()
@@ -12,8 +13,9 @@ function DialogComponent(parameters: { round: Round}) {
         setOpen(true);
     };
 
-    const handleClose = (value: string) => {
+    const handleClose = (event: React.SyntheticEvent, reason?: string) => {
         setOpen(false);
+        saveGameToFirebase(game);
     };
 
     const handleDeleteClick = () => {
@@ -95,7 +97,6 @@ function DialogComponent(parameters: { round: Round}) {
                       Delete
                   </Button>
               </Stack>
-
             </Dialog>
         </>
     )
