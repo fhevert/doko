@@ -7,7 +7,7 @@ import {Game} from "./model/Game";
 import {Round} from "./model/Round";
 import {GameContext} from './model/context/GameContext';
 import PlayersPage from "./pages/player/player/PlayersPage";
-import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
+import {MemoryRouter, Navigate, Route, Routes, Link} from "react-router-dom";
 import {firebaseApp, firebaseDB, analytics, auth} from "./firebase/firebase-config";
 import {ref, get, set, onValue, DataSnapshot } from "firebase/database";
 import {AuthProvider, useAuth} from './firebase/AuthContext';
@@ -36,9 +36,11 @@ const AuthStatusBar = memo(() => {
                     Logout ({currentUser.email})
                 </Button>
             ) : (
-                <Button color="inherit" href="/login">
-                    Login
-                </Button>
+                <Link to="/login">
+                    <Button color="inherit">
+                        Login
+                    </Button>
+                </Link>
             )}
         </Toolbar>
     );
@@ -122,11 +124,12 @@ function App() {
             <CssBaseline/>
             <ThemeProvider theme={darkTheme}>
                 <GameContext.Provider value={{game, setGame}}>
-                    <BrowserRouter>
+                    <MemoryRouter>
                         <AppBar position="static">
                             <AuthStatusBar />
                         </AppBar>
                         <Routes>
+                            <Route path="/" element={<Navigate to="/doko" />} />
                             <Route path="/login" element={<Login />} />
                             <Route path="/doko" element={
                                     <PrivateRoute>
@@ -141,7 +144,7 @@ function App() {
                                 }
                             />
                         </Routes>
-                    </BrowserRouter>
+                    </MemoryRouter>
                 </GameContext.Provider>
             </ThemeProvider>
         </>
