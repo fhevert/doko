@@ -66,7 +66,7 @@ function PlayersPage() {
                    }
                   <Link to="/results">
                        <Button>
-                           <p>Click Me!</p>
+                           <p>Ergebnisse</p>
                        </Button>
                    </Link>
                </Stack>

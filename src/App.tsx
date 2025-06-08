@@ -28,9 +28,11 @@ const AuthStatusBar = memo(() => {
 
     return (
         <Toolbar>
-            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                Doko
-            </Typography>
+            <Link to="/doko" style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
+                <Typography variant="h6" component="div">
+                    Doko
+                </Typography>
+            </Link>
             {currentUser ? (
                 <Button color="inherit" onClick={handleLogout}>
                     Logout ({currentUser.email})
