@@ -1,20 +1,33 @@
-import React, {useEffect, useState} from 'react';
+import React, {ReactNode, useEffect, useState} from 'react';
 import './App.css';
-import {createTheme, CssBaseline, ThemeProvider} from "@mui/material";
+import {AppBar, Button, createTheme, CssBaseline, ThemeProvider, Toolbar, Typography} from "@mui/material";
 import ResultTable from "./pages/result/resulttable/ResultTable";
-import {bspGame} from "./model/bsp/BspGame";
 import {emptyGame} from "./model/EmptyGame";
 import {Game} from "./model/Game";
 import {Round} from "./model/Round";
 import {GameContext} from './model/context/GameContext';
 import PlayersPage from "./pages/player/player/PlayersPage";
-import {BrowserRouter, Route, Routes} from "react-router-dom";
-import { firebaseApp, firebaseDB, analytics } from "./firebase-config";
+import {BrowserRouter, Navigate, Route, Routes} from "react-router-dom";
+import {firebaseApp, firebaseDB, analytics, auth} from "./firebase/firebase-config";
 import {ref, get, set, onValue, DataSnapshot } from "firebase/database";
+import {AuthProvider, useAuth} from './firebase/AuthContext';
+import { signOut } from 'firebase/auth';
+import Login from "./pages/login";
 
 function App() {
     const [gameId, setGameId] = useState('gameId');
     const [game, setGame] = React.useState(emptyGame);
+
+    const { currentUser } = useAuth();
+
+    const handleLogout = async () => {
+        try {
+            await signOut(auth);
+        } catch (error) {
+            console.error('Fehler beim Abmelden:', error);
+        }
+    };
+
 
     const darkTheme = createTheme({
         palette: {
@@ -55,6 +68,17 @@ function App() {
         return result;
       }
 
+// Definieren Sie den Typ für die Props der PrivateRoute
+    interface PrivateRouteProps {
+        children: ReactNode;
+    }
+
+// Eine private Route, die nur zugänglich ist, wenn der Benutzer eingeloggt ist
+    const PrivateRoute: React.FC<PrivateRouteProps> = ({ children }) => {
+        const { currentUser } = useAuth();
+        return currentUser ? <>{children}</> : <Navigate to="/login" />; // Verwende <></> für fragment
+    };
+
      useEffect(() => {
          const collectionRef = ref(firebaseDB, 'game');
          const fetchData = () => {
@@ -79,9 +103,36 @@ function App() {
             <ThemeProvider theme={darkTheme}>
                 <GameContext.Provider value={{game, setGame}}>
                     <BrowserRouter>
+                        <AppBar position="static">
+                            <Toolbar>
+                                <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                                    Doko
+                                </Typography>
+                                {currentUser ? (
+                                    <Button color="inherit" onClick={handleLogout}>
+                                        Logout ({currentUser.email})
+                                    </Button>
+                                ) : (
+                                    <Button color="inherit" href="/login">
+                                        Login
+                                    </Button>
+                                )}
+                            </Toolbar>
+                        </AppBar>
                         <Routes>
-                            <Route index path="doko" element={<PlayersPage/>}/>
-                            <Route path="results" element={<ResultTable gameId={gameId}/>}/>
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/doko" element={
+                                    <PrivateRoute>
+                                        <PlayersPage/>
+                                    </PrivateRoute>
+                                }
+                            />
+                            <Route path="/results" element={
+                                    <PrivateRoute>
+                                        <ResultTable gameId={gameId}/>
+                                    </PrivateRoute>
+                                }
+                            />
                         </Routes>
                     </BrowserRouter>
                 </GameContext.Provider>

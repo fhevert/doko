@@ -15,13 +15,13 @@ import PointCell from "../pointcell/PointCell";
 import DialogComponent from "../dialog/DialogComponent";
 import {Round} from "../../../model/Round";
 import {Game} from "../../../model/Game";
-import {firebaseDB} from "../../../firebase-config";
+import {firebaseDB} from "../../../firebase/firebase-config";
 import {ref, set} from "firebase/database";
 
 function ResultTable(parameters: { gameId: string }) {
     const {game, setGame} = useGameContext();
     const [page, setPage] = React.useState(0);
-    const [rowsPerPage, setRowsPerPage] = React.useState(9);
+    const [rowsPerPage, setRowsPerPage] = React.useState(8);
 
     const handleChangePage = (event: unknown, newPage: number) => {
         setPage(newPage);
@@ -152,7 +152,7 @@ function ResultTable(parameters: { gameId: string }) {
             </Table>
         </TableContainer>
         <TablePagination
-            rowsPerPageOptions={[9, 25, 100]}
+            rowsPerPageOptions={[8, 25, 100]}
             component="div"
             count={game.rounds.length}
             rowsPerPage={rowsPerPage}
