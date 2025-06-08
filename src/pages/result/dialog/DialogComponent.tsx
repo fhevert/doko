@@ -35,14 +35,34 @@ function DialogComponent(parameters: { round: Round}) {
 
 
     function handeCowardicePointsChange(event: React.ChangeEvent<HTMLInputElement>) {
-        parameters.round.cowardicePoints = Number(event.currentTarget.value);
+        // Remove leading zeros, but keep a single "0"
+        let value = event.currentTarget.value;
+        if (value !== "0") {
+            value = value.replace(/^0+/, '');
+        }
+        // If the value is empty, set it to 0
+        if (value === '') {
+            value = '0';
+        }
+        parameters.round.cowardicePoints = Number(value);
+        event.currentTarget.value = value;
         setGame({
             ...game
         })
     }
 
     function handeRoundPointsChange(event: React.ChangeEvent<HTMLInputElement>) {
-        parameters.round.roundPoints = Number(event.currentTarget.value);
+        // Remove leading zeros, but keep a single "0"
+        let value = event.currentTarget.value;
+        if (value !== "0") {
+            value = value.replace(/^0+/, '');
+        }
+        // If the value is empty, set it to 0
+        if (value === '') {
+            value = '0';
+        }
+        parameters.round.roundPoints = Number(value);
+        event.currentTarget.value = value;
         setGame({
             ...game
         })
