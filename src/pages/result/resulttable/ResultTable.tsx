@@ -15,7 +15,7 @@ import {useGameContext} from "../../../model/context/GameContext";
 import PointCell from "../pointcell/PointCell";
 import DialogComponent from "../dialog/DialogComponent";
 import {Round} from "../../../model/Round";
-import {Stack, Typography} from "@mui/material";
+import {Stack} from "@mui/material";
 import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 
 function ResultTable(parameters: { gameId: string }) {
