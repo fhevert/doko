@@ -1,7 +1,7 @@
 import React, {ReactEventHandler} from 'react';
 import './PlayersPage.css';
 import {useGameContext} from "../../../model/context/GameContext";
-import {ToggleButton, CardActions, CardContent, Card, Stack, Button, TextField} from "@mui/material";
+import {ToggleButton, CardActions, CardContent, Card, Stack, Button, TextField, Grid} from "@mui/material";
 import CheckIcon from '@mui/icons-material/Check';
 import {Simulate} from "react-dom/test-utils";
 import play = Simulate.play;
@@ -43,33 +43,37 @@ function PlayersPage() {
     return (
         <>
             <Layout>
-                <Stack  direction="row" sx={{padding: 5, display:'flex', flexWrap:'wrap', alignContent:'center',  alignItems:'center'}}>
+                <Grid container spacing={2} sx={{padding: 5}}>
                    {
                        game.players.map((player) => (
-                           <Card variant="outlined" sx={{padding:1}} >
-                               <CardContent>
-                                    <TextField fullWidth onChange={changeListener} key={player.id} name={player.id}  type="text" InputLabelProps={{shrink: true}} variant="standard" value={player.name} disabled={isLoading}/>
-                               </CardContent>
-                               <CardActions>
-                                   <ToggleButton
-                                       disabled={calculateTotalResults() > 0 || isLoading}
-                                       value="check"
-                                       selected={player.aktiv}
-                                       key={player.id} name={player.id}
-                                       onChange={handleChangeAktiv}
-                                   >
-                                        <CheckIcon />
-                                   </ToggleButton>
-                               </CardActions>
-                           </Card>
+                           <Grid item xs={12} sm={6} md={4} key={player.id}>
+                               <Card variant="outlined" sx={{padding:1, height: '100%'}} >
+                                   <CardContent>
+                                        <TextField fullWidth onChange={changeListener} name={player.id} type="text" InputLabelProps={{shrink: true}} variant="standard" value={player.name} disabled={isLoading}/>
+                                   </CardContent>
+                                   <CardActions>
+                                       <ToggleButton
+                                           disabled={calculateTotalResults() > 0 || isLoading}
+                                           value="check"
+                                           selected={player.aktiv}
+                                           name={player.id}
+                                           onChange={handleChangeAktiv}
+                                       >
+                                            <CheckIcon />
+                                       </ToggleButton>
+                                   </CardActions>
+                               </Card>
+                           </Grid>
                        ))
                    }
-                  <Link to={isLoading ? "#" : "/results"}>
-                       <Button disabled={isLoading}>
-                           <p>Ergebnisse</p>
-                       </Button>
-                   </Link>
-               </Stack>
+                   <Grid item xs={12} sx={{display: 'flex', justifyContent: 'center', marginTop: 2}}>
+                       <Link to={isLoading ? "#" : "/results"}>
+                           <Button disabled={isLoading}>
+                               <p>Ergebnisse</p>
+                           </Button>
+                       </Link>
+                   </Grid>
+               </Grid>
             </Layout>
         </>
     );

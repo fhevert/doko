@@ -27,7 +27,7 @@ export function ResultCell(parameters: { round: Round, player: Player }) {
 
 
     return (
-        <TableCell key={'TC-' + parameters.round.id + '-' + parameters.player.id}>
+        <TableCell align={'center'} key={'TC-' + parameters.round.id + '-' + parameters.player.id}>
             {getResult(parameters.round, parameters.player.id)}
         </TableCell>
     )

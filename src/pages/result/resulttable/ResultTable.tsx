@@ -93,9 +93,9 @@ function ResultTable(parameters: { gameId: string }) {
                             Runde
                         </TableCell>
                         <TableCell align={'center'} className='cellWithRightLine'>
-                            Punkte
+                            P
                         </TableCell>
-                        {game?.rounds?.length > 0 && game.players.map(player => (player.aktiv && <TableCell>
+                        {game?.rounds?.length > 0 && game.players.map(player => (player.aktiv && <TableCell align={'center'}>
                             {player.name + ': ' + ' ' + player.result}
                         </TableCell>))}
                     </TableRow>
@@ -105,7 +105,7 @@ function ResultTable(parameters: { gameId: string }) {
                         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                         .map((round) => (
                                 <TableRow tabIndex={-1} key={round.id}>
-                                    <TableCell align={'center'} className='cellWithRightLine' key={'TC-ROUND' + round.id}>
+                                    <TableCell align={'center'} className='cellWithRightLine'>
                                         <DialogComponent round={round} />
                                     </TableCell>
                                     <PointCell round={round}/>

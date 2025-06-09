@@ -80,7 +80,7 @@ function DialogComponent(parameters: { round: Round}) {
 
     return (
         <>
-            <Button variant="outlined" onClick={handleClickOpen}>
+            <Button variant="outlined" onClick={handleClickOpen} sx={{ minWidth: '40px', width: '40px' }}>
                 {parameters.round.id + 1}
               </Button>
             <Dialog onClose={handleClose} open={open}>

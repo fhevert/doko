@@ -18,7 +18,7 @@ function PointCell(parameters: { round: Round}) {
     };
 
     return (
-        <TableCell className='cellWithRightLine' key={'TC' + key}>
+        <TableCell align={'center'} className='cellWithRightLine' key={'TC' + key}>
             {parameters.round.roundPoints}
         </TableCell>
     )
