@@ -1,7 +1,7 @@
 import React, {ReactEventHandler} from 'react';
 import './PlayersPage.css';
 import {useGameContext} from "../../../model/context/GameContext";
-import {ToggleButton, CardActions, CardContent, Card, Stack, Button, TextField, Grid} from "@mui/material";
+import {ToggleButton, CardActions, CardContent, Card, Stack, Button, TextField, Grid, Avatar} from "@mui/material";
 import CheckIcon from '@mui/icons-material/Check';
 import {Simulate} from "react-dom/test-utils";
 import play = Simulate.play;
@@ -10,6 +10,12 @@ import Layout from "../../../layout/Layout";
 
 function PlayersPage() {
     const {game, setGame, isLoading} = useGameContext()
+
+    const getInitials = (firstname: string, name: string): string => {
+        const firstInitial = firstname ? firstname.charAt(0).toUpperCase() : '';
+        const lastInitial = name ? name.charAt(0).toUpperCase() : '';
+        return `${firstInitial}${lastInitial}`;
+    };
 
     function changeListener(event: React.ChangeEvent<HTMLInputElement>) {
         const playerId = event.currentTarget.name;
@@ -48,20 +54,31 @@ function PlayersPage() {
                        game.players.map((player) => (
                            <Grid item xs={12} sm={6} md={4} key={player.id}>
                                <Card variant="outlined" sx={{padding:1, height: '100%'}} >
-                                   <CardContent>
-                                        <TextField fullWidth onChange={changeListener} name={player.id} type="text" InputLabelProps={{shrink: true}} variant="standard" value={player.name} disabled={isLoading}/>
+                                   <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                                       <Stack direction="row" spacing={2} sx={{ width: '100%', marginBottom: 2 }}>
+                                           <TextField fullWidth onChange={changeListener} name={player.id} type="text" variant="standard" value={player.firstname} disabled={isLoading} inputProps={{ style: { textAlign: 'center' } }}/>
+                                           <TextField fullWidth onChange={changeListener} name={player.id} type="text" variant="standard" value={player.name} disabled={isLoading} inputProps={{ style: { textAlign: 'center' } }}/>
+                                       </Stack>
+
+                                       <Stack direction="row" width="100%" spacing={2} alignItems="center" sx={{ marginTop: 2 }}>
+                                           <Stack width="100%" alignItems="center">
+                                               <Avatar sx={{ bgcolor: player.aktiv ? 'primary.main' : 'grey.400'}}>
+                                                   {getInitials(player.firstname, player.name)}
+                                               </Avatar>
+                                           </Stack>
+                                           <Stack width="100%" alignItems="center">
+                                               <ToggleButton
+                                                   disabled={calculateTotalResults() > 0 || isLoading}
+                                                   value="check"
+                                                   selected={player.aktiv}
+                                                   name={player.id}
+                                                   onChange={handleChangeAktiv}
+                                               >
+                                                   <CheckIcon />
+                                               </ToggleButton>
+                                           </Stack>
+                                       </Stack>
                                    </CardContent>
-                                   <CardActions>
-                                       <ToggleButton
-                                           disabled={calculateTotalResults() > 0 || isLoading}
-                                           value="check"
-                                           selected={player.aktiv}
-                                           name={player.id}
-                                           onChange={handleChangeAktiv}
-                                       >
-                                            <CheckIcon />
-                                       </ToggleButton>
-                                   </CardActions>
                                </Card>
                            </Grid>
                        ))

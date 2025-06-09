@@ -7,6 +7,7 @@ export function saveGameToFirebase(game: Game): Promise<void> {
     const gameToSave = {
         players: game.players.map(player => ({
             id: player.id,
+            firstname: player.firstname || "",
             name: player.name,
             result: player.result,
             aktiv: player.aktiv

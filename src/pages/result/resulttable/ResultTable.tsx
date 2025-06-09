@@ -7,18 +7,26 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TablePagination from '@mui/material/TablePagination';
 import TableRow from '@mui/material/TableRow';
-import Button from '@mui/material/Button'
+import Button from '@mui/material/Button';
+import Avatar from '@mui/material/Avatar';
 
 import {ResultCell, getResult} from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
 import PointCell from "../pointcell/PointCell";
 import DialogComponent from "../dialog/DialogComponent";
 import {Round} from "../../../model/Round";
+import {Stack, Typography} from "@mui/material";
 
 function ResultTable(parameters: { gameId: string }) {
     const {game, setGame} = useGameContext();
     const [page, setPage] = React.useState(0);
     const [rowsPerPage, setRowsPerPage] = React.useState(8);
+
+    const getInitials = (firstname: string, name: string): string => {
+        const firstInitial = firstname ? firstname.charAt(0).toUpperCase() : '';
+        const lastInitial = name ? name.charAt(0).toUpperCase() : '';
+        return `${firstInitial}${lastInitial}`;
+    };
 
     const handleChangePage = (event: unknown, newPage: number) => {
         setPage(newPage);
@@ -89,14 +97,25 @@ function ResultTable(parameters: { gameId: string }) {
             <Table stickyHeader aria-label="sticky table">
                 <TableHead>
                     <TableRow>
-                        <TableCell align={'center'} className='cellWithRightLine'>
+                        <TableCell sx={{ whiteSpace: 'nowrap', width:'0px', borderRight: '1px solid rgba(224, 224, 224, 1)'}} align={'center'}>
                             Runde
                         </TableCell>
-                        <TableCell align={'center'} className='cellWithRightLine'>
+                        <TableCell sx={{ whiteSpace: 'nowrap', width:'0px', borderRight: '1px solid rgba(224, 224, 224, 1)'}} align={'center'}>
                             P
                         </TableCell>
                         {game?.rounds?.length > 0 && game.players.map(player => (player.aktiv && <TableCell align={'center'}>
-                            {player.name + ': ' + ' ' + player.result}
+                            <Stack sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                <Avatar sx={{ bgcolor: 'primary.main', width: 55, height: 55 }}>
+                                    <Stack direction="column" spacing={0}>
+                                        <Stack direction="column" spacing={0}>
+                                            {getInitials(player.firstname, player.name)}
+                                        </Stack>
+                                        <Stack direction="column" spacing={0}>
+                                            {player.result}
+                                        </Stack>
+                                    </Stack>
+                                </Avatar>
+                            </Stack>
                         </TableCell>))}
                     </TableRow>
                 </TableHead>
@@ -105,7 +124,7 @@ function ResultTable(parameters: { gameId: string }) {
                         .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                         .map((round) => (
                                 <TableRow tabIndex={-1} key={round.id}>
-                                    <TableCell align={'center'} className='cellWithRightLine'>
+                                    <TableCell sx={{ whiteSpace: 'nowrap', width:'0px', borderRight: '1px solid rgba(224, 224, 224, 1)'}} align={'center'}>
                                         <DialogComponent round={round} />
                                     </TableCell>
                                     <PointCell round={round}/>

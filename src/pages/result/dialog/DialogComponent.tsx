@@ -1,8 +1,6 @@
 import React, {ChangeEvent} from 'react';
-import '../css/Result.css';
 import {ToggleButtonGroup, Stack, ToggleButton, Typography, TextField, Button, Dialog, DialogTitle} from "@mui/material";
 import {ResultType, Round} from "../../../model/Round";
-import {Player} from "../../../model/Player";
 import {useGameContext} from "../../../model/context/GameContext";
 import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 
@@ -91,7 +89,7 @@ function DialogComponent(parameters: { round: Round}) {
                       game.players.map((player) => (
                        player.aktiv ? (
                            <Stack key={player.id}> {/* Wichtig: key muss im äussersten Element sein */}
-                             <Typography>{player.name}</Typography>
+                             <Typography>{(player.firstname || "") + ' ' + player.name}</Typography>
                             <ToggleButtonGroup
                                    value={parameters.round.results.get(player.id)}
                                    exclusive
