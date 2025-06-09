@@ -16,6 +16,7 @@ import PointCell from "../pointcell/PointCell";
 import DialogComponent from "../dialog/DialogComponent";
 import {Round} from "../../../model/Round";
 import {Stack, Typography} from "@mui/material";
+import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 
 function ResultTable(parameters: { gameId: string }) {
     const {game, setGame} = useGameContext();
@@ -57,6 +58,7 @@ function ResultTable(parameters: { gameId: string }) {
         setGame({
             ...game
         })
+        saveGameToFirebase(game);
     };
 
     useEffect(() => {
@@ -93,62 +95,66 @@ function ResultTable(parameters: { gameId: string }) {
 
 
     return <>
-        <TableContainer>
-            <Table stickyHeader aria-label="sticky table">
-                <TableHead>
-                    <TableRow>
-                        <TableCell sx={{ whiteSpace: 'nowrap', width:'0px', borderRight: '1px solid rgba(224, 224, 224, 1)'}} align={'center'}>
-                            Runde
-                        </TableCell>
-                        <TableCell sx={{ whiteSpace: 'nowrap', width:'0px', borderRight: '1px solid rgba(224, 224, 224, 1)'}} align={'center'}>
-                            P
-                        </TableCell>
-                        {game?.rounds?.length > 0 && game.players.map(player => (player.aktiv && <TableCell align={'center'}>
-                            <Stack sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                <Avatar sx={{ bgcolor: 'primary.main', width: 55, height: 55 }}>
-                                    <Stack direction="column" spacing={0}>
+        <Stack direction="column" height="92dvh">
+            <TableContainer>
+                <Table stickyHeader aria-label="sticky table">
+                    <TableHead>
+                        <TableRow>
+                            <TableCell sx={{ whiteSpace: 'nowrap', width:'0px'}} align={'center'}>
+                                Runde
+                            </TableCell>
+                            <TableCell sx={{ whiteSpace: 'nowrap', width:'0px'}} align={'center'}>
+                                P
+                            </TableCell>
+                            {game?.rounds?.length > 0 && game.players.map(player => (player.aktiv && <TableCell align={'center'}>
+                                <Stack sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <Avatar sx={{ bgcolor: 'primary.main', width: 55, height: 55 }}>
                                         <Stack direction="column" spacing={0}>
-                                            {getInitials(player.firstname, player.name)}
+                                            <Stack direction="column" spacing={0}>
+                                                {getInitials(player.firstname, player.name)}
+                                            </Stack>
+                                            <Stack direction="column" spacing={0}>
+                                                {player.result}
+                                            </Stack>
                                         </Stack>
-                                        <Stack direction="column" spacing={0}>
-                                            {player.result}
-                                        </Stack>
-                                    </Stack>
-                                </Avatar>
-                            </Stack>
-                        </TableCell>))}
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {game.rounds
-                        .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                        .map((round) => (
-                                <TableRow tabIndex={-1} key={round.id}>
-                                    <TableCell sx={{ whiteSpace: 'nowrap', width:'0px', borderRight: '1px solid rgba(224, 224, 224, 1)'}} align={'center'}>
-                                        <DialogComponent round={round} />
-                                    </TableCell>
-                                    <PointCell round={round}/>
-                                    {game.players.map(player => (
-                                        player.aktiv ?
-                                            <ResultCell round={round} player={player}/>
-                                        : null
-                                    ))}
-                                </TableRow>
-                            )
-                        )}
-                </TableBody>
-            </Table>
-        </TableContainer>
-        <TablePagination
-            rowsPerPageOptions={[8, 25, 100]}
-            component="div"
-            count={game.rounds.length}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={handleChangePage}
-            onRowsPerPageChange={handleChangeRowsPerPage}
-        />
-        <Button onClick={handleNeueZeileClick}>Neue Runde</Button>
+                                    </Avatar>
+                                </Stack>
+                            </TableCell>))}
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {game.rounds
+                            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                            .map((round) => (
+                                    <TableRow tabIndex={-1} key={round.id}>
+                                        <TableCell sx={{ whiteSpace: 'nowrap', width:'0px' , borderRight: '1px solid #e0e0e0'}} align={'center'}>
+                                            <DialogComponent round={round} />
+                                        </TableCell>
+                                        <PointCell round={round}/>
+                                        {game.players.map(player => (
+                                            player.aktiv ?
+                                                <ResultCell round={round} player={player}/>
+                                                : null
+                                        ))}
+                                    </TableRow>
+                                )
+                            )}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+            <Stack direction="column" spacing={0}>
+                <TablePagination sx={{overflow: 'hidden'}}
+                                 rowsPerPageOptions={[8, 25, 100]}
+                                 component="div"
+                                 count={game.rounds.length}
+                                 rowsPerPage={rowsPerPage}
+                                 page={page}
+                                 onPageChange={handleChangePage}
+                                 onRowsPerPageChange={handleChangeRowsPerPage}
+                />
+                <Button onClick={handleNeueZeileClick}>Neue Runde</Button>
+            </Stack>
+        </Stack>
     </>
 }
 

@@ -17,7 +17,7 @@ function PointCell(parameters: { round: Round}) {
     };
 
     return (
-        <TableCell sx={{ whiteSpace: 'nowrap', width:'0px', borderRight: '1px solid rgba(224, 224, 224, 1)'}} align={'center'} className='cellWithRightLine' key={'TC' + key}>
+        <TableCell sx={{ whiteSpace: 'nowrap', width:'0px', borderRight: '1px solid #e0e0e0'}} align={'center'} className='cellWithRightLine' key={'TC' + key}>
             {parameters.round.roundPoints}
         </TableCell>
     )
