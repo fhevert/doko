@@ -144,7 +144,7 @@ function ResultTable(parameters: { gameId: string }) {
             </TableContainer>
             <Stack direction="column" spacing={0}>
                 <TablePagination sx={{overflow: 'hidden'}}
-                                 rowsPerPageOptions={[8, 25, 100]}
+                                 rowsPerPageOptions={[8, { label: 'All', value: -1 }]}
                                  component="div"
                                  count={game.rounds.length}
                                  rowsPerPage={rowsPerPage}
