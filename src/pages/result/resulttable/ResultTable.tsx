@@ -48,6 +48,7 @@ function ResultTable(parameters: { gameId: string }) {
         return {
             id: game.rounds.length,
             roundPoints: 0,
+            bock: false,
             cowardicePoints: 0,
             results: resultsMap
         }
@@ -99,11 +100,11 @@ function ResultTable(parameters: { gameId: string }) {
     return (
         <Stack direction="column" sx={{
             width: '100%',
-            height: 'calc(100dvh - 50px)', // 50px ist die neue Höhe der AppBar
+            height: 'calc(100vh - 50px)', // 50px ist die neue Höhe der AppBar
             overflow: 'hidden',
             '& .MuiTable-root': {
                 width: '100%',
-                tableLayout: 'fixed',
+                tableLayout: 'fixed'
             }
         }}>
             <TableContainer sx={{

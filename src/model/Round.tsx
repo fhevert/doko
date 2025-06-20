@@ -1,11 +1,10 @@
-import {Player} from "./Player";
-
 export enum ResultType {
     UNCHANGED, WIN, LOSE
 }
 
 export interface Round {
-    id: number
+    id: number;
+    bock: boolean;
     roundPoints: number;
     cowardicePoints: number;
     results: Map<string, ResultType>;

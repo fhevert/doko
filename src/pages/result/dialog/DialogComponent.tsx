@@ -1,8 +1,19 @@
 import React, {ChangeEvent} from 'react';
-import {ToggleButtonGroup, Stack, ToggleButton, Typography, TextField, Button, Dialog, DialogTitle} from "@mui/material";
+import {
+    ToggleButtonGroup,
+    Stack,
+    ToggleButton,
+    Typography,
+    TextField,
+    Button,
+    Dialog,
+    DialogTitle,
+    Checkbox
+} from "@mui/material";
 import {ResultType, Round} from "../../../model/Round";
 import {useGameContext} from "../../../model/context/GameContext";
 import {saveGameToFirebase} from "../../../firebase/DbFunctions";
+import {Check, CheckBox} from "@mui/icons-material";
 
 function DialogComponent(parameters: { round: Round}) {
     const {game, setGame} = useGameContext()
@@ -85,6 +96,7 @@ function DialogComponent(parameters: { round: Round}) {
               <Stack sx={{padding:1}} spacing={1}>
                   <TextField type="number" label="Punkte" onChange={handeRoundPointsChange} value={parameters.round.roundPoints}/>
                   <TextField type="number" label="Feigheit" onChange={handeCowardicePointsChange} value={parameters.round.cowardicePoints}/>
+                  <Checkbox checked={parameters.round.results.get(game.players[0].id) === ResultType.WIN} icon={<CheckBox />} checkedIcon={<Check />}  />
                   {
                       game.players.map((player) => (
                        player.aktiv ? (
