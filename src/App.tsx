@@ -4,7 +4,6 @@ import {AppBar, Button, createTheme, CssBaseline, ThemeProvider, Toolbar, Typogr
 import ResultTable from "./pages/result/resulttable/ResultTable";
 import {emptyGame} from "./model/EmptyGame";
 import {Game} from "./model/Game";
-import {Round} from "./model/Round";
 import {GameContext} from './model/context/GameContext';
 import PlayersPage from "./pages/player/player/PlayersPage";
 import {Link, MemoryRouter, Navigate, Route, Routes} from "react-router-dom";
@@ -28,7 +27,8 @@ const AuthStatusBar = memo(() => {
     };
 
     return (
-        <Toolbar sx={{height: '50px', maxheight: '50px'}}>
+        <Toolbar sx={{ height: '8dvh'}}>
+
             <Link to="/doko" style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
                 <Typography variant="h6" component="div">
                     Doko
