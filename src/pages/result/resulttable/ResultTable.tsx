@@ -100,7 +100,7 @@ function ResultTable(parameters: { gameId: string }) {
     return (
         <Stack direction="column" sx={{
             width: '100%',
-            height: 'calc(100dvh - 64px)', // 50px ist die neue Höhe der AppBar
+            height: 'calc(100dvh - 50px)', // 50px ist die neue Höhe der AppBar
             overflow: 'hidden',
             '& .MuiTable-root': {
                 width: '100%',
