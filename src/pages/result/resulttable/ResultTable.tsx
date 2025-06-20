@@ -97,18 +97,34 @@ function ResultTable(parameters: { gameId: string }) {
 
 
     return <>
-        <Stack direction="column" height="92dvh">
+        <Stack direction="column" height="92dvh" sx={{
+            width: '100%',
+            overflowX: game.players.filter(p => p.aktiv).length > 5 ? 'auto' : 'hidden',
+            '& .MuiTable-root': {
+                width: '100%',
+                tableLayout: 'fixed',
+            }
+        }}>
             <TableContainer>
                 <Table stickyHeader aria-label="sticky table">
                     <TableHead>
                         <TableRow>
-                            <TableCell sx={{ whiteSpace: 'nowrap', width:'0px'}} align={'center'}>
+                            <TableCell align="center">
                                 Runde
                             </TableCell>
-                            <TableCell sx={{ whiteSpace: 'nowrap', width:'0px'}} align={'center'}>
-                                {'P(Ø: ' + game.averagePoints + ')'}
+                            <TableCell align={'center'}>
+                                {'P(' + String.fromCharCode(216) + ')'}
                             </TableCell>
-                            {game?.rounds?.length > 0 && game.players.map(player => (player.aktiv && <TableCell align={'center'}>
+                            {game?.rounds?.length > 0 && game.players.map(player => (player.aktiv && 
+                            <TableCell 
+                                align={'center'}
+                                sx={{
+                                    width: 'auto',
+                                    minWidth: 'fit-content',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                }}
+                            >
                                 <Stack sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     <Avatar sx={{ bgcolor: 'primary.main', width: 55, height: 55 }}>
                                         <Stack direction="column" spacing={0}>
@@ -129,7 +145,17 @@ function ResultTable(parameters: { gameId: string }) {
                             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                             .map((round) => (
                                     <TableRow tabIndex={-1} key={round.id}>
-                                        <TableCell sx={{ whiteSpace: 'nowrap', width:'0px' , borderRight: '1px solid #e0e0e0'}} align={'center'}>
+                                        <TableCell 
+                                            sx={{ 
+                                                whiteSpace: 'nowrap',
+                                                width: 'auto',
+                                                minWidth: 'fit-content',
+                                                padding: '8px 4px',
+                                                borderRight: '1px solid #e0e0e0',
+                                                textAlign: 'center'
+                                            }}
+                                            align="center"
+                                        >
                                             <DialogComponent round={round} />
                                         </TableCell>
                                         <PointCell round={round}/>
