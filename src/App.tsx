@@ -28,7 +28,7 @@ const AuthStatusBar = memo(() => {
     };
 
     return (
-        <Toolbar sx={{ minHeight: '50px', maxHeight: '50px'}}>
+        <Toolbar sx={{height: '50px', maxheight: '50px'}}>
             <Link to="/doko" style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
                 <Typography variant="h6" component="div">
                     Doko
