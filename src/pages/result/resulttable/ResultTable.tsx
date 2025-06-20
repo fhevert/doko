@@ -96,16 +96,20 @@ function ResultTable(parameters: { gameId: string }) {
 
 
 
-    return <>
-        <Stack direction="column" height="92dvh" sx={{
+    return (
+        <Stack direction="column" sx={{
             width: '100%',
-            overflowX: game.players.filter(p => p.aktiv).length > 5 ? 'auto' : 'hidden',
+            height: 'calc(100vh - 50px)', // 50px ist die neue Höhe der AppBar
+            overflow: 'hidden',
             '& .MuiTable-root': {
                 width: '100%',
                 tableLayout: 'fixed',
             }
         }}>
-            <TableContainer>
+            <TableContainer sx={{
+                flex: 1,
+                overflow: 'auto'
+            }}>
                 <Table stickyHeader aria-label="sticky table">
                     <TableHead>
                         <TableRow>
@@ -171,19 +175,31 @@ function ResultTable(parameters: { gameId: string }) {
                 </Table>
             </TableContainer>
             <Stack direction="column" spacing={0}>
-                <TablePagination sx={{overflow: 'hidden'}}
-                                 rowsPerPageOptions={[8, { label: 'All', value: -1 }]}
-                                 component="div"
-                                 count={game.rounds.length}
-                                 rowsPerPage={rowsPerPage}
-                                 page={page}
-                                 onPageChange={handleChangePage}
-                                 onRowsPerPageChange={handleChangeRowsPerPage}
+                <TablePagination 
+                    rowsPerPageOptions={[8, { label: 'All', value: -1 }]}
+                    component="div"
+                    count={game.rounds.length}
+                    rowsPerPage={rowsPerPage}
+                    page={page}
+                    onPageChange={handleChangePage}
+                    onRowsPerPageChange={handleChangeRowsPerPage}
                 />
-                <Button onClick={handleNeueZeileClick}>Neue Runde</Button>
+                <Button 
+                    onClick={handleNeueZeileClick}
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{
+                        borderRadius: 0,
+                        py: 1,
+                    }}
+                >
+                    Neue Runde
+                </Button>
             </Stack>
         </Stack>
-    </>
+    )
 }
+
 
 export default ResultTable;

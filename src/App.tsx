@@ -28,7 +28,7 @@ const AuthStatusBar = memo(() => {
     };
 
     return (
-        <Toolbar>
+        <Toolbar sx={{ minHeight: '50px', maxHeight: '50px'}}>
             <Link to="/doko" style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
                 <Typography variant="h6" component="div">
                     Doko
@@ -98,7 +98,7 @@ function App() {
             <ThemeProvider theme={darkTheme}>
                 <GameContext.Provider value={{game, setGame, isLoading}}>
                     <MemoryRouter>
-                        <AppBar position="static">
+                        <AppBar position="static" sx={{ '& .MuiToolbar-root': { minHeight: '50px' } }}>
                             <AuthStatusBar />
                         </AppBar>
                         <Routes>
