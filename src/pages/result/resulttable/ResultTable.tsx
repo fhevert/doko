@@ -90,6 +90,8 @@ function ResultTable(parameters: { gameId: string }) {
                p.result = gesamtPunkte / anzahlAktiveSpieler;
             }
         });
+
+        game.averagePoints = gesamtPunkte / anzahlAktiveSpieler
     }, [game]);
 
 
@@ -104,7 +106,7 @@ function ResultTable(parameters: { gameId: string }) {
                                 Runde
                             </TableCell>
                             <TableCell sx={{ whiteSpace: 'nowrap', width:'0px'}} align={'center'}>
-                                P
+                                {'P(Ø: ' + game.averagePoints + ')'}
                             </TableCell>
                             {game?.rounds?.length > 0 && game.players.map(player => (player.aktiv && <TableCell align={'center'}>
                                 <Stack sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

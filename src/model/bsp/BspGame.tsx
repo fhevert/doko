@@ -78,5 +78,6 @@ export const bspGame = {
     rounds: [
         createRound(0),
     ],
+    averagePoints:0,
     result: new Map<Player, number | undefined>()
 } as Game;

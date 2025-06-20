@@ -1,4 +1,4 @@
-import React, {ReactNode, useEffect, useState, memo} from 'react';
+import React, {memo, ReactNode, useEffect, useState} from 'react';
 import './App.css';
 import {AppBar, Button, createTheme, CssBaseline, ThemeProvider, Toolbar, Typography} from "@mui/material";
 import ResultTable from "./pages/result/resulttable/ResultTable";
@@ -7,11 +7,11 @@ import {Game} from "./model/Game";
 import {Round} from "./model/Round";
 import {GameContext} from './model/context/GameContext';
 import PlayersPage from "./pages/player/player/PlayersPage";
-import {MemoryRouter, Navigate, Route, Routes, Link} from "react-router-dom";
-import {firebaseApp, firebaseDB, analytics, auth} from "./firebase/firebase-config";
-import {ref, get, set, onValue, DataSnapshot } from "firebase/database";
-import {AuthProvider, useAuth} from './firebase/AuthContext';
-import { signOut } from 'firebase/auth';
+import {Link, MemoryRouter, Navigate, Route, Routes} from "react-router-dom";
+import {auth, firebaseDB} from "./firebase/firebase-config";
+import {DataSnapshot, onValue, ref} from "firebase/database";
+import {useAuth} from './firebase/AuthContext';
+import {signOut} from 'firebase/auth';
 import Login from "./pages/login";
 
 // Separate component for auth-dependent UI parts
@@ -97,11 +97,11 @@ function App() {
             rounds = new Array(0);
         }
 
-        var result = {
-           players: JSON.parse(JSON.stringify(gameToConvert.players)),
-           rounds: rounds
+        return {
+            players: JSON.parse(JSON.stringify(gameToConvert.players)),
+            rounds: rounds,
+            averagePoints: gameToConvert.averagePoints,
         } as Game;
-        return result;
       }
 
      useEffect(() => {

@@ -12,6 +12,7 @@ export function saveGameToFirebase(game: Game): Promise<void> {
             result: player.result,
             aktiv: player.aktiv
         })),
+        averagePoints: game.averagePoints,
         rounds: game.rounds.map(round => {
             var result = {
                 id: round.id,

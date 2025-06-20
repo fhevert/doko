@@ -1,6 +1,5 @@
 import {Game} from "./Game";
 import {Player} from "./Player";
-import {ResultType, Round} from "./Round";
 
 const fabi: Player = {
     id: '0',
@@ -57,5 +56,6 @@ const basti: Player = {
 export const emptyGame = {
     players: [fabi, chrissi, marcus, joschi, marci, johannes, basti],
     rounds: [],
+    averagePoints:0,
     result: new Map<Player, number | undefined>()
 } as Game;

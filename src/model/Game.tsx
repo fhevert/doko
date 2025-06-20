@@ -4,4 +4,5 @@ import {Round} from "./Round";
 export interface Game {
     players: Player[];
     rounds: Round[];
+    averagePoints:number;
 }
