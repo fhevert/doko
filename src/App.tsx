@@ -102,7 +102,7 @@ function App() {
             <ThemeProvider theme={darkTheme}>
                 <GameContext.Provider value={{game, setGame, isLoading}}>
                     <MemoryRouter>
-                        <AppBar position="static" sx={{ '& .MuiToolbar-root': { minHeight: '50px' } }}>
+                        <AppBar position="static">
                             <AuthStatusBar />
                         </AppBar>
                         <Routes>

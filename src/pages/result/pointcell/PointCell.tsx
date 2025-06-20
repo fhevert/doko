@@ -1,5 +1,5 @@
-import React, {ChangeEvent, Key, useId, useState} from 'react';
-import {InputBase, TableCell, TextField} from "@mui/material";
+import React, {ChangeEvent, useId} from 'react';
+import {Stack, TableCell, Typography} from "@mui/material";
 import {useGameContext} from "../../../model/context/GameContext";
 import {Round} from "../../../model/Round";
 
@@ -18,7 +18,12 @@ function PointCell(parameters: { round: Round}) {
 
     return (
         <TableCell sx={{ whiteSpace: 'nowrap', width:'0px', borderRight: '1px solid #e0e0e0'}} align={'center'} className='cellWithRightLine' key={'TC' + key}>
-            {parameters.round.roundPoints}
+            <Stack width='100%' alignItems="center" justifyContent="center" direction="row" spacing={1} divider={<Typography>x</Typography>}>
+                {parameters.round.solo && <Typography>{'S'}</Typography>}
+                {parameters.round.bock && <Typography>{'B'}</Typography>}
+                <Typography>{parameters.round.roundPoints}</Typography>
+            </Stack>
+
         </TableCell>
     )
 }

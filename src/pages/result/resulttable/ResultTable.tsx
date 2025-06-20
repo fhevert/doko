@@ -49,6 +49,8 @@ function ResultTable(parameters: { gameId: string }) {
             id: game.rounds.length,
             roundPoints: 0,
             bock: false,
+            solo: false,
+            multiplier: 1,
             cowardicePoints: 0,
             results: resultsMap
         }
@@ -100,7 +102,7 @@ function ResultTable(parameters: { gameId: string }) {
     return (
         <Stack direction="column" sx={{
             width: '100%',
-            height: '92dvh', // 50px ist die neue Höhe der AppBar
+            height: '92dvh',
             overflow: 'hidden',
             '& .MuiTable-root': {
                 width: '100%',
@@ -148,8 +150,18 @@ function ResultTable(parameters: { gameId: string }) {
                     <TableBody>
                         {game.rounds
                             .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                            .map((round) => (
-                                    <TableRow tabIndex={-1} key={round.id}>
+                            .map((round, index) => {
+                                const activePlayersCount = game.players.filter(p => p.aktiv).length;
+                                const groupIndex = Math.floor(index / activePlayersCount);
+                                const isShaded = groupIndex % 2 === 0;
+                                
+                                return (
+                                    <TableRow 
+                                        tabIndex={-1} 
+                                        key={round.id}
+                                        sx={{
+                                            backgroundColor: isShaded ? 'action.hover' : 'background.paper'
+                                        }}>
                                         <TableCell 
                                             sx={{ 
                                                 whiteSpace: 'nowrap',
@@ -170,8 +182,8 @@ function ResultTable(parameters: { gameId: string }) {
                                                 : null
                                         ))}
                                     </TableRow>
-                                )
-                            )}
+                                );
+                            })}
                     </TableBody>
                 </Table>
             </TableContainer>

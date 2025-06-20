@@ -1,4 +1,4 @@
-import React, {ChangeEvent} from 'react';
+import React from 'react';
 import {
     ToggleButtonGroup,
     Stack,
@@ -7,7 +7,6 @@ import {
     TextField,
     Button,
     Dialog,
-    DialogTitle,
     Checkbox
 } from "@mui/material";
 import {ResultType, Round} from "../../../model/Round";
@@ -87,16 +86,59 @@ function DialogComponent(parameters: { round: Round}) {
         }
     };
 
+
+    function onBockChange(event: React.ChangeEvent<HTMLInputElement>) {
+        parameters.round.bock = event.target.checked;
+        setMultiplier();
+        setGame({
+            ...game
+        });
+    }
+
+    function setMultiplier() {
+        parameters.round.multiplier = 1;
+        if (parameters.round.bock) {
+            parameters.round.multiplier *= 2;
+        }
+    }
+
+    function onSoloChange(event: React.ChangeEvent<HTMLInputElement>) {
+        parameters.round.solo = event.target.checked;
+        setMultiplier();
+        setGame({
+            ...game
+        });
+    }
+
     return (
         <>
             <Button variant="outlined" onClick={handleClickOpen} sx={{ minWidth: '40px', width: '40px' }}>
                 {parameters.round.id + 1}
-              </Button>
+            </Button>
             <Dialog onClose={handleClose} open={open}>
               <Stack sx={{padding:1}} spacing={1}>
-                  <TextField type="number" label="Punkte" onChange={handeRoundPointsChange} value={parameters.round.roundPoints}/>
-                  <TextField type="number" label="Feigheit" onChange={handeCowardicePointsChange} value={parameters.round.cowardicePoints}/>
-                  <Checkbox checked={parameters.round.results.get(game.players[0].id) === ResultType.WIN} icon={<CheckBox />} checkedIcon={<Check />}  />
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                      <Typography>{parameters.round.multiplier > 1 ? parameters.round.multiplier + ' x ': ''} </Typography>
+                      <TextField type="number" label="Punkte" onChange={handeRoundPointsChange} value={parameters.round.roundPoints}/>
+                      <TextField type="number" label="Feigheit" onChange={handeCowardicePointsChange} value={parameters.round.cowardicePoints}/>
+                  </Stack>
+                  <Stack direction="row" alignItems="center">
+                      <Checkbox  
+                        checked={parameters.round.bock} 
+                        onChange={onBockChange}
+                        icon={<CheckBox />} 
+                        checkedIcon={<Check />}
+                      />
+                      <Typography>Bock</Typography>
+                      <Checkbox
+                          checked={parameters.round.solo}
+                          onChange={onSoloChange}
+                          icon={<CheckBox />}
+                          checkedIcon={<Check />}
+                      />
+                      <Typography>Solo</Typography>
+                  </Stack>
+
                   {
                       game.players.map((player) => (
                        player.aktiv ? (

@@ -18,6 +18,9 @@ export function saveGameToFirebase(game: Game): Promise<void> {
             var result = {
                 id: round.id,
                 roundPoints: round.roundPoints,
+                solo: round.solo,
+                bock: round.bock,
+                multiplier: round.multiplier,
                 cowardicePoints: round.cowardicePoints,
                 results: Array.from(round.results, ([key, value]) => ({ key, value }))
             }
@@ -46,6 +49,9 @@ export function convertFromDbGame(gameToConvert: any): Game {
             rounds[i] = {
                 id: round.id,
                 roundPoints: round.roundPoints,
+                bock: round.bock,
+                solo: round.solo,
+                multiplier: round.multiplier,
                 cowardicePoints: round.cowardicePoints,
                 results: resultsArrayToMap(round.results)
             }as Round
