@@ -35,13 +35,17 @@ const AuthStatusBar = memo(() => {
                 </Typography>
             </Link>
             {currentUser ? (
-                <Button color="inherit" onClick={handleLogout}>
-                    Logout ({currentUser.email})
+                <Button  color="inherit" onClick={handleLogout}>
+                    <Typography variant="body1" component="div">
+                        Logout ({currentUser.email})
+                    </Typography>
                 </Button>
             ) : (
                 <Link to="/login">
                     <Button color="inherit">
-                        Login
+                        <Typography variant="body1" component="div">
+                            Login
+                        </Typography>
                     </Button>
                 </Link>
             )}
