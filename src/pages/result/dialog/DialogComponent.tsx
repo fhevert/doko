@@ -135,12 +135,6 @@ function DialogComponent(parameters: { round: Round, open?: boolean }) {
                         checkedIcon={<Check />}
                       />
                       <Typography>Bock</Typography>
-                      <Checkbox
-                          checked={parameters.round.solo}
-                          icon={<CheckBox />}
-                          checkedIcon={<Check />}
-                      />
-                      <Typography>Solo</Typography>
                   </Stack>
 
                   {
