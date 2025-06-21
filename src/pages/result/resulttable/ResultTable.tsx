@@ -10,19 +10,56 @@ import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import Avatar from '@mui/material/Avatar';
 
-import {ResultCell, getResult} from "../resultcell/ResultCell";
+import {getResult, ResultCell} from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
 import PointCell from "../pointcell/PointCell";
 import DialogComponent from "../dialog/DialogComponent";
 import {Round} from "../../../model/Round";
 import {Stack} from "@mui/material";
-import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 
 function ResultTable(parameters: { gameId: string }) {
     const {game, setGame} = useGameContext();
     const [page, setPage] = React.useState(0);
     const [openRound, setOpenRound] = React.useState<number>();
-    const [rowsPerPage, setRowsPerPage] = React.useState(8);
+    const getMaxRows = () => {
+        // Versuche, die tatsächlichen Höhen der Elemente zu bekommen
+        const tableHeader = document.querySelector('thead');
+        const firstRow = document.querySelector('tbody tr');
+        const pagination = document.querySelector('.MuiTablePagination-root');
+        const newRoundButton = document.querySelector('.new-round-button');
+        const appBar = document.querySelector('.MuiAppBar-root');
+        
+        // Fallback-Werte, falls die Elemente noch nicht gerendert sind
+        const headerHeight = tableHeader ? tableHeader.getBoundingClientRect().height : 80;
+        const rowHeight = firstRow ? firstRow.getBoundingClientRect().height : 60;
+        const paginationHeight = pagination ? pagination.getBoundingClientRect().height : 100;
+        const buttonHeight = newRoundButton ? newRoundButton.getBoundingClientRect().height : 50;
+        const appBarHeight = appBar ? appBar.getBoundingClientRect().height : 64;
+        
+        // Berechne die verfügbare Höhe unter Berücksichtigung aller Elemente
+        const viewportHeight = window.innerHeight;
+        // Gesamthöhe aller fixen Elemente
+        const fixedElementsHeight = headerHeight + paginationHeight + buttonHeight + appBarHeight;
+        const availableHeight = viewportHeight - fixedElementsHeight;
+        
+        // Berechne die maximale Anzahl der Zeilen (abzüglich einer halben Zeile als Puffer)
+        const maxRows = Math.max(1, Math.floor(availableHeight / rowHeight));
+        return Math.floor(maxRows);
+    };
+    const [maxRows, setMaxRows] = React.useState<number>(5); // Startwert 5, wird nach dem Rendern aktualisiert
+    const [rowsPerPage, setRowsPerPage] = React.useState(5);
+    const tableContainerRef = React.useRef<HTMLDivElement>(null);
+    
+    // Aktualisiere die maximale Zeilenanzahl nach dem Rendern
+    React.useEffect(() => {
+        const updateMaxRows = () => {
+            const calculatedMaxRows = getMaxRows();
+            setMaxRows(calculatedMaxRows);
+            setRowsPerPage(calculatedMaxRows);
+        };
+        // Initiale Berechnung
+        updateMaxRows();
+    }, []); // Leeres Abhängigkeitsarray bedeutet, dass dies nur beim Mount ausgeführt wird
 
     const getInitials = (firstname: string, name: string): string => {
         const firstInitial = firstname ? firstname.charAt(0).toUpperCase() : '';
@@ -103,15 +140,19 @@ function ResultTable(parameters: { gameId: string }) {
 
 
     return (
-        <Stack direction="column" sx={{
-            width: '100%',
-            height: '92dvh',
-            overflow: 'hidden',
-            '& .MuiTable-root': {
+        <Stack 
+            ref={tableContainerRef}
+            direction="column" 
+            sx={{
                 width: '100%',
-                tableLayout: 'fixed'
-            }
-        }}>
+                height: '92dvh',
+                overflow: 'hidden',
+                '& .MuiTable-root': {
+                    width: '100%',
+                    tableLayout: 'fixed'
+                }
+            }}
+        >
             <TableContainer sx={{
                 flex: 1,
                 overflow: 'auto'
@@ -191,8 +232,8 @@ function ResultTable(parameters: { gameId: string }) {
                 </Table>
             </TableContainer>
             <Stack direction="column" spacing={0}>
-                <TablePagination 
-                    rowsPerPageOptions={[8, { label: 'All', value: -1 }]}
+                <TablePagination
+                    rowsPerPageOptions={[{ label: 'Auto', value: maxRows }, { label: 'All', value: -1 }]}
                     component="div"
                     count={game.rounds.length}
                     rowsPerPage={rowsPerPage}
@@ -201,6 +242,7 @@ function ResultTable(parameters: { gameId: string }) {
                     onRowsPerPageChange={handleChangeRowsPerPage}
                 />
                 <Button 
+                    className="new-round-button"
                     onClick={handleNeueZeileClick}
                     variant="contained"
                     color="primary"
