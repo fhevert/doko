@@ -29,7 +29,7 @@ const AuthStatusBar = memo(() => {
     return (
         <Toolbar sx={{ height: '8dvh'}}>
 
-            <Link to="/doko" style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
+            <Link to="/players" style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
                 <Typography variant="h6" component="div">
                     Doko
                 </Typography>
@@ -110,9 +110,18 @@ function App() {
                             <Route path="/login" element={<Login />} />
                             <Route path="/doko"element={
                                     <PrivateRoute>
-                                        <PlayersPage/>
+                                        {game.rounds.length > 0 ?
+                                            <Navigate to="/results" />:
+                                            <PlayersPage/>
+                                        }
                                     </PrivateRoute>
                                 }
+                            />
+                            <Route path="/players"element={
+                                <PrivateRoute>
+                                    <PlayersPage/>
+                                </PrivateRoute>
+                            }
                             />
                             <Route path="/results" element={
                                     <PrivateRoute>
