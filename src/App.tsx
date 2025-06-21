@@ -111,8 +111,8 @@ function App() {
                             <Route path="/doko"element={
                                     <PrivateRoute>
                                         {game.rounds.length === 0 ?
-                                            <Navigate to="/results" />:
-                                            <PlayersPage/>
+                                            <PlayersPage/>:
+                                            <Navigate to="/results" />
                                         }
 
                                     </PrivateRoute>
