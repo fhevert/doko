@@ -85,6 +85,14 @@ function DialogComponent(parameters: { round: Round, open?: boolean }) {
         const player = game.players.find((p) => p.id ===playerId);
         if (player){
              parameters.round.results.set(player.id, Number(event.currentTarget.value));
+
+            // Check if there's exactly one winner or one loser
+            const results = Array.from(parameters.round.results.values());
+            const winCount = results.filter(r => r === ResultType.WIN).length;
+            const loseCount = results.filter(r => r === ResultType.LOSE).length;
+
+            // Set solo to true if there's exactly one winner or one loser
+            parameters.round.solo = (winCount === 1 || loseCount === 1);
             setGame({
                 ...game
             })
@@ -105,14 +113,6 @@ function DialogComponent(parameters: { round: Round, open?: boolean }) {
         if (parameters.round.bock) {
             parameters.round.multiplier *= 2;
         }
-    }
-
-    function onSoloChange(event: React.ChangeEvent<HTMLInputElement>) {
-        parameters.round.solo = event.target.checked;
-        setMultiplier();
-        setGame({
-            ...game
-        });
     }
 
     return (
@@ -137,7 +137,6 @@ function DialogComponent(parameters: { round: Round, open?: boolean }) {
                       <Typography>Bock</Typography>
                       <Checkbox
                           checked={parameters.round.solo}
-                          onChange={onSoloChange}
                           icon={<CheckBox />}
                           checkedIcon={<Check />}
                       />
