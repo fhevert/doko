@@ -108,7 +108,7 @@ function App() {
                         <Routes>
                             <Route path="/" element={<Navigate to="/doko" />} />
                             <Route path="/login" element={<Login />} />
-                            <Route path="/doko"element={
+                            <Route path="/doko" element={
                                     <PrivateRoute>
                                         {game.rounds.length === 0 ?
                                             <PlayersPage/>:
