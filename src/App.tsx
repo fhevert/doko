@@ -110,10 +110,7 @@ function App() {
                             <Route path="/login" element={<Login />} />
                             <Route path="/doko"element={
                                     <PrivateRoute>
-                                        {game.rounds.length > 0 ?
-                                            <Navigate to="/results" />:
-                                            <PlayersPage/>
-                                        }
+                                        <PlayersPage/>
                                     </PrivateRoute>
                                 }
                             />
