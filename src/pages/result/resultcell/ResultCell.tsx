@@ -17,17 +17,17 @@ import {useGameContext} from "../../../model/context/GameContext";
             
             // If this is the only loser, return roundPoints * 3
             if (loseCount === 1) {
-                return round.roundPoints * 3;
+                return round.roundPoints * 3 * round.multiplier;
             }
         }
         
         // Default behavior for non-solo games or when not the only loser
         switch(result) {
            case ResultType.WIN: {
-              return round.cowardicePoints;
+              return round.cowardicePoints * round.multiplier;
            }
            case ResultType.LOSE: {
-               return round.roundPoints;
+               return round.roundPoints * round.multiplier;
            }
            default: {
                return 0;
