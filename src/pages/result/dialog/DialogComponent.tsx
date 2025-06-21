@@ -42,6 +42,7 @@ function DialogComponent(parameters: { round: Round, open?: boolean }) {
         setGame({
             ...game
         })
+        saveGameToFirebase(game);
         setOpen(false);
     };
 

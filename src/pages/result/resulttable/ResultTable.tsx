@@ -65,7 +65,6 @@ function ResultTable(parameters: { gameId: string }) {
         setGame({
             ...game
         })
-        saveGameToFirebase(game);
     };
 
     useEffect(() => {
