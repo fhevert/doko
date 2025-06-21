@@ -21,6 +21,7 @@ import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 function ResultTable(parameters: { gameId: string }) {
     const {game, setGame} = useGameContext();
     const [page, setPage] = React.useState(0);
+    const [openRound, setOpenRound] = React.useState<number>();
     const [rowsPerPage, setRowsPerPage] = React.useState(8);
 
     const getInitials = (firstname: string, name: string): string => {
@@ -57,7 +58,10 @@ function ResultTable(parameters: { gameId: string }) {
     }
 
     const handleNeueZeileClick = () => {
-        game.rounds.push(createRound());
+        let newRound = createRound();
+        setOpenRound(newRound.id);
+        game.rounds.push(newRound);
+        setPage(Math.ceil(game.rounds.length / rowsPerPage) - 1);
         setGame({
             ...game
         })
@@ -173,7 +177,7 @@ function ResultTable(parameters: { gameId: string }) {
                                             }}
                                             align="center"
                                         >
-                                            <DialogComponent round={round} />
+                                            <DialogComponent round={round} open={openRound === round.id} />
                                         </TableCell>
                                         <PointCell round={round}/>
                                         {game.players.map(player => (

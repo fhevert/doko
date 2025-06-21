@@ -1,5 +1,5 @@
 import React from 'react';
-import {TableCell} from "@mui/material";
+import {TableCell, Typography} from "@mui/material";
 import {ResultType, Round} from "../../../model/Round";
 import {Player} from "../../../model/Player";
 import {useGameContext} from "../../../model/context/GameContext";
@@ -41,7 +41,17 @@ export function ResultCell(parameters: { round: Round, player: Player }) {
 
     return (
         <TableCell align={'center'} key={'TC-' + parameters.round.id + '-' + parameters.player.id}>
-            {getResult(parameters.round, parameters.player.id)}
+            {/* eslint-disable-next-line eqeqeq */}
+            <Typography color={() => {
+                if (parameters.round.results.get(parameters.player.id) === ResultType.WIN) {
+                    return 'green';
+                } else if (parameters.round.results.get(parameters.player.id) === ResultType.LOSE) {
+                    return 'red';
+                } else {
+                    return 'black';
+                }
+            }
+            }>{getResult(parameters.round, parameters.player.id)}</Typography>
         </TableCell>
     )
 }

@@ -14,9 +14,13 @@ import {useGameContext} from "../../../model/context/GameContext";
 import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 import {Check, CheckBox} from "@mui/icons-material";
 
-function DialogComponent(parameters: { round: Round}) {
+function DialogComponent(parameters: { round: Round, open?: boolean }) {
     const {game, setGame} = useGameContext()
-    const [open, setOpen] = React.useState(false);
+    const [open, setOpen] = React.useState(parameters.open || false);
+    React.useEffect(() => {
+        setOpen(parameters.open || false);
+    }, [parameters.open]
+    )
     const handleClickOpen = () => {
         setOpen(true);
     };
