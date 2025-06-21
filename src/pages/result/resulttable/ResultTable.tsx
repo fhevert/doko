@@ -61,7 +61,6 @@ function ResultTable(parameters: { gameId: string }) {
         let newRound = createRound();
         setOpenRound(newRound.id);
         game.rounds.push(newRound);
-        setPage(Math.ceil(game.rounds.length / rowsPerPage) - 1);
         setGame({
             ...game
         })
