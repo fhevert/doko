@@ -192,8 +192,7 @@ function ResultTable(parameters: { gameId: string }) {
                         </TableRow>
                     </TableHead>
                     <TableBody>
-                        {game.rounds
-                            .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                        {(rowsPerPage === -1 ? game.rounds : game.rounds.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage))
                             .map((round, index) => {
                                 const activePlayersCount = game.players.filter(p => p.aktiv).length;
                                 const groupIndex = Math.floor(index / activePlayersCount);
