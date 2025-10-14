@@ -46,7 +46,7 @@ function RundenDialog(parameters: {}) {
                     {'Ergebnis: ' + new Intl.NumberFormat('de-DE', {
                         style: 'currency',
                         currency: 'EUR',
-                        minimumFractionDigits: 2, // Zeigt zwei Nachkommastellen (z.B. 45,00 €)
+                        minimumFractionDigits: 2,
                     }).format(getGesamtergebnis())}
                 </DialogTitle>
 
@@ -87,7 +87,7 @@ function RundenDialog(parameters: {}) {
                                                 {new Intl.NumberFormat('de-DE', {
                                                     style: 'currency',
                                                     currency: 'EUR',
-                                                    minimumFractionDigits: 2, // Zeigt zwei Nachkommastellen (z.B. 45,00 €)
+                                                    minimumFractionDigits: 2,
                                                 }).format(getSpielerergenis(spieler))}
                                             </Typography>
                                         </TableCell>
