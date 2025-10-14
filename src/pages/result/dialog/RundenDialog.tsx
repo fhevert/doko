@@ -1,20 +1,11 @@
 import React from 'react';
-import {
-    ToggleButtonGroup,
-    Stack,
-    ToggleButton,
-    Typography,
-    TextField,
-    Button,
-    Dialog,
-    Checkbox
-} from "@mui/material";
+import {Button, Checkbox, Dialog, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography} from "@mui/material";
 import {ResultType, Round} from "../../../model/Round";
 import {useGameContext} from "../../../model/context/GameContext";
 import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 import {Check, CheckBox} from "@mui/icons-material";
 
-function DialogComponent(parameters: { round: Round, open?: boolean }) {
+function RundenDialog(parameters: { round: Round, open?: boolean }) {
     const {game, setGame} = useGameContext()
     const [open, setOpen] = React.useState(parameters.open || false);
     React.useEffect(() => {
@@ -172,4 +163,4 @@ function DialogComponent(parameters: { round: Round, open?: boolean }) {
     )
 }
 
-export default DialogComponent;
+export default RundenDialog;

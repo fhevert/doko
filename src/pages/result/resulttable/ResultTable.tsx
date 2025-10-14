@@ -13,9 +13,10 @@ import Avatar from '@mui/material/Avatar';
 import {getResult, ResultCell} from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
 import PointCell from "../pointcell/PointCell";
-import DialogComponent from "../dialog/DialogComponent";
+import RundenDialog from "../dialog/RundenDialog";
 import {Round} from "../../../model/Round";
 import {Stack} from "@mui/material";
+import ErgebnisDialog from "../dialog/ErgebnisDialog";
 
 function ResultTable(parameters: { gameId: string }) {
     const {game, setGame} = useGameContext();
@@ -164,7 +165,7 @@ function ResultTable(parameters: { gameId: string }) {
                                 Runde
                             </TableCell>
                             <TableCell align={'center'}>
-                                {'P(' + String.fromCharCode(216) + ')'}
+                               <ErgebnisDialog/>
                             </TableCell>
                             {game?.rounds?.length > 0 && game.players.map(player => (player.aktiv && 
                             <TableCell 
@@ -216,7 +217,7 @@ function ResultTable(parameters: { gameId: string }) {
                                             }}
                                             align="center"
                                         >
-                                            <DialogComponent round={round} open={openRound === round.id} />
+                                            <RundenDialog round={round} open={openRound === round.id} />
                                         </TableCell>
                                         <PointCell round={round}/>
                                         {game.players.map(player => (
