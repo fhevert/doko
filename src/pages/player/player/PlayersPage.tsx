@@ -1,12 +1,11 @@
-import React, {ReactEventHandler} from 'react';
+import React from 'react';
 import './PlayersPage.css';
 import {useGameContext} from "../../../model/context/GameContext";
-import {ToggleButton, CardActions, CardContent, Card, Stack, Button, TextField, Grid, Avatar} from "@mui/material";
+import {Avatar, Button, Card, CardContent, Grid, Stack, TextField, ToggleButton} from "@mui/material";
 import CheckIcon from '@mui/icons-material/Check';
-import {Simulate} from "react-dom/test-utils";
-import play = Simulate.play;
 import {Link} from "react-router-dom";
 import Layout from "../../../layout/Layout";
+import NewGame from "./components/NewGame";
 
 function PlayersPage() {
     const {game, setGame, isLoading} = useGameContext()
@@ -84,11 +83,14 @@ function PlayersPage() {
                        ))
                    }
                    <Grid item xs={12} sx={{display: 'flex', justifyContent: 'center', marginTop: 2}}>
-                       <Link to={isLoading ? "#" : "/results"}>
-                           <Button disabled={isLoading}>
-                               <p>Ergebnisse</p>
-                           </Button>
-                       </Link>
+                       <Stack  direction="row" justifyContent="space-between" sx={{ width: '100%'}}>
+                           <NewGame/>
+                           <Link to={isLoading ? "#" : "/results"}>
+                               <Button variant="outlined" disabled={isLoading}>
+                                   <p>Ergebnisse</p>
+                               </Button>
+                           </Link>
+                       </Stack>
                    </Grid>
                </Grid>
             </Layout>
