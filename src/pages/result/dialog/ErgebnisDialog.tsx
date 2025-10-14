@@ -82,10 +82,8 @@ function RundenDialog(parameters: {}) {
                                         <TableCell align="right">
                                             <Typography
                                                 variant="h6"
-                                                // Punkte färben (positiv/negativ)
                                                 color={spieler.result >= 0 ? (spieler.aktiv ? 'white' : 'success.dark') : 'error.dark'}
                                             >
-
                                                 {new Intl.NumberFormat('de-DE', {
                                                     style: 'currency',
                                                     currency: 'EUR',
