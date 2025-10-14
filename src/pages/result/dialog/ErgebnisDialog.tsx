@@ -15,6 +15,7 @@ import {
 import {useGameContext} from "../../../model/context/GameContext";
 import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 import TableBody from "@mui/material/TableBody";
+import {Player} from "../../../model/Player";
 
 function RundenDialog(parameters: {}) {
     const {game, setGame} = useGameContext()
@@ -28,7 +29,12 @@ function RundenDialog(parameters: {}) {
         setOpen(false);
         saveGameToFirebase(game);
     };
-
+    const getSpielerergenis = (player: Player) => {
+        return player.result * 0.1 + 5
+    };
+    const getGesamtergebnis = () => {
+        return game.players.reduce((total, player) => total + getSpielerergenis(player), 0);
+    };
 
     return (
         <>
@@ -37,7 +43,11 @@ function RundenDialog(parameters: {}) {
             </Button>
             <Dialog onClose={handleClose} open={open}>
                 <DialogTitle id="doko-ergebnis-titel" sx={{ textAlign: 'center', bgcolor: 'primary.main', color: 'white' }}>
-                    Doppelkopf - Endergebnis
+                    {'Doppelkopf - Endergebnis: ' + new Intl.NumberFormat('de-DE', {
+                        style: 'currency',
+                        currency: 'EUR',
+                        minimumFractionDigits: 2, // Zeigt zwei Nachkommastellen (z.B. 45,00 €)
+                    }).format(getGesamtergebnis())}
                 </DialogTitle>
 
                 <DialogContent dividers>
@@ -80,7 +90,7 @@ function RundenDialog(parameters: {}) {
                                                     style: 'currency',
                                                     currency: 'EUR',
                                                     minimumFractionDigits: 2, // Zeigt zwei Nachkommastellen (z.B. 45,00 €)
-                                                }).format(spieler.result * 0.1 + 5)}
+                                                }).format(getSpielerergenis(spieler))}
                                             </Typography>
                                         </TableCell>
                                     </TableRow>
