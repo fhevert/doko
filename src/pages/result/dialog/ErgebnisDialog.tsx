@@ -55,10 +55,8 @@ function RundenDialog(parameters: {}) {
                                 {game.players.sort((a, b) => a.result - b.result).map((spieler, index) => (
                                     <TableRow
                                         key={spieler.id}
-                                        // Optional: Hebe den Sieger visuell hervor
                                         sx={{
                                             '&:last-child td, &:last-child th': { border: 0 },
-                                            // Hebt den 1. Platz hervor
                                             ...(spieler.aktiv && { bgcolor: 'success.light', '& td, & th': { color: 'white' } }),
                                             ...(!spieler.aktiv && { bgcolor: 'action.hover', '& td, & th': { color: 'black' } })
                                         }}
