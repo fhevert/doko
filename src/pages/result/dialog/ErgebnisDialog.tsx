@@ -43,7 +43,7 @@ function RundenDialog(parameters: {}) {
             </Button>
             <Dialog onClose={handleClose} open={open}>
                 <DialogTitle id="doko-ergebnis-titel" sx={{ textAlign: 'center', bgcolor: 'primary.main', color: 'white' }}>
-                    {'Endergebnis: ' + new Intl.NumberFormat('de-DE', {
+                    {'Ergebnis: ' + new Intl.NumberFormat('de-DE', {
                         style: 'currency',
                         currency: 'EUR',
                         minimumFractionDigits: 2, // Zeigt zwei Nachkommastellen (z.B. 45,00 €)
