@@ -46,6 +46,7 @@ function RundenDialog(parameters: { round: Round, open?: boolean, onClose?: () =
         setGame({ ...game, rounds: reindexedRounds });
         saveGameToFirebase({ ...game, rounds: reindexedRounds });
         setOpen(false);
+        parameters.onClose?.();
     };
 
     const handleValueChange = (field: 'roundPoints' | 'cowardicePoints') => (event: React.ChangeEvent<HTMLInputElement>) => {

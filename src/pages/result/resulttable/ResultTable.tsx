@@ -138,12 +138,12 @@ function ResultTable(parameters: { gameId: string }) {
                             {/* Runden-Info */}
                             <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                                 <Stack direction="row" spacing={0.5} alignItems="center">
-                                    <Typography sx={{ fontSize: '0.6rem', color: 'text.disabled', fontWeight: 'bold' }}>
+                                    <Typography sx={{ fontSize: '0.8rem', color: 'text.disabled', fontWeight: 'bold' }}>
                                         #{actualRoundIndex + 1}
                                     </Typography>
                                     {round.bock && <LocalFireDepartmentIcon sx={{ color: '#ff1744', fontSize: 14 }} />}
                                 </Stack>
-                                <Typography sx={{ fontSize: '0.65rem', fontWeight: '800', color: headerBlue }}>
+                                <Typography sx={{ fontSize: '0.8rem', fontWeight: '800', color: headerBlue }}>
                                     WERT: {round.roundPoints}
                                 </Typography>
                             </Stack>
@@ -168,10 +168,10 @@ function ResultTable(parameters: { gameId: string }) {
                                             {getResult(round, p.id) || 0}
                                         </Typography>
                                         <Stack direction="row" justifyContent="center" alignItems="center" spacing={0.2}>
-                                            <Typography noWrap sx={{ fontSize: '0.5rem', color: pIdx === dealerIndex ? headerBlue : 'text.disabled', fontWeight: pIdx === dealerIndex ? 'bold' : 'normal' }}>
+                                            <Typography noWrap sx={{ fontSize: '0.7rem', color: 'text.disabled', fontWeight: 'normal' }}>
                                                 {p.firstname.substring(0, 3).toUpperCase()}
                                             </Typography>
-                                            {pIdx === dealerIndex && <SportsEsportsIcon sx={{ fontSize: 10, color: headerBlue }} />}
+                                            {pIdx === dealerIndex && <SportsEsportsIcon sx={{ fontSize: '1rem', color: headerBlue }} />}
                                         </Stack>
                                     </Box>
                                 ))}

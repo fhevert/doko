@@ -38,7 +38,7 @@ function ErgebnisDialog() {
     const getGesamtergebnis = () =>
         game.players.reduce((total, p) => total + getSpielerergebnis(p), 0);
 
-    const sortedPlayers = [...game.players].sort((a, b) => b.result - a.result);
+    const sortedPlayers = [...game.players].sort((a, b) => a.result - b.result);
 
     return (
         <>

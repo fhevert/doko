@@ -27,6 +27,7 @@ import DragHandleIcon from '@mui/icons-material/DragHandle';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import {Link} from "react-router-dom";
 import Layout from "../../../layout/Layout";
+import {saveGameToFirebase} from '../../../firebase/DbFunctions';
 
 interface PlayerCardProps {
     player: any;
@@ -65,8 +66,9 @@ function PlayersPage() {
                 result: 0     // Punkte zurücksetzen
             }));
 
-        setGame({ ...game, players: cleanedPlayers });
+        setGame({ ...game, players: cleanedPlayers, rounds: []});
         setIsResetDialogOpen(false);
+        saveGameToFirebase(game);
     };
 
     const activePlayers = useMemo(() =>
@@ -208,7 +210,7 @@ function PlayersPage() {
                             variant="contained" fullWidth size="large"
                             sx={{ borderRadius: 3, fontWeight: 'bold', textTransform: 'none' }}
                         >
-                            Spiel starten
+                            {canModify ? 'Spiel starten' : 'Spiel fortsetzen'}
                         </Button>
                     </Box>
                 </Box>
