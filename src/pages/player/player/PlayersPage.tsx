@@ -10,6 +10,7 @@ import {
     Dialog,
     DialogActions,
     DialogContent,
+    DialogContentText,
     DialogTitle,
     Grid,
     IconButton,
@@ -23,9 +24,9 @@ import CheckIcon from '@mui/icons-material/Check';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DragHandleIcon from '@mui/icons-material/DragHandle';
+import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import {Link} from "react-router-dom";
 import Layout from "../../../layout/Layout";
-import NewGame from "./components/NewGame";
 
 interface PlayerCardProps {
     player: any;
@@ -40,25 +41,40 @@ interface PlayerCardProps {
 
 function PlayersPage() {
     const { game, setGame, isLoading } = useGameContext();
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    // State für Dialoge
+    const [isGuestDialogOpen, setIsGuestDialogOpen] = useState(false);
+    const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
     const [newGuest, setNewGuest] = useState({ firstname: '', name: '' });
 
     const getInitials = (f: string, n: string): string =>
         `${f?.charAt(0) || ''}${n?.charAt(0) || ''}`.toUpperCase() || '?';
 
+    // Bestimmt, ob Änderungen (Sortierung/Löschen) erlaubt sind
     const canModify = useMemo(() =>
             game.players.reduce((sum: number, p: any) => sum + (p.result || 0), 0) === 0 && !isLoading
         , [game.players, isLoading]);
 
-    // 1. AKTIVE SPIELER: Alle, die 'aktiv' sind (Stamm + Gäste), behalten ihre gespeicherte Reihenfolge
+    // --- LOGIK: NEUES SPIEL ---
+    const handleNewGameReset = () => {
+        const cleanedPlayers = game.players
+            .filter((p: any) => !p.id.toString().includes('guest')) // Alle Gäste löschen
+            .map((p: any) => ({
+                ...p,
+                aktiv: false, // Alle Stammspieler inaktiv
+                result: 0     // Punkte zurücksetzen
+            }));
+
+        setGame({ ...game, players: cleanedPlayers });
+        setIsResetDialogOpen(false);
+    };
+
     const activePlayers = useMemo(() =>
             game.players.filter((p: any) => p.aktiv)
         , [game.players]);
 
-    // 2. INAKTIVE SPIELER: Sortierung Stamm (A-Z) und danach Gäste ganz unten
     const inactivePlayersSorted = useMemo(() => {
         const inactive = game.players.filter((p: any) => !p.aktiv);
-
         const regularInactive = inactive.filter((p: any) => !p.id.toString().includes('guest'));
         const guestInactive = inactive.filter((p: any) => p.id.toString().includes('guest'));
 
@@ -71,12 +87,9 @@ function PlayersPage() {
 
     const onDragEnd = (result: DropResult) => {
         if (!result.destination || !canModify) return;
-
         const items = Array.from(activePlayers);
         const [reorderedItem] = items.splice(result.source.index, 1);
         items.splice(result.destination.index, 0, reorderedItem);
-
-        // Den globalen State aktualisieren: Die neuen aktiven Items + alle Inaktiven
         const inactiveItems = game.players.filter((p: any) => !p.aktiv);
         setGame({ ...game, players: [...items, ...inactiveItems] });
     };
@@ -102,10 +115,9 @@ function PlayersPage() {
     const addGuest = () => {
         if (newGuest.firstname || newGuest.name) {
             const guest = { id: `guest-${Date.now()}`, ...newGuest, aktiv: true, result: 0 };
-            // Neue Gäste werden vorne in die Liste eingefügt (direkt aktiv)
             setGame({ ...game, players: [guest, ...game.players] });
             setNewGuest({ firstname: '', name: '' });
-            setIsDialogOpen(false);
+            setIsGuestDialogOpen(false);
         }
     };
 
@@ -122,14 +134,9 @@ function PlayersPage() {
                             {(provided) => (
                                 <Grid container spacing={1.5} {...provided.droppableProps} ref={provided.innerRef}>
 
-                                    {/* OBERE SEKTION: AKTIVE SPIELER (Inkl. aktive Gäste) */}
+                                    {/* SEKTION: AKTIVE SPIELER */}
                                     {activePlayers.map((player: any, index: number) => (
-                                        <Draggable
-                                            key={player.id}
-                                            draggableId={player.id.toString()}
-                                            index={index}
-                                            isDragDisabled={!canModify}
-                                        >
+                                        <Draggable key={player.id} draggableId={player.id.toString()} index={index} isDragDisabled={!canModify}>
                                             {(provided, snapshot) => (
                                                 <Grid item xs={12} ref={provided.innerRef} {...provided.draggableProps}>
                                                     <PlayerCard
@@ -148,14 +155,12 @@ function PlayersPage() {
                                     ))}
                                     {provided.placeholder}
 
-                                    {/* MITTLERE SEKTION: INTERAKTION */}
+                                    {/* BUTTON: GAST HINZUFÜGEN */}
                                     {canModify && (
                                         <Grid item xs={12} sx={{ my: 1 }}>
                                             <Button
-                                                fullWidth
-                                                variant="outlined"
-                                                startIcon={<AddIcon />}
-                                                onClick={() => setIsDialogOpen(true)}
+                                                fullWidth variant="outlined" startIcon={<AddIcon />}
+                                                onClick={() => setIsGuestDialogOpen(true)}
                                                 sx={{ py: 1.5, borderRadius: 3, borderStyle: 'dashed', borderWidth: 2, textTransform: 'none' }}
                                             >
                                                 Gast hinzufügen
@@ -163,7 +168,7 @@ function PlayersPage() {
                                         </Grid>
                                     )}
 
-                                    {/* UNTERE SEKTION: PAUSIERENDE SPIELER (Stamm A-Z, dann inaktive Gäste) */}
+                                    {/* SEKTION: INAKTIVE SPIELER */}
                                     {inactivePlayersSorted.length > 0 && (
                                         <Grid item xs={12}>
                                             <Typography variant="overline" sx={{ mt: 2, mb: 1, display: 'block', color: 'text.secondary', fontWeight: 'bold' }}>
@@ -188,14 +193,19 @@ function PlayersPage() {
                         </Droppable>
                     </DragDropContext>
 
+                    {/* AKTIONEN UNTEN */}
                     <Box sx={{ mt: 5, display: 'flex', gap: 2 }}>
-                        <NewGame />
                         <Button
-                            component={Link}
-                            to="/results"
-                            variant="contained"
-                            fullWidth
-                            size="large"
+                            variant="outlined" fullWidth size="large"
+                            startIcon={<RestartAltIcon />}
+                            onClick={() => setIsResetDialogOpen(true)}
+                            sx={{ borderRadius: 3, fontWeight: 'bold', textTransform: 'none' }}
+                        >
+                            Neues Spiel
+                        </Button>
+                        <Button
+                            component={Link} to="/results"
+                            variant="contained" fullWidth size="large"
                             sx={{ borderRadius: 3, fontWeight: 'bold', textTransform: 'none' }}
                         >
                             Spiel starten
@@ -204,7 +214,8 @@ function PlayersPage() {
                 </Box>
             </Box>
 
-            <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} fullWidth maxWidth="xs">
+            {/* DIALOG: GAST HINZUFÜGEN */}
+            <Dialog open={isGuestDialogOpen} onClose={() => setIsGuestDialogOpen(false)} fullWidth maxWidth="xs">
                 <DialogTitle sx={{ fontWeight: 'bold' }}>Neuer Gastspieler</DialogTitle>
                 <DialogContent>
                     <Stack spacing={2} sx={{ mt: 1 }}>
@@ -213,14 +224,29 @@ function PlayersPage() {
                     </Stack>
                 </DialogContent>
                 <DialogActions sx={{ p: 3 }}>
-                    <Button onClick={() => setIsDialogOpen(false)} color="inherit">Abbrechen</Button>
+                    <Button onClick={() => setIsGuestDialogOpen(false)} color="inherit">Abbrechen</Button>
                     <Button onClick={addGuest} variant="contained" disabled={!newGuest.firstname && !newGuest.name}>Hinzufügen</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* DIALOG: NEUES SPIEL BESTÄTIGEN */}
+            <Dialog open={isResetDialogOpen} onClose={() => setIsResetDialogOpen(false)}>
+                <DialogTitle>Neues Spiel starten?</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Möchtest du wirklich ein neues Spiel starten? Dabei werden alle **Gastspieler gelöscht** und alle Stammspieler auf **inaktiv** gesetzt.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{ p: 2 }}>
+                    <Button onClick={() => setIsResetDialogOpen(false)} color="inherit">Abbrechen</Button>
+                    <Button onClick={handleNewGameReset} color="error" variant="contained">Ja, zurücksetzen</Button>
                 </DialogActions>
             </Dialog>
         </Layout>
     );
 }
 
+// --- PlayerCard Unter-Komponente ---
 function PlayerCard({ player, canModify, onToggle, onDelete, onChange, dragHandleProps, isDragging, getInitials }: PlayerCardProps) {
     const isGuest = player.id.toString().includes('guest');
 
@@ -254,16 +280,14 @@ function PlayerCard({ player, canModify, onToggle, onDelete, onChange, dragHandl
                     <Stack sx={{ flexGrow: 1 }}>
                         <Stack direction="row" spacing={1} alignItems="center">
                             <TextField
-                                variant="standard"
-                                size="small"
+                                variant="standard" size="small"
                                 value={player.firstname || ''}
                                 onChange={(e) => onChange('firstname', e.target.value)}
                                 InputProps={{ disableUnderline: true, sx: { fontWeight: 'bold', fontSize: '0.9rem' } }}
                                 placeholder="Vorname"
                             />
                             <TextField
-                                variant="standard"
-                                size="small"
+                                variant="standard" size="small"
                                 value={player.name || ''}
                                 onChange={(e) => onChange('name', e.target.value)}
                                 InputProps={{ disableUnderline: true, sx: { fontSize: '0.9rem' } }}
@@ -280,12 +304,8 @@ function PlayerCard({ player, canModify, onToggle, onDelete, onChange, dragHandl
                             </IconButton>
                         )}
                         <ToggleButton
-                            value="check"
-                            selected={player.aktiv}
-                            onChange={onToggle}
-                            disabled={!canModify}
-                            size="small"
-                            color="primary"
+                            value="check" selected={player.aktiv} onChange={onToggle}
+                            disabled={!canModify} size="small" color="primary"
                             sx={{ borderRadius: '50%', border: 'none', p: 1 }}
                         >
                             <CheckIcon fontSize="small" />
