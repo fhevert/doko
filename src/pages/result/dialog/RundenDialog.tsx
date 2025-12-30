@@ -25,7 +25,7 @@ import {ResultType, Round} from "../../../model/Round";
 import {useGameContext} from "../../../model/context/GameContext";
 import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 
-function RundenDialog(parameters: { round: Round, open?: boolean }) {
+function RundenDialog(parameters: { round: Round, open?: boolean, onClose?: () => void }) {
     const { game, setGame } = useGameContext();
     const [open, setOpen] = React.useState(parameters.open || false);
 
@@ -36,6 +36,7 @@ function RundenDialog(parameters: { round: Round, open?: boolean }) {
     const handleClose = () => {
         setOpen(false);
         saveGameToFirebase(game);
+        parameters.onClose?.();
     };
 
     const handleDeleteClick = () => {
@@ -76,16 +77,13 @@ function RundenDialog(parameters: { round: Round, open?: boolean }) {
 
     return (
         <>
-            <Button
-                variant="contained"
-                color={parameters.round.bock ? "warning" : "primary"}
-                onClick={() => setOpen(true)}
-                sx={{ minWidth: '45px', fontWeight: 'bold' }}
+            <Dialog 
+                open={open}
+                onClose={handleClose}
+                onClick={(e) => e.stopPropagation()}
+                fullWidth 
+                maxWidth="xs"
             >
-                {parameters.round.id + 1}
-            </Button>
-
-            <Dialog open={open} onClose={handleClose} fullWidth maxWidth="xs">
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
                     Runde {parameters.round.id + 1} bearbeiten
                     {parameters.round.bock && <LocalFireDepartment color="error" />}
@@ -159,9 +157,6 @@ function RundenDialog(parameters: { round: Round, open?: boolean }) {
                     <IconButton color="error" onClick={handleDeleteClick} title="Löschen">
                         <DeleteOutline />
                     </IconButton>
-                    <Button onClick={handleClose} variant="contained" color="primary">
-                        Speichern
-                    </Button>
                 </DialogActions>
             </Dialog>
         </>

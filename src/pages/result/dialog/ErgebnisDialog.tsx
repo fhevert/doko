@@ -22,7 +22,7 @@ import {useGameContext} from "../../../model/context/GameContext";
 import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 import {Player} from "../../../model/Player";
 
-function RundenDialog() {
+function ErgebnisDialog() {
     const { game } = useGameContext();
     const [open, setOpen] = React.useState(false);
 
@@ -142,4 +142,4 @@ function RundenDialog() {
     );
 }
 
-export default RundenDialog;
+export default ErgebnisDialog;

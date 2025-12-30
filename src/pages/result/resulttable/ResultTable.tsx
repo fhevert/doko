@@ -1,90 +1,69 @@
 import * as React from 'react';
-import {useEffect} from 'react';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TablePagination from '@mui/material/TablePagination';
-import TableRow from '@mui/material/TableRow';
-import Button from '@mui/material/Button';
-import Avatar from '@mui/material/Avatar';
+import {useEffect, useMemo, useState} from 'react';
+import {Box, Button, Paper, Stack, Typography} from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 
-import {getResult, ResultCell} from "../resultcell/ResultCell";
+import {getResult} from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
-import PointCell from "../pointcell/PointCell";
+import {ResultType, Round} from "../../../model/Round";
 import RundenDialog from "../dialog/RundenDialog";
-import {Round} from "../../../model/Round";
-import {Stack} from "@mui/material";
 import ErgebnisDialog from "../dialog/ErgebnisDialog";
+import {Player} from "../../../model/Player";
 
 function ResultTable(parameters: { gameId: string }) {
-    const {game, setGame} = useGameContext();
-    const [page, setPage] = React.useState(0);
-    const [openRound, setOpenRound] = React.useState<number>();
-    const getMaxRows = () => {
-        // Versuche, die tatsächlichen Höhen der Elemente zu bekommen
-        const tableHeader = document.querySelector('thead');
-        const firstRow = document.querySelector('tbody tr');
-        const pagination = document.querySelector('.MuiTablePagination-root');
-        const newRoundButton = document.querySelector('.new-round-button');
-        const appBar = document.querySelector('.MuiAppBar-root');
-        
-        // Fallback-Werte, falls die Elemente noch nicht gerendert sind
-        const headerHeight = tableHeader ? tableHeader.getBoundingClientRect().height : 80;
-        const rowHeight = firstRow ? firstRow.getBoundingClientRect().height : 60;
-        const paginationHeight = pagination ? pagination.getBoundingClientRect().height : 100;
-        const buttonHeight = newRoundButton ? newRoundButton.getBoundingClientRect().height : 50;
-        const appBarHeight = appBar ? appBar.getBoundingClientRect().height : 64;
-        
-        // Berechne die verfügbare Höhe unter Berücksichtigung aller Elemente
-        const viewportHeight = window.innerHeight;
-        // Gesamthöhe aller fixen Elemente
-        const fixedElementsHeight = headerHeight + paginationHeight + buttonHeight + appBarHeight;
-        const availableHeight = viewportHeight - fixedElementsHeight;
-        
-        // Berechne die maximale Anzahl der Zeilen (abzüglich einer halben Zeile als Puffer)
-        const maxRows = Math.max(1, Math.floor(availableHeight / rowHeight));
-        return Math.floor(maxRows);
-    };
-    const [maxRows, setMaxRows] = React.useState<number>(5); // Startwert 5, wird nach dem Rendern aktualisiert
-    const [rowsPerPage, setRowsPerPage] = React.useState(5);
-    const tableContainerRef = React.useRef<HTMLDivElement>(null);
-    
-    // Aktualisiere die maximale Zeilenanzahl nach dem Rendern
-    React.useEffect(() => {
-        const updateMaxRows = () => {
-            const calculatedMaxRows = getMaxRows();
-            setMaxRows(calculatedMaxRows);
-            setRowsPerPage(calculatedMaxRows);
-        };
-        // Initiale Berechnung
-        updateMaxRows();
-    }, []); // Leeres Abhängigkeitsarray bedeutet, dass dies nur beim Mount ausgeführt wird
+    const { game, setGame } = useGameContext();
+    const [selectedRoundId, setSelectedRoundId] = useState<number | null>(null);
 
-    const getInitials = (firstname: string, name: string): string => {
-        const firstInitial = firstname ? firstname.charAt(0).toUpperCase() : '';
-        const lastInitial = name ? name.charAt(0).toUpperCase() : '';
-        return `${firstInitial}${lastInitial}`;
+    const headerBlue = "#1a237e";
+
+    // --- DYNAMISCHE ANPASSUNG ---
+    const activePlayers = useMemo(() => game.players.filter(p => p.aktiv), [game.players]);
+    const playerCount = activePlayers.length;
+
+    // Berechnet Styles basierend auf der Anzahl der Spieler
+    const getAdaptiveStyles = () => {
+        if (playerCount <= 4) {
+            return { fontSizeName: '0.7rem', fontSizeScore: '1.5rem', padding: 2 };
+        } else if (playerCount === 5) {
+            return { fontSizeName: '0.6rem', fontSizeScore: '1.2rem', padding: 1.5 };
+        } else {
+            // Ab 6 Spielern sehr kompakt
+            return { fontSizeName: '0.5rem', fontSizeScore: '1rem', padding: 1 };
+        }
     };
 
-    const handleChangePage = (event: unknown, newPage: number) => {
-        setPage(newPage);
-    };
+    const { fontSizeName, fontSizeScore, padding } = getAdaptiveStyles();
 
-    const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
-        setRowsPerPage(+event.target.value);
-        setPage(0);
-    };
-
-    const createRound = (): Round => {
-        const  resultsMap= new Map<string, number>();
-
-        game.players.forEach((player) => {
-            resultsMap.set(player.id, 0);
+    useEffect(() => {
+        const players = [...game.players];
+        let totalActivePoints = 0;
+        let activeCount = 0;
+        players.forEach(p => {
+            if (p.aktiv) {
+                let playerResult = 0;
+                game.rounds.forEach((round) => {
+                    const point = getResult(round, p.id);
+                    if (point) playerResult += point;
+                });
+                p.result = playerResult;
+                totalActivePoints += playerResult;
+                activeCount++;
+            }
         });
+        if (activeCount > 0) {
+            const average = totalActivePoints / activeCount;
+            players.forEach(p => {
+                if (!p.aktiv) p.result = average;
+            });
+            game.averagePoints = average;
+        }
+    }, [game, setGame]);
 
-        return {
+    const handleNeueZeileClick = () => {
+        const resultsMap = new Map<string, number>();
+        game.players.forEach((player) => resultsMap.set(player.id, 0));
+        const newRound: Round = {
             id: game.rounds.length,
             roundPoints: 0,
             bock: false,
@@ -92,172 +71,119 @@ function ResultTable(parameters: { gameId: string }) {
             multiplier: 1,
             cowardicePoints: 0,
             results: resultsMap
-        }
-    }
-
-    const handleNeueZeileClick = () => {
-        let newRound = createRound();
-        setOpenRound(newRound.id);
-        game.rounds.push(newRound);
-        setPage(Math.ceil(game.rounds.length / rowsPerPage) - 1);
-        setGame({
-            ...game
-        })
+        };
+        setGame({ ...game, rounds: [...game.rounds, newRound] });
+        setSelectedRoundId(newRound.id);
     };
 
-    useEffect(() => {
-        game.players.forEach(p => {
-            if(p.aktiv){
-               let playerResult: number = 0;
-               game.rounds.forEach((round) => {
-                   const point = getResult(round, p.id);
-                   if(point){
-                       playerResult += point;
-                   }
-               });
-               p.result = playerResult;
-            }
-        });
-        let gesamtPunkte: number = 0;
-        let anzahlAktiveSpieler: number = 0;
-        game.players.forEach(p => {
-            if(p.aktiv){
-                anzahlAktiveSpieler++;
-                var playerScore = p.result;
-                if(playerScore){
-                   gesamtPunkte+= playerScore;
-                }
-            }
-        });
-        game.players.forEach(p => {
-            if(!p.aktiv){
-               p.result = gesamtPunkte / anzahlAktiveSpieler;
-            }
-        });
-
-        game.averagePoints = gesamtPunkte / anzahlAktiveSpieler
-    }, [game]);
-
-
+    function getScoreColor(round: Round, p: Player) {
+        const res = round.results.get(p.id);
+        if (res === ResultType.WIN) return '#2e7d32'; // MUI Success
+        if (res === ResultType.LOSE) return '#d32f2f'; // MUI Error
+        return 'text.primary';
+    }
 
     return (
-        <Stack 
-            ref={tableContainerRef}
-            direction="column" 
-            sx={{
-                width: '100%',
-                height: '92dvh',
-                overflow: 'hidden',
-                '& .MuiTable-root': {
-                    width: '100%',
-                    tableLayout: 'fixed'
-                }
-            }}
-        >
-            <TableContainer sx={{
-                flex: 1,
-                overflow: 'auto'
-            }}>
-                <Table stickyHeader aria-label="sticky table">
-                    <TableHead>
-                        <TableRow>
-                            <TableCell align="center">
-                                Runde
-                            </TableCell>
-                            <TableCell align={'center'}>
-                               <ErgebnisDialog/>
-                            </TableCell>
-                            {game?.rounds?.length > 0 && [...game.players].sort((a, b) => a.result - b.result).map(player => (player.aktiv &&
-                            <TableCell 
-                                align={'center'}
-                                sx={{
-                                    width: 'auto',
-                                    minWidth: 'fit-content',
-                                    whiteSpace: 'nowrap',
-                                    overflow: 'hidden',
-                                }}
-                            >
-                                <Stack sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                    <Avatar sx={{ bgcolor: 'primary.main', width: 55, height: 55 }}>
-                                        <Stack direction="column" spacing={0}>
-                                            <Stack direction="column" spacing={0}>
-                                                {getInitials(player.firstname, player.name)}
-                                            </Stack>
-                                            <Stack direction="column" spacing={0}>
-                                                {player.result}
-                                            </Stack>
-                                        </Stack>
-                                    </Avatar>
-                                </Stack>
-                            </TableCell>))}
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {(rowsPerPage === -1 ? game.rounds : game.rounds.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage))
-                            .map((round, index) => {
-                                const activePlayersCount = game.players.filter(p => p.aktiv).length;
-                                const groupIndex = Math.floor(index / activePlayersCount);
-                                const isShaded = groupIndex % 2 === 0;
-                                
-                                return (
-                                    <TableRow 
-                                        tabIndex={-1} 
-                                        key={round.id}
+        <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)', bgcolor: '#f5f5f5', overflow: 'hidden' }}>
+
+            {/* --- HEADER --- */}
+            <Paper elevation={3} sx={{ borderRadius: 0, bgcolor: 'white', zIndex: 10, borderBottom: `3px solid ${headerBlue}` }}>
+                <Box sx={{ p: 1, display: 'flex', justifyContent: 'center' }}>
+                    <ErgebnisDialog />
+                </Box>
+                <Box sx={{ display: 'flex', width: '100%', px: padding, pb: 2 }}>
+                    {activePlayers.map((player) => (
+                        <Box key={player.id} sx={{ flex: 1, textAlign: 'center', overflow: 'hidden' }}>
+                            <Typography noWrap sx={{ fontSize: fontSizeName, color: 'text.secondary', fontWeight: 'bold' }}>
+                                {player.firstname.toUpperCase()}
+                            </Typography>
+                            <Typography sx={{ fontSize: fontSizeScore, fontWeight: '900', lineHeight: 1 }}>
+                                {player.result}
+                            </Typography>
+                        </Box>
+                    ))}
+                </Box>
+            </Paper>
+
+            {/* --- SCROLL-LISTE --- */}
+            <Box sx={{ flex: 1, overflowY: 'auto', p: 1.5, pb: '100px', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {[...game.rounds].reverse().map((round, idx) => (
+                    <Paper
+                        key={round.id}
+                        elevation={0}
+                        onClick={() => setSelectedRoundId(round.id)}
+                        sx={{
+                            p: padding,
+                            borderRadius: 2,
+                            bgcolor: '#fff',
+                            border: '1px solid #e0e0e0',
+                            transition: 'background-color 0.2s',
+                            '&:active': { bgcolor: '#f0f0f0' }
+                        }}
+                    >
+                        {/* Runden-Info */}
+                        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                            <Stack direction="row" spacing={0.5} alignItems="center">
+                                <Typography sx={{ fontSize: '0.6rem', color: 'text.disabled', fontWeight: 'bold' }}>
+                                    #{game.rounds.length - idx}
+                                </Typography>
+                                {round.bock && <LocalFireDepartmentIcon sx={{ color: '#ff1744', fontSize: 14 }} />}
+                            </Stack>
+                            <Typography sx={{ fontSize: '0.65rem', fontWeight: '800', color: headerBlue }}>
+                                WERT: {round.roundPoints}
+                            </Typography>
+                        </Stack>
+
+                        {/* Ergebnisse der Spieler */}
+                        <Box sx={{ display: 'flex', width: '100%' }}>
+                            {activePlayers.map((p) => (
+                                <Box key={p.id} sx={{ flex: 1, textAlign: 'center' }}>
+                                    <Typography
                                         sx={{
-                                            backgroundColor: isShaded ? 'action.hover' : 'background.paper'
-                                        }}>
-                                        <TableCell 
-                                            sx={{ 
-                                                whiteSpace: 'nowrap',
-                                                width: 'auto',
-                                                minWidth: 'fit-content',
-                                                padding: '8px 4px',
-                                                borderRight: '1px solid #e0e0e0',
-                                                textAlign: 'center'
-                                            }}
-                                            align="center"
-                                        >
-                                            <RundenDialog round={round} open={openRound === round.id} />
-                                        </TableCell>
-                                        <PointCell round={round}/>
-                                        {game.players.map(player => (
-                                            player.aktiv ?
-                                                <ResultCell round={round} player={player}/>
-                                                : null
-                                        ))}
-                                    </TableRow>
-                                );
-                            })}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-            <Stack direction="column" spacing={0}>
-                <TablePagination
-                    rowsPerPageOptions={[{ label: 'Auto', value: maxRows }, { label: 'All', value: -1 }]}
-                    component="div"
-                    count={game.rounds.length}
-                    rowsPerPage={rowsPerPage}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                />
-                <Button 
-                    className="new-round-button"
-                    onClick={handleNeueZeileClick}
+                                            fontSize: fontSizeScore,
+                                            fontWeight: '800',
+                                            color: getScoreColor(round, p),
+                                            lineHeight: 1
+                                        }}
+                                    >
+                                        {getResult(round, p.id) || 0}
+                                    </Typography>
+                                    <Typography noWrap sx={{ fontSize: '0.5rem', color: 'text.disabled', mt: 0.2 }}>
+                                        {p.firstname.substring(0, 3).toUpperCase()}
+                                    </Typography>
+                                </Box>
+                            ))}
+                        </Box>
+
+                        <RundenDialog
+                            round={round}
+                            open={selectedRoundId === round.id}
+                            onClose={() => setSelectedRoundId(null)}
+                        />
+                    </Paper>
+                ))}
+            </Box>
+
+            {/* --- FIXIERTER BUTTON --- */}
+            <Box sx={{
+                position: 'fixed', bottom: 0, left: 0, right: 0, p: 2,
+                background: 'linear-gradient(to top, #f5f5f5 70%, rgba(245,245,245,0) 100%)',
+                display: 'flex', justifyContent: 'center', zIndex: 20
+            }}>
+                <Button
                     variant="contained"
-                    color="primary"
-                    fullWidth
+                    onClick={handleNeueZeileClick}
+                    startIcon={<AddIcon />}
                     sx={{
-                        borderRadius: 0,
-                        py: 1,
+                        borderRadius: '10px', px: 4, py: 1.5, width: '100%', maxWidth: '350px',
+                        fontWeight: '800', bgcolor: headerBlue, textTransform: 'none'
                     }}
                 >
-                    Neue Runde
+                    Nächste Runde
                 </Button>
-            </Stack>
-        </Stack>
-    )
+            </Box>
+        </Box>
+    );
 }
-
 
 export default ResultTable;
