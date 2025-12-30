@@ -167,7 +167,7 @@ function ResultTable(parameters: { gameId: string }) {
                             <TableCell align={'center'}>
                                <ErgebnisDialog/>
                             </TableCell>
-                            {game?.rounds?.length > 0 && game.players.map(player => (player.aktiv && 
+                            {game?.rounds?.length > 0 && [...game.players].sort((a, b) => a.result - b.result).map(player => (player.aktiv &&
                             <TableCell 
                                 align={'center'}
                                 sx={{

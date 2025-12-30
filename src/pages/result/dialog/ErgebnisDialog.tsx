@@ -1,105 +1,145 @@
 import React from 'react';
 import {
+    Avatar,
+    Box,
     Button,
     Dialog,
     DialogContent,
     DialogTitle,
-    Paper,
-    Table,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Typography
+    Divider,
+    IconButton,
+    List,
+    ListItem,
+    ListItemAvatar,
+    ListItemText,
+    Typography,
+    useMediaQuery,
+    useTheme
 } from "@mui/material";
+import CloseIcon from '@mui/icons-material/Close';
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import {useGameContext} from "../../../model/context/GameContext";
 import {saveGameToFirebase} from "../../../firebase/DbFunctions";
-import TableBody from "@mui/material/TableBody";
 import {Player} from "../../../model/Player";
 
-function RundenDialog(parameters: {}) {
-    const {game, setGame} = useGameContext()
+function RundenDialog() {
+    const { game } = useGameContext();
     const [open, setOpen] = React.useState(false);
 
-    const handleClickOpen = () => {
-        setOpen(true);
-    };
+    // Theme-Hooks für Responsive Design
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    const handleClose = (event: React.SyntheticEvent, reason?: string) => {
-        setOpen(false);
-        saveGameToFirebase(game);
-    };
-    const getSpielerergenis = (player: Player) => {
-        return player.result * 0.1 + 5
-    };
-    const getGesamtergebnis = () => {
-        return game.players.reduce((total, player) => total + getSpielerergenis(player), 0);
-    };
+    const formatCurrency = (amount: number) =>
+        new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount);
+
+    const getSpielerergebnis = (player: Player) => player.result * 0.1 + 5;
+
+    const getGesamtergebnis = () =>
+        game.players.reduce((total, p) => total + getSpielerergebnis(p), 0);
+
+    const sortedPlayers = [...game.players].sort((a, b) => b.result - a.result);
 
     return (
         <>
-            <Button variant="outlined" onClick={handleClickOpen} sx={{ minWidth: '40px', width: '40px' }}>
+            <Button
+                variant="contained"
+                onClick={() => setOpen(true)}
+                sx={{ borderRadius: '20px'}}
+            >
                 {'P(' + String.fromCharCode(216) + ')'}
             </Button>
-            <Dialog onClose={handleClose} open={open}>
-                <DialogTitle id="doko-ergebnis-titel" sx={{ textAlign: 'center', bgcolor: 'primary.main', color: 'white' }}>
-                    {'Ergebnis: ' + new Intl.NumberFormat('de-DE', {
-                        style: 'currency',
-                        currency: 'EUR',
-                        minimumFractionDigits: 2,
-                    }).format(getGesamtergebnis())}
+
+            <Dialog
+                open={open}
+                onClose={() => setOpen(false)}
+                fullWidth
+                maxWidth="xs"
+                // Verhindert, dass der Dialog auf kleinen Handys zu hoch wird
+                PaperProps={{
+                    sx: {
+                        borderRadius: 3,
+                        maxHeight: '90vh',
+                        m: 1
+                    }
+                }}
+            >
+                <DialogTitle sx={{ m: 0, p: isMobile ? 1.5 : 2, textAlign: 'center', fontWeight: 'bold', fontSize: isMobile ? '1.1rem' : '1.25rem' }}>
+                    Gesamtergebnis
+                    <IconButton
+                        onClick={() => { setOpen(false); saveGameToFirebase(game); }}
+                        sx={{ position: 'absolute', right: 4, top: 4, color: (theme) => theme.palette.grey[500] }}
+                    >
+                        <CloseIcon fontSize={isMobile ? "small" : "medium"} />
+                    </IconButton>
                 </DialogTitle>
 
-                <DialogContent dividers>
-                    {/* Tabelle zur Anzeige der sortierten Ergebnisse */}
-                    <TableContainer component={Paper} elevation={0}>
-                        <Table size="small" aria-label="Doppelkopf Ergebnisse">
-                            <TableHead>
-                                <TableRow sx={{ '& th': { fontWeight: 'bold' } }}>
-                                    <TableCell align="center" sx={{ width: 50 }}>Platz</TableCell>
-                                    <TableCell>Spieler</TableCell>
-                                    <TableCell align="right">Punkte</TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody>
-                                {game.players.sort((a, b) => a.result - b.result).map((spieler, index) => (
-                                    <TableRow
-                                        key={spieler.id}
+                <Box sx={{ px: 2, pb: 1, textAlign: 'center' }}>
+                    <Typography variant={isMobile ? "h5" : "h4"} color="primary.main" fontWeight="800">
+                        {formatCurrency(getGesamtergebnis())}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Gesamteinsatz im Topf</Typography>
+                </Box>
+
+                <DialogContent sx={{ p: 0, overflowY: 'auto' }}>
+                    <List sx={{ width: '100%', bgcolor: 'background.paper', py: 0 }}>
+                        {sortedPlayers.map((spieler, index) => {
+                            const ergebnis = getSpielerergebnis(spieler);
+                            const isWinner = index === 0;
+
+                            return (
+                                <React.Fragment key={spieler.id}>
+                                    <ListItem
                                         sx={{
-                                            '&:last-child td, &:last-child th': { border: 0 },
-                                            ...(spieler.aktiv && { bgcolor: 'success.light', '& td, & th': { color: 'white' } }),
-                                            ...(!spieler.aktiv && { bgcolor: 'action.hover', '& td, & th': { color: 'black' } })
+                                            py: isMobile ? 0.5 : 1, // Deutlich weniger Padding vertikal
+                                            px: 2,
+                                            bgcolor: spieler.aktiv ? 'inherit' : 'action.hover'
                                         }}
-                                    >
-                                        <TableCell align="center">
-                                            <Typography variant="h6" color={spieler.aktiv ? 'white' : 'text.primary'}>
-                                                {index + 1}.
-                                            </Typography>
-                                        </TableCell>
-                                        <TableCell component="th" scope="row">
-                                            {spieler.firstname} {spieler.name}
-                                        </TableCell>
-                                        <TableCell align="right">
+                                        secondaryAction={
                                             <Typography
-                                                variant="h6"
-                                                color={spieler.result >= 0 ? (spieler.aktiv ? 'white' : 'success.dark') : 'error.dark'}
+                                                variant="body1"
+                                                fontWeight="700"
+                                                color={ergebnis >= 5 ? "success.main" : "error.main"}
+                                                sx={{ fontSize: isMobile ? '0.9rem' : '1rem' }}
                                             >
-                                                {new Intl.NumberFormat('de-DE', {
-                                                    style: 'currency',
-                                                    currency: 'EUR',
-                                                    minimumFractionDigits: 2,
-                                                }).format(getSpielerergenis(spieler))}
+                                                {formatCurrency(ergebnis)}
                                             </Typography>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </TableContainer>
+                                        }
+                                    >
+                                        <ListItemAvatar sx={{ minWidth: isMobile ? 40 : 56 }}>
+                                            <Avatar sx={{
+                                                width: isMobile ? 30 : 40,
+                                                height: isMobile ? 30 : 40,
+                                                fontSize: isMobile ? '0.8rem' : '1rem',
+                                                bgcolor: isWinner ? 'gold' : (spieler.aktiv ? 'primary.light' : 'grey.400'),
+                                                boxShadow: isWinner ? 2 : 0
+                                            }}>
+                                                {isWinner ? <EmojiEventsIcon sx={{ fontSize: isMobile ? 18 : 24 }} /> : (index + 1)}
+                                            </Avatar>
+                                        </ListItemAvatar>
+                                        <ListItemText
+                                            primary={`${spieler.firstname} ${spieler.name}`}
+                                            primaryTypographyProps={{
+                                                variant: 'body2',
+                                                fontWeight: 600,
+                                                style: { fontSize: isMobile ? '0.85rem' : '1rem', lineHeight: 1.2 }
+                                            }}
+                                            secondary={
+                                                <Typography variant="caption" color="text.secondary" sx={{ fontSize: isMobile ? '0.7rem' : '0.75rem' }}>
+                                                    {spieler.result} Pkt. {!spieler.aktiv && " • Inaktiv"}
+                                                </Typography>
+                                            }
+                                        />
+                                    </ListItem>
+                                    <Divider component="li" />
+                                </React.Fragment>
+                            );
+                        })}
+                    </List>
                 </DialogContent>
             </Dialog>
         </>
-    )
+    );
 }
 
 export default RundenDialog;
