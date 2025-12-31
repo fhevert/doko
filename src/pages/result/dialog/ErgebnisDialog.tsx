@@ -47,7 +47,7 @@ function ErgebnisDialog() {
                 onClick={() => setOpen(true)}
                 sx={{ borderRadius: '20px'}}
             >
-                {'P(' + String.fromCharCode(216) + ')'}
+                {String.fromCharCode(216) + ' ' +  game.averagePoints}
             </Button>
 
             <Dialog
