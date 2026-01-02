@@ -161,7 +161,10 @@ const GameGroupPage: React.FC = () => {
                             >
                                 <ListItemText
                                     primary={group.name || `Gruppe ${id}`}
-                                    secondary={`${group.players?.length || 0} Spieler | ${group.games?.length || 0} Spiele`}
+                                    secondary={`
+                                        ${group.players?.length || 0} Spieler | 
+                                        ${group.games ? Object.keys(group.games).length : 0} Spiele
+                                    `}
                                 />
                             </ListItem>
                         ))}

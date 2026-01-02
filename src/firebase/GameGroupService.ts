@@ -12,8 +12,9 @@ export const createGameGroup = async (group: Omit<GameGroup, 'id' | 'createdAt' 
     const newGroup: GameGroup = {
         ...group,
         id: newGroupRef.key!,
-        games: [],
-        rounds: [],
+        players: group.players || [],
+        games: [], 
+        rounds: [], 
         createdAt: Date.now(),
         updatedAt: Date.now()
     };

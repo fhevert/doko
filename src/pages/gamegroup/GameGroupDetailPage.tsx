@@ -21,11 +21,12 @@ import {
 import {useNavigate, useParams} from 'react-router-dom';
 import {Add as AddIcon, ArrowBack as ArrowBackIcon} from '@mui/icons-material';
 import {GameGroup} from '../../model/GameGroup';
-import {updateGameGroup} from '../../firebase/GameGroupService';
 import {GameContext} from '../../model/context/GameContext';
 import {Game} from '../../model/Game';
 import {auth, firebaseDB as db} from '../../firebase/firebase-config';
-import {DataSnapshot, get, onValue, ref, remove, set} from 'firebase/database'; // Import from modular SDK
+import {DataSnapshot, get, onValue, ref, remove, set} from 'firebase/database';
+import {saveGameToFirebase} from "../../firebase/DbFunctions";
+import {ResultType} from "../../model/Round"; // Import from modular SDK
 
 const GameGroupDetailPage: React.FC = () => {
     const {groupId} = useParams<{ groupId: string }>();
@@ -117,9 +118,35 @@ const GameGroupDetailPage: React.FC = () => {
             try {
                 const groupData = snapshot.val();
                 if (groupData) {
+                    let games: Game[] = [];
+                    
+                    // Handle both array and object formats for games
+                    if (Array.isArray(groupData.games)) {
+                        games = groupData.games
+                            .filter((game: any) => game) // Filter out any null/undefined games
+                            .map((game: any) => ({
+                                ...game,
+                                date: game.date ? new Date(game.date) : new Date(),
+                                // Ensure rounds is an array
+                                rounds: Array.isArray(game.rounds) ? game.rounds : []
+                            }));
+                    } else if (groupData.games && typeof groupData.games === 'object') {
+                        // Convert object of games to array
+                        games = Object.entries(groupData.games)
+                            .filter(([_, game]) => game) // Filter out any null/undefined games
+                            .map(([id, game]: [string, any]) => ({
+                                ...game,
+                                id: id, // Ensure the ID is set
+                                date: game.date ? new Date(game.date) : new Date(),
+                                // Ensure rounds is an array
+                                rounds: Array.isArray(game.rounds) ? game.rounds : []
+                            }));
+                    }
+
                     setGroup({
                         ...groupData,
-                        id: groupId
+                        id: groupId,
+                        games: games
                     } as GameGroup);
                     setError(null);
                 } else {
@@ -159,18 +186,41 @@ const GameGroupDetailPage: React.FC = () => {
             const user = auth.currentUser;
             if (!user) throw new Error('User not authenticated');
             
-            const gameRef = ref(db, `users/${user.uid}/games/${gameId}`);
+            const gameRef = ref(db, `users/${user.uid}/gameGroups/${groupId}/games/${gameId}`);
             const snapshot = await get(gameRef);
             
             if (snapshot.exists()) {
                 const gameData = snapshot.val() as Game;
                 
-                // Ensure rounds is an array and convert results back to Map
+                // Ensure rounds is an array and convert results back to Map with proper ResultType handling
                 const rounds = Array.isArray(gameData?.rounds) 
-                    ? gameData.rounds.map((round) => ({
-                        ...round,
-                        results: new Map(round.results ? Object.entries(round.results) : [])
-                    }))
+                    ? gameData.rounds.map((round) => {
+                        const resultsMap = new Map<string, ResultType>();
+                        
+                        if (round.results) {
+                            if (Array.isArray(round.results)) {
+                                // Handle array format
+                                round.results.forEach((result: {key: string, value: number}) => {
+                                    if (result && result.key !== undefined && result.value !== undefined) {
+                                        resultsMap.set(String(result.key), result.value as ResultType);
+                                    }
+                                });
+                            } else if (typeof round.results === 'object') {
+                                // Handle object format
+                                Object.entries(round.results).forEach(([key, value]) => {
+                                    if (value !== undefined) {
+                                        resultsMap.set(String(key), value as ResultType);
+                                    }
+                                });
+                            }
+                        }
+                        
+                        return {
+                            ...round,
+                            results: resultsMap,
+                            date: round.date ? new Date(round.date) : new Date()
+                        };
+                    })
                     : [];
                 
                 const gameWithRounds = {
@@ -204,37 +254,36 @@ const GameGroupDetailPage: React.FC = () => {
     const handleStartNewGame = async () => {
         if (group && groupId) {
             try {
+                setLoading(true);
+                const user = auth.currentUser;
+                if (!user) throw new Error('User not authenticated');
+
                 // Create a new game with the group's players
                 const newGame: Game = {
-                    id: Date.now().toString(), // Convert to string for Firebase
-                    gameGroupId: groupId, // Add the required gameGroupId
+                    id: `game_${Date.now()}`, // More descriptive ID
+                    gameGroupId: groupId,
                     players: group.players.map(player => ({
                         ...player,
-                        aktiv: true, // Set all group players as active by default
-                        result: 0    // Reset any previous results
+                        aktiv: true,
+                        result: 0
                     })),
-                    rounds: [], // Ensure rounds is always an array
+                    rounds: [],
                     averagePoints: 0,
                     date: new Date()
                 };
                 
-                // Save the game to the database
-                const user = auth.currentUser;
-                if (!user) throw new Error('User not authenticated');
+                // Save the new game using the dedicated function
+                await saveGameToFirebase(newGame);
                 
-                const gameRef = ref(db, `users/${user.uid}/games/${newGame.id}`);
-                await set(gameRef, newGame);
-                
-                // Update the group's games list
-                const updatedGroup: GameGroup = {
-                    ...group,
-                    games: [...(group.games || []), newGame],
+                // Update local state with the new game
+                const updatedGames = [...(group.games || []), newGame];
+                setGroup(prev => prev ? {
+                    ...prev,
+                    games: updatedGames,
                     updatedAt: Date.now()
-                };
+                } : null);
                 
-                await updateGameGroup(groupId, updatedGroup);
-                
-                // Set the new game in context
+                // Set the game in context
                 setGame(newGame);
                 
                 // Navigate to the player selection screen
@@ -325,23 +374,6 @@ const GameGroupDetailPage: React.FC = () => {
                             Noch keine Spiele vorhanden. Starten Sie ein neues Spiel!
                         </Typography>
                     )}
-                </Box>
-
-                <Box>
-                    <Typography variant="h6" gutterBottom>Spieler</Typography>
-                    <List>
-                        {players.map((player, index) => (
-                            <React.Fragment key={player.id || index}>
-                                <ListItem>
-                                    <ListItemText 
-                                        primary={`${player.firstname || ''} ${player.name || ''}`.trim() || 'Unbenannter Spieler'}
-                                        secondary={player.aktiv ? 'Aktiv' : 'Inaktiv'}
-                                    />
-                                </ListItem>
-                                {index < players.length - 1 && <Divider component="li" />}
-                            </React.Fragment>
-                        ))}
-                    </List>
                 </Box>
             </Box>
 
