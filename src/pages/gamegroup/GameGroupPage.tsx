@@ -5,6 +5,7 @@ import {
     Button,
     CircularProgress,
     Container,
+    IconButton,
     List,
     ListItem,
     ListItemText,
@@ -14,6 +15,7 @@ import {
 import {GameGroup} from '../../model/GameGroup';
 import {Link, useNavigate} from 'react-router-dom';
 import GameGroupDialog from './GameGroupDialog';
+import { Edit as EditIcon, Delete as DeleteIcon, PlayArrow as PlayArrowIcon } from '@mui/icons-material';
 import {
     createGameGroup,
     deleteGameGroup,
@@ -117,12 +119,11 @@ const GameGroupPage: React.FC = () => {
                                     textDecoration: 'none',
                                     color: 'inherit',
                                     display: 'block',
-                                    pr: 20 // Add padding to prevent text overlap with buttons
+                                    pr: 12 // Reduced padding for icon buttons
                                 }}
                                 secondaryAction={
                                     <Box sx={{display: 'flex', gap: 1}} onClick={(e) => e.stopPropagation()}>
-                                        <Button
-                                            variant="outlined"
+                                        <IconButton
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
@@ -130,32 +131,24 @@ const GameGroupPage: React.FC = () => {
                                                 setOpenDialog(true);
                                             }}
                                             disabled={loading}
+                                            size="small"
+                                            title="Bearbeiten"
                                         >
-                                            Bearbeiten
-                                        </Button>
-                                        <Button
-                                            variant="contained"
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                e.stopPropagation();
-                                                handleStartNewGame(group);
-                                            }}
-                                            disabled={loading}
-                                        >
-                                            Neues Spiel
-                                        </Button>
-                                        <Button
-                                            variant="outlined"
-                                            color="error"
+                                            <EditIcon fontSize="small" />
+                                        </IconButton>
+<IconButton
                                             onClick={(e) => {
                                                 e.preventDefault();
                                                 e.stopPropagation();
                                                 handleDeleteGroup(id);
                                             }}
                                             disabled={loading}
+                                            size="small"
+                                            color="error"
+                                            title="Löschen"
                                         >
-                                            Löschen
-                                        </Button>
+                                            <DeleteIcon fontSize="small" />
+                                        </IconButton>
                                     </Box>
                                 }
                             >
