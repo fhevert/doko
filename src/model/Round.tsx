@@ -5,10 +5,11 @@ export enum ResultType {
 export interface Round {
     id: number;
     bock: boolean;
-    solo: boolean
+    solo: boolean;
     multiplier: number;
     roundPoints: number;
     cowardicePoints: number;
     results: Map<string, ResultType>;
+    date?: Date | string;  // Optional date field
 }
 

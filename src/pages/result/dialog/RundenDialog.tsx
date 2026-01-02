@@ -33,10 +33,16 @@ function RundenDialog(parameters: { round: Round, open?: boolean, onClose?: () =
         setOpen(parameters.open || false);
     }, [parameters.open]);
 
-    const handleClose = () => {
-        setOpen(false);
-        saveGameToFirebase(game);
-        parameters.onClose?.();
+    const handleClose = async () => {
+        try {
+            await saveGameToFirebase(game);
+        } catch (error) {
+            console.error('Error saving game:', error);
+            // Optionally show an error message to the user
+        } finally {
+            setOpen(false);
+            parameters.onClose?.();
+        }
     };
 
     const handleDeleteClick = () => {

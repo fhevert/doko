@@ -1,10 +1,14 @@
 import {Game} from "../model/Game";
-import { firebaseDB } from "./firebase-config";
+import {auth, firebaseDB} from "./firebase-config";
 import {ref, set} from "firebase/database";
 import {Round} from "../model/Round";
 
 export function saveGameToFirebase(game: Game): Promise<void> {
-    const gameRef = ref(firebaseDB, 'game'); // Pfad in der Datenbank
+    const user = auth.currentUser;
+    if (!user) return Promise.reject(new Error('User not authenticated'));
+    if (!game.gameGroupId) return Promise.reject(new Error('Game is missing gameGroupId'));
+    
+    const gameRef = ref(firebaseDB, `users/${user.uid}/gameGroups/${game.gameGroupId}/games/${game.id}`);
     const gameToSave = {
         players: game.players.map(player => ({
             id: player.id,
@@ -14,18 +18,16 @@ export function saveGameToFirebase(game: Game): Promise<void> {
             aktiv: player.aktiv
         })),
         averagePoints: game.averagePoints,
-        rounds: game.rounds.map(round => {
-            var result = {
-                id: round.id,
-                roundPoints: round.roundPoints,
-                solo: round.solo,
-                bock: round.bock,
-                multiplier: round.multiplier,
-                cowardicePoints: round.cowardicePoints,
-                results: Array.from(round.results, ([key, value]) => ({ key, value }))
-            }
-            return result;
-        })
+        rounds: game.rounds.map(round => ({
+            id: round.id,
+            roundPoints: round.roundPoints,
+            solo: round.solo,
+            bock: round.bock,
+            multiplier: round.multiplier,
+            cowardicePoints: round.cowardicePoints,
+            date: round.date || new Date().toISOString(), // Ensure there's always a date
+            results: Array.from(round.results, ([key, value]) => ({ key, value }))
+        }))
     }
 
     return set(gameRef, gameToSave);

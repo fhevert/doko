@@ -6,6 +6,8 @@ import {emptyGame} from "./model/EmptyGame";
 import {Game} from "./model/Game";
 import {GameContext} from './model/context/GameContext';
 import PlayersPage from "./pages/player/player/PlayersPage";
+import GameGroupPage from "./pages/gamegroup";
+import GameGroupDetailPage from "./pages/gamegroup/GameGroupDetailPage";
 import {Link, MemoryRouter, Navigate, Route, Routes} from "react-router-dom";
 import {auth, firebaseDB} from "./firebase/firebase-config";
 import {DataSnapshot, onValue, ref} from "firebase/database";
@@ -27,12 +29,13 @@ const AuthStatusBar = memo(() => {
     };
 
     return (
-        <Toolbar sx={{ height: '8dvh'}}>
-
-            <Link to="/players" style={{ textDecoration: 'none', color: 'inherit', flexGrow: 1 }}>
-                <Typography variant="h6" component="div">
-                    Doko
-                </Typography>
+        <Toolbar sx={{ height: '8dvh', display: 'flex', gap: 2 }}>
+            <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                <Button color="inherit">
+                    <Typography variant="h6" component="div">
+                        Spielgruppen
+                    </Typography>
+                </Button>
             </Link>
             {currentUser ? (
                 <Button  color="inherit" onClick={handleLogout}>
@@ -106,30 +109,32 @@ function App() {
                             <AuthStatusBar />
                         </AppBar>
                         <Routes>
-                            <Route path="/" element={<Navigate to="/doko" />} />
+                            <Route path="/" element={
+                                <PrivateRoute>
+                                    <GameGroupPage />
+                                </PrivateRoute>
+                            } />
                             <Route path="/login" element={<Login />} />
-                            <Route path="/doko" element={
-                                    <PrivateRoute>
-                                        {game.rounds.length === 0 ?
-                                            <PlayersPage/>:
-                                            <Navigate to="/results" />
-                                        }
-
-                                    </PrivateRoute>
-                                }
-                            />
-                            <Route path="/players"element={
+                            <Route path="/players" element={
                                 <PrivateRoute>
                                     <PlayersPage/>
                                 </PrivateRoute>
-                            }
-                            />
+                            } />
                             <Route path="/results" element={
-                                    <PrivateRoute>
-                                        <ResultTable gameId={gameId}/>
-                                    </PrivateRoute>
-                                }
-                            />
+                                <PrivateRoute>
+                                    <ResultTable gameId={gameId} />
+                                </PrivateRoute>
+                            } />
+                            <Route path="/game-groups" element={
+                                <PrivateRoute>
+                                    <GameGroupPage />
+                                </PrivateRoute>
+                            } />
+                            <Route path="/game-groups/:groupId" element={
+                                <PrivateRoute>
+                                    <GameGroupDetailPage />
+                                </PrivateRoute>
+                            } />
                         </Routes>
                     </MemoryRouter>
                 </GameContext.Provider>

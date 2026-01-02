@@ -47,7 +47,11 @@ function ErgebnisDialog() {
                 onClick={() => setOpen(true)}
                 sx={{ borderRadius: '20px'}}
             >
-                {String.fromCharCode(216) + ' ' +  game.averagePoints}
+                {new Date(game.date).toLocaleDateString('de-DE', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                }) + ': ' + String.fromCharCode(216) + ' ' + game.averagePoints}
             </Button>
 
             <Dialog

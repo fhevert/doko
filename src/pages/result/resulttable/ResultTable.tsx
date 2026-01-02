@@ -4,6 +4,8 @@ import {Box, Button, Paper, Stack, Typography} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'; // Icon für den Geber
+import GroupsIcon from '@mui/icons-material/Groups'; // Icon für Spielerauswahl
+import { useNavigate } from 'react-router-dom';
 import {getResult} from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
 import {ResultType, Round} from "../../../model/Round";
@@ -13,6 +15,7 @@ import {Player} from "../../../model/Player";
 
 function ResultTable(parameters: { gameId: string }) {
     const { game, setGame } = useGameContext();
+    const navigate = useNavigate();
     const [selectedRoundId, setSelectedRoundId] = useState<number | null>(null);
 
     const headerBlue = "#1a237e";
@@ -75,7 +78,8 @@ function ResultTable(parameters: { gameId: string }) {
             solo: false,
             multiplier: 1,
             cowardicePoints: 0,
-            results: resultsMap
+            results: resultsMap,
+            date: new Date().toISOString()  // Add current date in ISO format
         };
         setGame({ ...game, rounds: [...game.rounds, newRound] });
         setSelectedRoundId(newRound.id);
@@ -93,7 +97,20 @@ function ResultTable(parameters: { gameId: string }) {
 
             {/* --- HEADER --- */}
             <Paper elevation={3} sx={{ borderRadius: 0, bgcolor: 'white', zIndex: 10, borderBottom: `3px solid ${headerBlue}` }}>
-                <Box sx={{ p: 1, display: 'flex', justifyContent: 'center' }}>
+                <Box sx={{ p: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<GroupsIcon />}
+                        onClick={() => navigate('/players')}
+                        sx={{
+                            textTransform: 'none',
+                            borderRadius: 2,
+                            ml: 1
+                        }}
+                    >
+                        Spieler
+                    </Button>
                     <ErgebnisDialog />
                 </Box>
                 <Box sx={{ display: 'flex', width: '100%', px: padding, pb: 2 }}>

@@ -10,7 +10,6 @@ import {
     Dialog,
     DialogActions,
     DialogContent,
-    DialogContentText,
     DialogTitle,
     Grid,
     IconButton,
@@ -24,10 +23,8 @@ import CheckIcon from '@mui/icons-material/Check';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DragHandleIcon from '@mui/icons-material/DragHandle';
-import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import {Link} from "react-router-dom";
 import Layout from "../../../layout/Layout";
-import {saveGameToFirebase} from '../../../firebase/DbFunctions';
 
 interface PlayerCardProps {
     player: any;
@@ -45,7 +42,6 @@ function PlayersPage() {
 
     // State für Dialoge
     const [isGuestDialogOpen, setIsGuestDialogOpen] = useState(false);
-    const [isResetDialogOpen, setIsResetDialogOpen] = useState(false);
     const [newGuest, setNewGuest] = useState({ firstname: '', name: '' });
 
     const getInitials = (f: string, n: string): string =>
@@ -55,21 +51,6 @@ function PlayersPage() {
     const canModify = useMemo(() =>
             game.players.reduce((sum: number, p: any) => sum + (p.result || 0), 0) === 0 && !isLoading
         , [game.players, isLoading]);
-
-    // --- LOGIK: NEUES SPIEL ---
-    const handleNewGameReset = () => {
-        const cleanedPlayers = game.players
-            .filter((p: any) => !p.id.toString().includes('guest')) // Alle Gäste löschen
-            .map((p: any) => ({
-                ...p,
-                aktiv: false, // Alle Stammspieler inaktiv
-                result: 0     // Punkte zurücksetzen
-            }));
-
-        setGame({ ...game, players: cleanedPlayers, rounds: []});
-        setIsResetDialogOpen(false);
-        saveGameToFirebase(game);
-    };
 
     const activePlayers = useMemo(() =>
             game.players.filter((p: any) => p.aktiv)
@@ -198,17 +179,16 @@ function PlayersPage() {
                     {/* AKTIONEN UNTEN */}
                     <Box sx={{ mt: 5, display: 'flex', gap: 2 }}>
                         <Button
-                            variant="outlined" fullWidth size="large"
-                            startIcon={<RestartAltIcon />}
-                            onClick={() => setIsResetDialogOpen(true)}
-                            sx={{ borderRadius: 3, fontWeight: 'bold', textTransform: 'none' }}
-                        >
-                            Neues Spiel
-                        </Button>
-                        <Button
                             component={Link} to="/results"
-                            variant="contained" fullWidth size="large"
-                            sx={{ borderRadius: 3, fontWeight: 'bold', textTransform: 'none' }}
+                            variant="contained" 
+                            fullWidth 
+                            size="large"
+                            sx={{ 
+                                borderRadius: 3, 
+                                fontWeight: 'bold', 
+                                textTransform: 'none',
+                                py: 1.5
+                            }}
                         >
                             {canModify ? 'Spiel starten' : 'Spiel fortsetzen'}
                         </Button>
@@ -231,19 +211,6 @@ function PlayersPage() {
                 </DialogActions>
             </Dialog>
 
-            {/* DIALOG: NEUES SPIEL BESTÄTIGEN */}
-            <Dialog open={isResetDialogOpen} onClose={() => setIsResetDialogOpen(false)}>
-                <DialogTitle>Neues Spiel starten?</DialogTitle>
-                <DialogContent>
-                    <DialogContentText>
-                        Möchtest du wirklich ein neues Spiel starten? Dabei werden alle **Gastspieler gelöscht** und alle Stammspieler auf **inaktiv** gesetzt.
-                    </DialogContentText>
-                </DialogContent>
-                <DialogActions sx={{ p: 2 }}>
-                    <Button onClick={() => setIsResetDialogOpen(false)} color="inherit">Abbrechen</Button>
-                    <Button onClick={handleNewGameReset} color="error" variant="contained">Ja, zurücksetzen</Button>
-                </DialogActions>
-            </Dialog>
         </Layout>
     );
 }
