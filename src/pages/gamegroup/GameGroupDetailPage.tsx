@@ -321,7 +321,7 @@ const GameGroupDetailPage: React.FC = () => {
     }
 
     return (
-        <Container maxWidth="md">
+        <Container maxWidth="md" sx={{ pb: 12 }}>
             <Box my={4}>
                 <Box display="flex" alignItems="center" mb={3}>
                     <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
@@ -333,19 +333,6 @@ const GameGroupDetailPage: React.FC = () => {
                 </Box>
 
                 <Box mb={4}>
-                    <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                        <Typography variant="h6">Spiele</Typography>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            startIcon={<AddIcon/>}
-                            onClick={handleStartNewGame}
-                            disabled={group.players === undefined || group.players.length === 0}
-                        >
-                            Neues Spiel starten
-                        </Button>
-                    </Box>
-
                     {games.length > 0 ? (
                         <List sx={{ bgcolor: 'background.paper' }}>
                             {games.map((game, index) => (
@@ -374,6 +361,29 @@ const GameGroupDetailPage: React.FC = () => {
                             Noch keine Spiele vorhanden. Starten Sie ein neues Spiel!
                         </Typography>
                     )}
+                </Box>
+                <Box sx={{ 
+                    position: 'fixed',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    p: 2,
+                    bgcolor: 'background.paper',
+                    boxShadow: '0 -2px 4px rgba(0,0,0,0.1)'
+                }}>
+                    <Container maxWidth="md">
+                        <Button
+                            fullWidth
+                            variant="contained"
+                            color="primary"
+                            startIcon={<AddIcon/>}
+                            onClick={handleStartNewGame}
+                            disabled={group.players === undefined || group.players.length === 0}
+                            size="large"
+                        >
+                            Neues Spiel starten
+                        </Button>
+                    </Container>
                 </Box>
             </Box>
 
