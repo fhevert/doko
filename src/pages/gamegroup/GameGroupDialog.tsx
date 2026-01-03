@@ -84,6 +84,7 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
         if (!formData.players.some(p => p.id === user.uid)) {
             const newPlayer: Player = {
                 id: user.uid,
+                email: user.email || '', // Add the required email field
                 name: user.displayName?.split(' ').slice(-1)[0] || 'Unbekannt',
                 firstname: user.displayName?.split(' ')[0] || 'Unbekannt',
                 result: 0,

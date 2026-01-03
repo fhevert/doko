@@ -65,6 +65,28 @@ export const uploadProfileImage = async (file: File, userId: string): Promise<st
   }
 };
 
+export const getUserProfileByEmail = async (email: string): Promise<UserProfile | null> => {
+  try {
+    const dbRef = ref(getDatabase());
+    const usersSnapshot = await get(child(dbRef, 'users'));
+    
+    if (usersSnapshot.exists()) {
+      const users = usersSnapshot.val() as { [key: string]: UserProfile };
+      const user = Object.entries(users).find(
+        ([_, userData]: [string, UserProfile]) => userData.email === email
+      );
+      
+      if (user) {
+        return { ...user[1], uid: user[0] };
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching user profile by email:', error);
+    return null;
+  }
+};
+
 export const updateUserProfile = async (userId: string, updates: Partial<UserProfile>): Promise<void> => {
   try {
     const userRef = ref(firebaseDB, `users/${userId}`);

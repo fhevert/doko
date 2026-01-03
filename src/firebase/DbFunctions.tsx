@@ -90,8 +90,7 @@ export function convertFromDbGame(gameToConvert: any): Game {
     const players = Array.isArray(gameToConvert.players) 
         ? gameToConvert.players.map((player: any) => ({
             id: player.id || `player_${Date.now()}`,
-            name: player.name || 'Unbekannter Spieler',
-            firstname: player.firstname || '',
+            email: player.email || `unknown-${Date.now()}@doko.app`,
             result: player.result || 0,
             aktiv: player.aktiv !== undefined ? player.aktiv : true
         }))

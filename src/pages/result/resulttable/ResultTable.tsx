@@ -117,7 +117,7 @@ function ResultTable() {
                     {activePlayers.map((player) => (
                         <Box key={player.id} sx={{ flex: 1, textAlign: 'center', overflow: 'hidden' }}>
                             <Typography noWrap sx={{ fontSize: fontSizeName, color: 'text.secondary', fontWeight: 'bold' }}>
-                                {player.firstname.toUpperCase()}
+                                {player.firstname?.toUpperCase()}
                             </Typography>
                             <Typography sx={{ fontSize: fontSizeScore, fontWeight: '900', lineHeight: 1 }}>
                                 {player.result}
@@ -186,7 +186,7 @@ function ResultTable() {
                                         </Typography>
                                         <Stack direction="row" justifyContent="center" alignItems="center" spacing={0.2}>
                                             <Typography noWrap sx={{ fontSize: '0.7rem', color: 'text.disabled', fontWeight: 'normal' }}>
-                                                {p.firstname.substring(0, 3).toUpperCase()}
+                                                {p.firstname?.substring(0, 3).toUpperCase()}
                                             </Typography>
                                             {pIdx === dealerIndex && <SportsEsportsIcon sx={{ fontSize: '1rem', color: headerBlue }} />}
                                         </Stack>

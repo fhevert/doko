@@ -97,7 +97,14 @@ function PlayersPage() {
 
     const addGuest = () => {
         if (newGuest.firstname || newGuest.name) {
-            const guest = { id: `guest-${Date.now()}`, ...newGuest, aktiv: true, result: 0 };
+            const guest = { 
+                id: `guest-${Date.now()}`,
+                email: `guest-${Date.now()}@doko.app`,
+                firstname: newGuest.firstname,
+                name: newGuest.name,
+                aktiv: true, 
+                result: 0 
+            };
             setGame({ ...game, players: [guest, ...game.players] });
             setNewGuest({ firstname: '', name: '' });
             setIsGuestDialogOpen(false);
