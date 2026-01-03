@@ -1,4 +1,4 @@
-import React, { useState, FormEvent } from 'react'; // Importiere FormEvent
+import React, { useState, FormEvent } from 'react';
 import {
     TextField,
     Button,
@@ -6,37 +6,64 @@ import {
     Typography,
     Box,
     Alert,
+    CircularProgress,
 } from '@mui/material';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-
 import { useNavigate } from 'react-router-dom';
-import {auth} from "../firebase/firebase-config";
+import { auth } from "../firebase/firebase-config";
 
 function Login() {
-    const [email, setEmail] = useState<string>(''); // Typisierung von email
-    const [password, setPassword] = useState<string>(''); // Typisierung von password
-    const [error, setError] = useState<string>(''); // Typisierung von error
+    const [email, setEmail] = useState<string>('');
+    const [password, setPassword] = useState<string>('');
+    const [error, setError] = useState<string>('');
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     const navigate = useNavigate();
 
-    const handleLogin = async (e: FormEvent) => { // Typisierung des Event-Objekts
+    const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
+        if (!email || !password) {
+            setError('Bitte geben Sie E-Mail und Passwort ein');
+            return;
+        }
+        
         setError('');
+        setIsLoading(true);
+        
         try {
             await signInWithEmailAndPassword(auth, email, password);
             navigate('/doko');
-        } catch (err: any) { // err kann von verschiedenen Typen sein, hier 'any' zur Vereinfachung
-            setError(err.message);
+        } catch (err: any) {
+            console.error('Login error:', err);
+            setError('Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.');
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const handleRegister = async (e: FormEvent) => { // Typisierung des Event-Objekts
+    const handleRegister = async (e: FormEvent) => {
         e.preventDefault();
+        if (!email || !password) {
+            setError('Bitte geben Sie E-Mail und Passwort ein');
+            return;
+        }
+        
         setError('');
+        setIsLoading(true);
+        
         try {
+            // User creation and profile creation is handled in AuthContext
             await createUserWithEmailAndPassword(auth, email, password);
-            navigate('/doko');
+            // No need to navigate here, as the AuthContext will handle the redirect
+            // after the user profile is created
         } catch (err: any) {
-            setError(err.message);
+            console.error('Registration error:', err);
+            setError('Registrierung fehlgeschlagen. ' + 
+                (err.code === 'auth/email-already-in-use' 
+                    ? 'Diese E-Mail wird bereits verwendet.' 
+                    : err.message || 'Bitte versuchen Sie es später erneut.')
+            );
+        } finally {
+            setIsLoading(false);
         }
     };
 

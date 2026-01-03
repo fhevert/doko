@@ -1,14 +1,15 @@
 // src/AuthContext.tsx
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import {auth} from "./firebase-config";
-import { onAuthStateChanged, User } from 'firebase/auth'; // Importiere User Typ
+import { auth } from "./firebase-config";
+import { onAuthStateChanged, User } from 'firebase/auth';
+import { createUserProfile, getUserProfile } from './UserService';
 
-// Definieren Sie den Typ für den Kontextwert
+// Define the context value type
 interface AuthContextType {
     currentUser: User | null;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined); // Context kann anfangs undefined sein
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
@@ -18,9 +19,9 @@ export const useAuth = () => {
     return context;
 };
 
-// Definieren Sie den Typ für die Props des AuthProvider
+// Define the props type for AuthProvider
 interface AuthProviderProps {
-    children: ReactNode; // children vom Typ ReactNode
+    children: ReactNode;
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
@@ -28,15 +29,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [loading, setLoading] = useState<boolean>(true);
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, (user) => {
+        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            if (user) {
+                // Check if user profile exists, if not create one
+                try {
+                    const userProfile = await getUserProfile(user.uid);
+                    if (!userProfile) {
+                        await createUserProfile(user);
+                    }
+                } catch (error) {
+                    console.error('Error handling user profile:', error);
+                }
+            }
             setCurrentUser(user);
             setLoading(false);
         });
 
-        return unsubscribe;
+        return () => unsubscribe();
     }, []);
 
-    const value: AuthContextType = { // Typisierung des Wertes
+    const value: AuthContextType = {
         currentUser,
     };
 

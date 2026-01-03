@@ -29,7 +29,10 @@ import {DataSnapshot, onValue, ref} from "firebase/database";
 import {useAuth} from './firebase/AuthContext';
 import {signOut} from 'firebase/auth';
 import Login from "./pages/login";
-import {convertFromDbGame} from "./firebase/DbFunctions"; // Separate component for auth-dependent UI parts
+import ProfilePage from "./pages/profile/ProfilePage";
+import {convertFromDbGame} from "./firebase/DbFunctions";
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import { Avatar, IconButton, Menu, MenuItem } from '@mui/material'; // Separate component for auth-dependent UI parts
 
 // Separate component for auth-dependent UI parts
 const AppBreadcrumbs = memo(() => {
@@ -161,35 +164,80 @@ const AppBreadcrumbs = memo(() => {
 
 const AuthStatusBar = memo(() => {
     const { currentUser } = useAuth();
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const open = Boolean(anchorEl);
+
+    const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleClose = () => {
+        setAnchorEl(null);
+    };
 
     const handleLogout = async () => {
         try {
             await signOut(auth);
+            handleClose();
         } catch (error) {
             console.error('Fehler beim Abmelden:', error);
         }
     };
 
     return (
-        <Toolbar sx={{ minHeight: '64px', display: 'flex', gap: 2 }}>
+        <Toolbar sx={{ minHeight: '64px', display: 'flex', justifyContent: 'space-between' }}>
             <AppBreadcrumbs />
             
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 {currentUser ? (
-                    <Button 
-                        color="inherit" 
-                        onClick={handleLogout}
-                        sx={{ 
-                            textTransform: 'none',
-                            '&:hover': {
-                                backgroundColor: 'rgba(255, 255, 255, 0.08)'
-                            }
-                        }}
-                    >
-                        <Typography variant="body1" component="div">
-                            Abmelden ({currentUser.email})
-                        </Typography>
-                    </Button>
+                    <>
+                        <IconButton
+                            size="large"
+                            aria-label="account of current user"
+                            aria-controls="menu-appbar"
+                            aria-haspopup="true"
+                            onClick={handleMenu}
+                            color="inherit"
+                            sx={{ p: 0, ml: 2 }}
+                        >
+                            <Avatar 
+                                alt={currentUser.displayName || currentUser.email || 'User'} 
+                                src={currentUser.photoURL || ''}
+                                sx={{ width: 40, height: 40 }}
+                            >
+                                {currentUser.email?.[0]?.toUpperCase() || 'U'}
+                            </Avatar>
+                        </IconButton>
+                        <Menu
+                            id="menu-appbar"
+                            anchorEl={anchorEl}
+                            anchorOrigin={{
+                                vertical: 'bottom',
+                                horizontal: 'right',
+                            }}
+                            keepMounted
+                            transformOrigin={{
+                                vertical: 'top',
+                                horizontal: 'right',
+                            }}
+                            open={open}
+                            onClose={handleClose}
+                        >
+                            <MenuItem 
+                                component={RouterLink} 
+                                to="/profile"
+                                onClick={handleClose}
+                            >
+                                <AccountCircleIcon sx={{ mr: 1 }} />
+                                Mein Profil
+                            </MenuItem>
+                            <MenuItem onClick={handleLogout}>
+                                <Typography color="error">
+                                    Abmelden
+                                </Typography>
+                            </MenuItem>
+                        </Menu>
+                    </>
                 ) : (
                     <Button 
                         component={RouterLink}
@@ -271,6 +319,13 @@ function App() {
                                 </PrivateRoute>
                             } />
                             <Route path="/login" element={<Login />} />
+                            <Route path="/profile" element={
+                                <PrivateRoute>
+                                    <ProfilePage />
+                                </PrivateRoute>
+                            } />
+                            <Route path="/" element={<Navigate to="/doko" replace />} />
+                            <Route path="*" element={<div>404 Not Found</div>} />
                             <Route path="/players" element={
                                 <PrivateRoute>
                                     <PlayersPage/>

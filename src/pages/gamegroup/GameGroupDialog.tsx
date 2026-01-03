@@ -18,11 +18,14 @@ import {
     Checkbox,
     FormControlLabel,
     Box,
-    Typography
+    Typography,
+    SelectChangeEvent,
+    Autocomplete
 } from '@mui/material';
 import {Player} from '../../model/Player';
 import {GameGroup} from '../../model/GameGroup';
-import {Add as AddIcon, Delete as DeleteIcon} from '@mui/icons-material';
+import {Add as AddIcon, Delete as DeleteIcon, PersonAdd as PersonAddIcon} from '@mui/icons-material';
+import {getAllUsers, UserProfile} from '../../firebase/UserService';
 
 type GameGroupFormData = Omit<GameGroup, 'id' | 'createdAt' | 'updatedAt' | 'games' | 'rounds'>;
 
@@ -38,8 +41,30 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
         name: '',
         players: []
     });
-    const [newPlayerName, setNewPlayerName] = useState('');
-    const [newPlayerFirstname, setNewPlayerFirstname] = useState('');
+    const [availableUsers, setAvailableUsers] = useState<UserProfile[]>([]);
+    const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                setLoading(true);
+                const users = await getAllUsers();
+                setAvailableUsers(users);
+                setError(null);
+            } catch (err) {
+                console.error('Error loading users:', err);
+                setError('Fehler beim Laden der Benutzer');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (open) {
+            fetchUsers();
+        }
+    }, [open]);
 
     useEffect(() => {
         if (group) {
@@ -55,21 +80,29 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
         }
     }, [group]);
 
-    const handleAddPlayer = () => {
-        if (newPlayerName.trim() && newPlayerFirstname.trim()) {
+    const handleAddPlayer = (user: UserProfile) => {
+        if (!formData.players.some(p => p.id === user.uid)) {
             const newPlayer: Player = {
-                id: Date.now().toString(),
-                name: newPlayerName.trim(),
-                firstname: newPlayerFirstname.trim(),
+                id: user.uid,
+                name: user.displayName?.split(' ').slice(-1)[0] || 'Unbekannt',
+                firstname: user.displayName?.split(' ')[0] || 'Unbekannt',
                 result: 0,
                 aktiv: true
             };
+
             setFormData(prev => ({
                 ...prev,
                 players: [...prev.players, newPlayer]
             }));
-            setNewPlayerName('');
-            setNewPlayerFirstname('');
+            
+            // Reset the selected user
+            setSelectedUser(null);
+        }
+    };
+
+    const handleUserSelect = (event: React.SyntheticEvent, value: UserProfile | null) => {
+        if (value) {
+            handleAddPlayer(value);
         }
     };
 
@@ -112,28 +145,49 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                 />
 
                 <Typography variant="h6" gutterBottom>Spieler</Typography>
-                <Box sx={{display: 'flex', gap: 2, mb: 2}}>
-                    <TextField
-                        label="Vorname"
-                        value={newPlayerFirstname}
-                        onChange={(e) => setNewPlayerFirstname(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleAddPlayer()}
-                    />
-                    <TextField
-                        label="Nachname"
-                        value={newPlayerName}
-                        onChange={(e) => setNewPlayerName(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && handleAddPlayer()}
+                <Box sx={{display: 'flex', gap: 2, mb: 2, alignItems: 'center'}}>
+                    <Autocomplete
+                        options={availableUsers}
+                        getOptionLabel={(user) => 
+                            user.displayName || `${user.email?.split('@')[0] || 'Unbekannt'}`
+                        }
+                        value={selectedUser}
+                        onChange={handleUserSelect}
+                        renderInput={(params) => (
+                            <TextField
+                                {...params}
+                                label="Spieler auswählen"
+                                variant="outlined"
+                                size="small"
+                                sx={{ minWidth: 300 }}
+                            />
+                        )}
+                        renderOption={(props, user) => (
+                            <li {...props}>
+                                {user.displayName || user.email?.split('@')[0] || 'Unbekannter Benutzer'}
+                            </li>
+                        )}
+                        isOptionEqualToValue={(option, value) => option.uid === value.uid}
+                        noOptionsText="Keine Benutzer gefunden"
+                        loading={loading}
+                        loadingText="Lade Benutzer..."
+                        disabled={loading}
                     />
                     <Button
                         variant="contained"
-                        onClick={handleAddPlayer}
-                        startIcon={<AddIcon/>}
-                        disabled={!newPlayerName.trim() || !newPlayerFirstname.trim()}
+                        onClick={() => selectedUser && handleAddPlayer(selectedUser)}
+                        startIcon={<PersonAddIcon/>}
+                        disabled={!selectedUser}
+                        sx={{ height: '40px' }}
                     >
                         Hinzufügen
                     </Button>
                 </Box>
+                {error && (
+                    <Typography color="error" variant="body2" sx={{ mb: 2 }}>
+                        {error}
+                    </Typography>
+                )}
 
                 <List dense>
                     {formData.players.map((player) => (
