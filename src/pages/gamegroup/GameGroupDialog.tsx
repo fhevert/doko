@@ -102,9 +102,7 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
     };
 
     const handleUserSelect = (event: React.SyntheticEvent, value: UserProfile | null) => {
-        if (value) {
-            handleAddPlayer(value);
-        }
+        setSelectedUser(value);
     };
 
     const handleRemovePlayer = (id: string) => {
@@ -148,7 +146,9 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                 <Typography variant="h6" gutterBottom>Spieler</Typography>
                 <Box sx={{display: 'flex', gap: 2, mb: 2, alignItems: 'center'}}>
                     <Autocomplete
-                        options={availableUsers}
+                        options={availableUsers.filter(user => 
+                            !formData.players.some(player => player.id === user.uid)
+                        )}
                         getOptionLabel={(user) => 
                             user.displayName || `${user.email?.split('@')[0] || 'Unbekannt'}`
                         }
@@ -169,7 +169,7 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                             </li>
                         )}
                         isOptionEqualToValue={(option, value) => option.uid === value.uid}
-                        noOptionsText="Keine Benutzer gefunden"
+                        noOptionsText="Keine weiteren Spieler verfügbar"
                         loading={loading}
                         loadingText="Lade Benutzer..."
                         disabled={loading}
