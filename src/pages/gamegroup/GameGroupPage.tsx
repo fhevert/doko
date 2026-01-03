@@ -15,7 +15,7 @@ import {
 import {GameGroup} from '../../model/GameGroup';
 import {Link, useNavigate} from 'react-router-dom';
 import GameGroupDialog from './GameGroupDialog';
-import { Edit as EditIcon, Delete as DeleteIcon, PlayArrow as PlayArrowIcon } from '@mui/icons-material';
+import {Delete as DeleteIcon, Edit as EditIcon} from '@mui/icons-material';
 import {
     createGameGroup,
     deleteGameGroup,
@@ -75,10 +75,6 @@ const GameGroupPage: React.FC = () => {
                 setError('Fehler beim Löschen der Spielgruppe');
             }
         }
-    };
-
-    const handleStartNewGame = (group: GameGroup) => {
-        navigate(`/game?groupId=${group.id}`);
     };
 
     return (

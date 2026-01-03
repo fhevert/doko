@@ -1,14 +1,14 @@
 import {Game} from "../model/Game";
 import {auth, firebaseDB} from "./firebase-config";
 import {ref, set} from "firebase/database";
-import {Round, ResultType} from "../model/Round";
+import {ResultType, Round} from "../model/Round";
 
 export function saveGameToFirebase(game: Game): Promise<void> {
     const user = auth.currentUser;
     if (!user) return Promise.reject(new Error('User not authenticated'));
     if (!game.gameGroupId) return Promise.reject(new Error('Game is missing gameGroupId'));
     
-    const gameRef = ref(firebaseDB, `users/${user.uid}/gameGroups/${game.gameGroupId}/games/${game.id}`);
+    const gameRef = ref(firebaseDB, `gameGroups/${game.gameGroupId}/games/${game.id}`);
     const gameToSave = {
         id: game.id,  // Make sure to include the id
         gameGroupId: game.gameGroupId,  // Include gameGroupId for reference

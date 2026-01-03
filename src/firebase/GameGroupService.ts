@@ -1,12 +1,12 @@
-import { ref, set, onValue, push, update, get, DataSnapshot, remove } from 'firebase/database';
-import { auth, firebaseDB } from './firebase-config';
-import { GameGroup } from '../model/GameGroup';
+import {DataSnapshot, get, onValue, push, ref, remove, set, update} from 'firebase/database';
+import {auth, firebaseDB} from './firebase-config';
+import {GameGroup} from '../model/GameGroup';
 
 export const createGameGroup = async (group: Omit<GameGroup, 'id' | 'createdAt' | 'updatedAt' | 'games' | 'rounds'>) => {
     const user = auth.currentUser;
     if (!user) throw new Error('User not authenticated');
 
-    const gameGroupRef = ref(firebaseDB, `users/${user.uid}/gameGroups`);
+    const gameGroupRef = ref(firebaseDB, `gameGroups`);
     const newGroupRef = push(gameGroupRef);
     
     const newGroup: GameGroup = {
@@ -27,7 +27,7 @@ export const updateGameGroup = async (groupId: string, updates: Partial<GameGrou
     const user = auth.currentUser;
     if (!user) throw new Error('User not authenticated');
 
-    const groupRef = ref(firebaseDB, `users/${user.uid}/gameGroups/${groupId}`);
+    const groupRef = ref(firebaseDB, `gameGroups/${groupId}`);
     
     await update(groupRef, {
         ...updates,
@@ -39,7 +39,7 @@ export const deleteGameGroup = async (groupId: string) => {
     const user = auth.currentUser;
     if (!user) throw new Error('User not authenticated');
 
-    const groupRef = ref(firebaseDB, `users/${user.uid}/gameGroups/${groupId}`);
+    const groupRef = ref(firebaseDB, `gameGroups/${groupId}`);
     await remove(groupRef);
 };
 
@@ -47,7 +47,7 @@ export const getGameGroup = async (groupId: string): Promise<GameGroup | null> =
     const user = auth.currentUser;
     if (!user) throw new Error('User not authenticated');
 
-    const groupRef = ref(firebaseDB, `users/${user.uid}/gameGroups/${groupId}`);
+    const groupRef = ref(firebaseDB, `gameGroups/${groupId}`);
     const snapshot = await get(groupRef);
     
     if (!snapshot.exists()) {
@@ -67,7 +67,7 @@ export const subscribeToGameGroups = (
         return () => {};
     }
 
-    const gameGroupsRef = ref(firebaseDB, `users/${user.uid}/gameGroups`);
+    const gameGroupsRef = ref(firebaseDB, `gameGroups`);
     
     const handleValue = (snapshot: DataSnapshot) => {
         const groups = snapshot.val() || {};

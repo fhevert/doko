@@ -61,7 +61,7 @@ const GameGroupDetailPage: React.FC = () => {
             if (!user) throw new Error('Nicht angemeldet');
             
             // Remove the game from the user's games
-            const gameRef = ref(db, `users/${user.uid}/games/${gameToDelete.id}`);
+            const gameRef = ref(db, `games/${gameToDelete.id}`);
             await remove(gameRef);
             
             // Update the group's games list
@@ -111,7 +111,7 @@ const GameGroupDetailPage: React.FC = () => {
         }
         
         // Set up real-time listener for the game group with the correct user path
-        const groupRef = ref(db, `users/${user.uid}/gameGroups/${groupId}`);
+        const groupRef = ref(db, `gameGroups/${groupId}`);
         
         // Handle successful data retrieval
         const onData = (snapshot: DataSnapshot) => {
@@ -186,7 +186,7 @@ const GameGroupDetailPage: React.FC = () => {
             const user = auth.currentUser;
             if (!user) throw new Error('User not authenticated');
             
-            const gameRef = ref(db, `users/${user.uid}/gameGroups/${groupId}/games/${gameId}`);
+            const gameRef = ref(db, `gameGroups/${groupId}/games/${gameId}`);
             const snapshot = await get(gameRef);
             
             if (snapshot.exists()) {
