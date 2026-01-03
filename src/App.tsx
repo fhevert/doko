@@ -201,7 +201,7 @@ const AuthStatusBar = memo(() => {
                             sx={{ p: 0, ml: 2 }}
                         >
                             <Avatar 
-                                alt={currentUser.displayName || currentUser.email || 'User'} 
+                                alt={currentUser.email || 'User'} 
                                 src={currentUser.photoURL || ''}
                                 sx={{ width: 40, height: 40 }}
                             >

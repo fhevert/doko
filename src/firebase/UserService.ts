@@ -8,7 +8,6 @@ const storage = getStorage(firebaseApp);
 export interface UserProfile {
   uid: string;
   email?: string;
-  displayName?: string;
   firstName?: string;
   lastName?: string;
   photoURL?: string;
@@ -18,17 +17,14 @@ export interface UserProfile {
 export const createUserProfile = async (user: User, additionalData: { firstName?: string; lastName?: string } = {}): Promise<void> => {
   try {
     const userRef = ref(firebaseDB, `users/${user.uid}`);
-    const displayName = user.displayName || 
-      (additionalData.firstName && additionalData.lastName 
-        ? `${additionalData.firstName} ${additionalData.lastName}`
-        : user.email?.split('@')[0] || 'User');
+    const firstName = additionalData.firstName || user.email?.split('@')[0] || 'User';
+    const lastName = additionalData.lastName || '';
 
     await set(userRef, {
       uid: user.uid,
       email: user.email,
-      displayName,
-      firstName: additionalData.firstName || '',
-      lastName: additionalData.lastName || '',
+      firstName,
+      lastName,
       photoURL: user.photoURL || '',
       createdAt: Date.now()
     });

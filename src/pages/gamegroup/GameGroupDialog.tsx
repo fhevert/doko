@@ -84,9 +84,9 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
         if (!formData.players.some(p => p.id === user.uid)) {
             const newPlayer: Player = {
                 id: user.uid,
-                email: user.email || '', // Add the required email field
-                name: user.displayName?.split(' ').slice(-1)[0] || 'Unbekannt',
-                firstname: user.displayName?.split(' ')[0] || 'Unbekannt',
+                email: user.email || '',
+                name: user.lastName || 'Unbekannt',
+                firstname: user.firstName || user.email?.split('@')[0] || 'Unbekannt',
                 result: 0,
                 aktiv: true
             };
@@ -150,7 +150,9 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                             !formData.players.some(player => player.id === user.uid)
                         )}
                         getOptionLabel={(user) => 
-                            user.displayName || `${user.email?.split('@')[0] || 'Unbekannt'}`
+                            user.firstName && user.lastName 
+                                ? `${user.firstName} ${user.lastName}` 
+                                : user.email?.split('@')[0] || 'Unbekannt'
                         }
                         value={selectedUser}
                         onChange={handleUserSelect}
@@ -165,7 +167,9 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                         )}
                         renderOption={(props, user) => (
                             <li {...props}>
-                                {user.displayName || user.email?.split('@')[0] || 'Unbekannter Benutzer'}
+                                {user.firstName && user.lastName 
+                                    ? `${user.firstName} ${user.lastName}` 
+                                    : user.email?.split('@')[0] || 'Unbekannter Benutzer'}
                             </li>
                         )}
                         isOptionEqualToValue={(option, value) => option.uid === value.uid}

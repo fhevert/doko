@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-    Container,
-    TextField,
-    Button,
-    Typography,
-    Box,
+    Alert,
     Avatar,
-    IconButton,
+    Box,
+    Button,
     CircularProgress,
-    Alert
+    Container,
+    IconButton,
+    TextField,
+    Typography
 } from '@mui/material';
-import { useAuth } from '../../firebase/AuthContext';
-import { updateUserProfile, uploadProfileImage } from '../../firebase/UserService';
-import { useNavigate } from 'react-router-dom';
-import { ArrowBack as ArrowBackIcon, CameraAlt as CameraAltIcon } from '@mui/icons-material';
+import {useAuth} from '../../firebase/AuthContext';
+import {updateUserProfile, uploadProfileImage, getUserProfile} from '../../firebase/UserService';
+import {useNavigate} from 'react-router-dom';
+import {ArrowBack as ArrowBackIcon, CameraAlt as CameraAltIcon} from '@mui/icons-material';
 
 const ProfilePage: React.FC = () => {
     const { currentUser } = useAuth();
@@ -25,12 +25,34 @@ const ProfilePage: React.FC = () => {
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
 
-    useEffect(() => {
-        if (currentUser) {
-            setFirstName(currentUser.displayName?.split(' ')[0] || '');
-            setLastName(currentUser.displayName?.split(' ').slice(1).join(' ') || '');
+    const loadUserData = async () => {
+        if (!currentUser) return;
+        
+        try {
+            // Get user profile directly from the database using UserService
+            const userProfile = await getUserProfile(currentUser.uid);
+            
+            if (userProfile) {
+                setFirstName(userProfile.firstName || '');
+                setLastName(userProfile.lastName || '');
+                setPhotoURL(userProfile.photoURL || currentUser.photoURL || '');
+            } else {
+                // If no profile exists yet, create one with empty values
+                setFirstName('');
+                setLastName('');
+                setPhotoURL(currentUser.photoURL || '');
+            }
+        } catch (error) {
+            console.error('Error loading user data:', error);
+            // Fallback to empty values on error
+            setFirstName('');
+            setLastName('');
             setPhotoURL(currentUser.photoURL || '');
         }
+    };
+
+    useEffect(() => {
+        loadUserData();
     }, [currentUser]);
 
     const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -63,14 +85,31 @@ const ProfilePage: React.FC = () => {
             setLoading(true);
             setError('');
             
-            await updateUserProfile(currentUser!.uid, {
-                displayName: `${firstName.trim()} ${lastName.trim()}`,
-                firstName: firstName.trim(),
-                lastName: lastName.trim(),
-                photoURL: photoURL || ''
+            // Update the user's profile in Firestore
+            await fetch(`/api/users/${currentUser?.uid}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    firstName: firstName.trim(),
+                    lastName: lastName.trim(),
+                    photoURL: photoURL || ''
+                })
             });
             
-            setSuccess('Profil erfolgreich aktualisiert');
+            // Update the user profile in the database
+            if (currentUser) {
+                await updateUserProfile(currentUser.uid, {
+                    photoURL: photoURL || '',
+                    firstName: firstName.trim(),
+                    lastName: lastName.trim()
+                });
+            
+                // Reload the user data to ensure UI is in sync
+                await loadUserData();
+                setSuccess('Profil erfolgreich aktualisiert');
+            }
         } catch (err) {
             console.error('Error updating profile:', err);
             setError('Fehler beim Aktualisieren des Profils');
@@ -96,7 +135,7 @@ const ProfilePage: React.FC = () => {
                         <Avatar
                             src={photoURL}
                             sx={{ width: 120, height: 120, fontSize: 40 }}
-                            alt={currentUser?.displayName || 'Profilbild'}
+                            alt={currentUser?.email || 'Profilbild'}
                         >
                             {!photoURL && (currentUser?.email?.[0]?.toUpperCase() || 'U')}
                         </Avatar>
