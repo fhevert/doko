@@ -5,7 +5,7 @@ import AddIcon from '@mui/icons-material/Add';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'; // Icon für den Geber
 import GroupsIcon from '@mui/icons-material/Groups'; // Icon für Spielerauswahl
-import { useNavigate } from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import {getResult} from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
 import {ResultType, Round} from "../../../model/Round";
@@ -13,7 +13,7 @@ import RundenDialog from "../dialog/RundenDialog";
 import ErgebnisDialog from "../dialog/ErgebnisDialog";
 import {Player} from "../../../model/Player";
 
-function ResultTable(parameters: { gameId: string }) {
+function ResultTable() {
     const { game, setGame } = useGameContext();
     const navigate = useNavigate();
     const [selectedRoundId, setSelectedRoundId] = useState<number | null>(null);
