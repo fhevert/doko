@@ -1,14 +1,6 @@
 import {DataSnapshot, get, onValue, push, ref, remove, set, update} from 'firebase/database';
 import {auth, firebaseDB} from './firebase-config';
 import {GameGroup} from '../model/GameGroup';
-import {MinimalPlayer} from '../model/MinimalPlayer';
-import {Player} from '../model/Player';
-import {getUserProfileByEmail} from './UserService'; // You'll need to implement this
-
-const toMinimalPlayer = (player: Player): MinimalPlayer => ({
-    id: player.id,
-    email: player.email
-});
 
 export const createGameGroup = async (group: Omit<GameGroup, 'id' | 'createdAt' | 'updatedAt' | 'games' | 'rounds'>) => {
     const user = auth.currentUser;
@@ -17,13 +9,10 @@ export const createGameGroup = async (group: Omit<GameGroup, 'id' | 'createdAt' 
     const gameGroupRef = ref(firebaseDB, `gameGroups`);
     const newGroupRef = push(gameGroupRef);
     
-    // Convert players to MinimalPlayer before saving
-    const minimalPlayers = (group.players || []).map(toMinimalPlayer);
-    
-    const newGroup = {
+    const newGroup: GameGroup = {
         ...group,
         id: newGroupRef.key!,
-        players: minimalPlayers,
+        players: group.players || [],
         games: [], 
         rounds: [], 
         createdAt: Date.now(),
@@ -54,28 +43,6 @@ export const deleteGameGroup = async (groupId: string) => {
     await remove(groupRef);
 };
 
-const enrichPlayer = async (minimalPlayer: MinimalPlayer): Promise<Player> => {
-    try {
-        const user = await getUserProfileByEmail(minimalPlayer.email);
-        return {
-            ...minimalPlayer,
-            firstname: user?.firstName,
-            name: user?.lastName,
-            // Set default values for required fields
-            result: 0,
-            aktiv: true
-        };
-    } catch (error) {
-        console.error(`Error enriching player ${minimalPlayer.email}:`, error);
-        // Return minimal player with required fields if user lookup fails
-        return {
-            ...minimalPlayer,
-            result: 0,
-            aktiv: true
-        };
-    }
-};
-
 export const getGameGroup = async (groupId: string): Promise<GameGroup | null> => {
     const user = auth.currentUser;
     if (!user) throw new Error('User not authenticated');
@@ -87,20 +54,7 @@ export const getGameGroup = async (groupId: string): Promise<GameGroup | null> =
         return null;
     }
     
-    const group = snapshot.val();
-    
-    // Enrich players with user data
-    if (group.players && Array.isArray(group.players)) {
-        const enrichedPlayers = await Promise.all(
-            group.players.map((player: MinimalPlayer) => enrichPlayer(player))
-        );
-        return {
-            ...group,
-            players: enrichedPlayers
-        };
-    }
-    
-    return group;
+    return snapshot.val();
 };
 
 export const subscribeToGameGroups = (
@@ -115,23 +69,9 @@ export const subscribeToGameGroups = (
 
     const gameGroupsRef = ref(firebaseDB, `gameGroups`);
     
-    const handleValue = async (snapshot: DataSnapshot) => {
+    const handleValue = (snapshot: DataSnapshot) => {
         const groups = snapshot.val() || {};
-        
-        // Process each group to enrich players
-        const processedGroups = await Promise.all(
-            Object.entries(groups).map(async ([id, group]: [string, any]) => {
-                if (group.players && Array.isArray(group.players)) {
-                    const enrichedPlayers = await Promise.all(
-                        group.players.map((player: MinimalPlayer) => enrichPlayer(player))
-                    );
-                    return [id, { ...group, players: enrichedPlayers }];
-                }
-                return [id, group];
-            })
-        );
-        
-        onGameGroupsChanged(Object.fromEntries(processedGroups));
+        onGameGroupsChanged(groups);
     };
     
     onValue(gameGroupsRef, handleValue, (error) => {
