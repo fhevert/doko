@@ -39,10 +39,26 @@ export const MobileNavigation = () => {
     const unsubscribe = onValue(groupsRef, (snapshot) => {
       const groupsData = snapshot.val();
       if (groupsData) {
-        const groupsList = Object.entries<GameGroup>(groupsData).map(([id, group]) => ({
-          ...group,
-          id
-        }));
+        const groupsList = Object.entries<GameGroup>(groupsData).map(([id, group]) => {
+          // Convert games object to array if it's an object
+          let games: Game[] = [];
+          if (group.games) {
+            if (Array.isArray(group.games)) {
+              games = group.games;
+            } else if (typeof group.games === 'object') {
+              games = Object.entries(group.games).map(([gameId, game]) => ({
+                ...game as Game,
+                id: gameId
+              }));
+            }
+          }
+          
+          return {
+            ...group,
+            id,
+            games
+          };
+        });
         
         // Set initial expanded state for groups
         const initialExpanded = groupsList.reduce((acc, group) => {
