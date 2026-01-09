@@ -1,39 +1,30 @@
-import { 
-  Drawer, 
-  List, 
-  ListItem, 
-  ListItemButton, 
-  ListItemIcon, 
-  ListItemText, 
-  useMediaQuery, 
-  useTheme, 
-  Box, 
-  IconButton, 
-  Typography, 
-  Divider, 
+import {
+  Box,
+  CircularProgress,
   Collapse,
-  CircularProgress
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemText,
+  Typography,
+  useTheme
 } from '@mui/material';
-import { useNavigate, useLocation } from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import MenuIcon from '@mui/icons-material/Menu';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
-import GroupIcon from '@mui/icons-material/Group';
-import SportsEsportsIcon from '@mui/icons-material/SportsEsports';
-import { useState, useEffect } from 'react';
-import { GameGroup } from '../model/GameGroup';
-import { ref, onValue } from 'firebase/database';
-import { firebaseDB } from '../firebase/firebase-config';
-import { Game } from '../model/Game';
-
-interface GameGroupWithId extends GameGroup {
-  // All properties are inherited from GameGroup
-}
+import {useEffect, useState} from 'react';
+import {GameGroup} from '../model/GameGroup';
+import {onValue, ref} from 'firebase/database';
+import {firebaseDB} from '../firebase/firebase-config';
+import {Game} from "../model/Game";
 
 export const MobileNavigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [groups, setGroups] = useState<GameGroupWithId[]>([]);
+  const [groups, setGroups] = useState<GameGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedGroups, setExpandedGroups] = useState<{[key: string]: boolean}>({});
   const theme = useTheme();
@@ -42,29 +33,28 @@ export const MobileNavigation = () => {
 
   // Lade Gruppen und deren Spiele
   useEffect(() => {
-    if (!isOpen) return;
-    
     setLoading(true);
     const groupsRef = ref(firebaseDB, 'gameGroups');
     
     const unsubscribe = onValue(groupsRef, (snapshot) => {
       const groupsData = snapshot.val();
       if (groupsData) {
-        const groupsList = Object.entries(groupsData).map(([id, group]) => {
-          const { id: _, ...groupWithoutId } = group as GameGroup;
-          return {
-            id,
-            ...groupWithoutId,
-            games: Array.isArray((group as GameGroup).games) 
-              ? (group as GameGroup).games
-                  .filter((g: any) => g && g.date)
-                  .sort((a: any, b: any) => 
-                    new Date(b.date).getTime() - new Date(a.date).getTime()
-                  )
-                  .slice(0, 5) // Nur die letzten 5 Spiele
-              : []
-          };
-        });
+        const groupsList = Object.entries<GameGroup>(groupsData).map(([id, group]) => ({
+          ...group,
+          id
+        }));
+        
+        // Set initial expanded state for groups
+        const initialExpanded = groupsList.reduce((acc, group) => {
+          acc[group.id] = expandedGroups[group.id] || false;
+          return acc;
+        }, {} as {[key: string]: boolean});
+        
+        setExpandedGroups(prev => ({
+          ...initialExpanded,
+          ...prev // Preserve any existing expanded states
+        }));
+        
         setGroups(groupsList);
       } else {
         setGroups([]);
@@ -76,10 +66,10 @@ export const MobileNavigation = () => {
     });
 
     return () => {
-      // Cleanup listener when component unmounts or isOpen changes
+      // Cleanup listener when component unmounts
       unsubscribe();
     };
-  }, [isOpen]);
+  }, []); // Remove isOpen from dependencies to load data once
 
   const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
     if (event.type === 'keydown' && 
@@ -90,11 +80,36 @@ export const MobileNavigation = () => {
     setIsOpen(open);
   };
 
-  const toggleGroup = (groupId: string) => {
-    setExpandedGroups(prev => ({
-      ...prev,
-      [groupId]: !prev[groupId]
-    }));
+  const handleGroupClick = (groupId: string) => {
+    setExpandedGroups(prev => {
+      // If the group is not in the expanded state, close all other groups
+      if (!prev[groupId]) {
+        const newState = Object.keys(prev).reduce((acc, key) => {
+          acc[key] = false;
+          return acc;
+        }, {} as {[key: string]: boolean});
+        return {
+          ...newState,
+          [groupId]: true
+        };
+      }
+      // If the group is already expanded, just close it
+      return {
+        ...prev,
+        [groupId]: false
+      };
+    });
+  };
+
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    setIsOpen(false);
+  };
+
+  const handleGameClick = (groupId: string, gameId: string) => {
+    // Navigate to the specific game
+    navigate(`/game-groups/${groupId}/games/${gameId}`);
+    setIsOpen(false);
   };
 
   const formatGameDate = (date: Date) => {
@@ -113,15 +128,17 @@ export const MobileNavigation = () => {
       if (path.includes('game-groups/')) {
         const groupId = path.split('/').pop();
         const group = groups.find(g => g.id === groupId);
-        return group?.name || 'Gruppendetails';
+        return group?.name || 'Gruppe';
       }
-      return 'Spielgruppen';
+      return 'Meine Gruppen';
     } else if (path.includes('players')) {
-      return 'Spieler';
+      return 'Spieler verwalten';
     } else if (path.includes('results')) {
-      return 'Ergebnisse';
+      return 'Spielergebnisse';
     } else if (path.includes('profile')) {
-      return 'Profil';
+      return 'Mein Profil';
+    } else if (path.includes('game')) {
+      return 'Aktuelles Spiel';
     }
     return 'Doko App';
   };
@@ -201,7 +218,7 @@ export const MobileNavigation = () => {
           <List>
             {/* Gruppen Abschnitt */}
             <ListItemButton 
-              onClick={() => navigate('/game-groups')}
+              onClick={() => handleNavigation('/game-groups')}
               selected={location.pathname === '/game-groups'}
               sx={{
                 '&.Mui-selected': {
@@ -227,7 +244,7 @@ export const MobileNavigation = () => {
               groups.map((group) => (
                 <div key={group.id}>
                   <ListItemButton 
-                    onClick={() => toggleGroup(group.id)}
+                    onClick={() => handleGroupClick(group.id)}
                     sx={{
                       '&:hover': {
                         backgroundColor: theme.palette.action.hover,
@@ -245,29 +262,29 @@ export const MobileNavigation = () => {
                     />
                     {expandedGroups[group.id] ? <ExpandLess /> : <ExpandMore />}
                   </ListItemButton>
-                  
+
                   <Collapse in={expandedGroups[group.id]} timeout="auto" unmountOnExit>
                     <List component="div" disablePadding>
                       {group.games && group.games.length > 0 ? (
-                        group.games.map((game, index) => (
-                          <ListItemButton 
-                            key={index}
-                            sx={{ pl: 6 }}
-                            onClick={() => {
-                              navigate(`/game-groups/${group.id}`);
-                              // Hier könntest du auch direkt zum Spiel navigieren, falls gewünscht
-                              // navigate(`/game/${game.id}`);
-                            }}
-                          >
-                            <ListItemText 
-                              primary={game.date ? formatGameDate(game.date) : 'Ohne Datum'}
-                              primaryTypographyProps={{
-                                variant: 'body2',
-                                color: 'text.secondary'
-                              }}
-                            />
-                          </ListItemButton>
-                        ))
+                        group.games.map((game: Game) => {
+                          // Convert Firebase timestamp to Date if needed
+                          const gameDate = game.date instanceof Date ? game.date : new Date(game.date);
+                          return (
+                            <ListItemButton
+                              key={game.id}
+                              sx={{ pl: 6 }}
+                              onClick={() => handleGameClick(group.id, game.id)}
+                            >
+                              <ListItemText
+                                primary={gameDate ? formatGameDate(gameDate) : 'Ohne Datum'}
+                                primaryTypographyProps={{
+                                  variant: 'body2',
+                                  color: 'text.secondary'
+                                }}
+                              />
+                            </ListItemButton>
+                          );
+                        })
                       ) : (
                         <Typography variant="body2" sx={{ pl: 8, py: 1, color: 'text.secondary' }}>
                           Keine Spiele

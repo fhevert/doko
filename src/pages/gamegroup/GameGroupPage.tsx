@@ -22,6 +22,7 @@ import {
     subscribeToGameGroups,
     updateGameGroup
 } from "../../firebase/GameGroupService";
+import AddIcon from "@mui/icons-material/Add";
 
 interface GameGroups {
     [key: string]: GameGroup;
@@ -77,21 +78,23 @@ const GameGroupPage: React.FC = () => {
         }
     };
 
+    const handleOpenDialog = () => {
+        setSelectedGroup(null);
+        setOpenDialog(true);
+    };
+
     return (
         <Container maxWidth="md">
             <Box sx={{mt: 4, mb: 4}}>
-                <Box sx={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3}}>
-                    <Typography variant="h4" component="h1">Spielgruppen</Typography>
+                <Box sx={{display: 'flex', justifyContent: 'flex-end', mb: 3}}>
                     <Button
                         variant="contained"
                         color="primary"
-                        onClick={() => {
-                            setSelectedGroup(null);
-                            setOpenDialog(true);
-                        }}
+                        onClick={handleOpenDialog}
+                        startIcon={<AddIcon/>}
                         disabled={loading}
                     >
-                        Neue Gruppe erstellen
+                        Neue Gruppe
                     </Button>
                 </Box>
 
@@ -150,10 +153,10 @@ const GameGroupPage: React.FC = () => {
                             >
                                 <ListItemText
                                     primary={group.name || `Gruppe ${id}`}
-                                    secondary={`
-                                        ${group.players?.length || 0} Spieler | 
-                                        ${group.games ? Object.keys(group.games).length : 0} Spiele
-                                    `}
+                                    secondary={
+                                        `${group.players?.length || 0} Spieler | 
+                                        ${group.games?.length || 0} Spiele`
+                                    }
                                 />
                             </ListItem>
                         ))}

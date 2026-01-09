@@ -321,48 +321,43 @@ const GameGroupDetailPage: React.FC = () => {
     }
 
     return (
-        <Container maxWidth="md" sx={{ pb: 12 }}>
+        <Container maxWidth="md">
             <Box my={4}>
-                <Box display="flex" alignItems="center" mb={3}>
-                    <IconButton onClick={() => navigate(-1)} sx={{ mr: 1 }}>
+                <Box mb={2}>
+                    <IconButton onClick={() => navigate(-1)}>
                         <ArrowBackIcon/>
                     </IconButton>
-                    <Typography variant="h4" component="h1">
-                        {group.name || `Gruppe ${group.id}`}
+                </Box>
+                
+                {games.length > 0 ? (
+                    <List>
+                        {games.map((game, index) => (
+                            <React.Fragment key={game.id || index}>
+                                <ListItem 
+                                    button 
+                                    onClick={() => loadGame(game.id)}
+                                    sx={{
+                                        '&:hover': {
+                                            backgroundColor: 'action.hover',
+                                            cursor: 'pointer'
+                                        }
+                                    }}
+                                >
+                                    <ListItemText
+                                        primary={`Spiel am ${new Date(game.date).toLocaleDateString()}`}
+                                        secondary={`${game.players?.length || 0} Spieler • ${game.rounds?.length || 0} Runden`}
+                                    />
+                                </ListItem>
+                                {index < games.length - 1 && <Divider component="li" />}
+                            </React.Fragment>
+                        ))}
+                    </List>
+                ) : (
+                    <Typography variant="body1" color="textSecondary">
+                        Noch keine Spiele vorhanden. Starten Sie ein neues Spiel!
                     </Typography>
-                </Box>
-
-                <Box mb={4}>
-                    {games.length > 0 ? (
-                        <List sx={{ bgcolor: 'background.paper' }}>
-                            {games.map((game, index) => (
-                                <React.Fragment key={game.id || index}>
-                                    <ListItem 
-                                        button 
-                                        onClick={() => loadGame(game.id)}
-                                        sx={{
-                                            '&:hover': {
-                                                backgroundColor: 'action.hover',
-                                                cursor: 'pointer'
-                                            }
-                                        }}
-                                    >
-                                        <ListItemText
-                                            primary={`Spiel am ${new Date(game.date).toLocaleDateString()}`}
-                                            secondary={`${game.players?.length || 0} Spieler • ${game.rounds?.length || 0} Runden`}
-                                        />
-                                    </ListItem>
-                                    {index < group.games!.length - 1 && <Divider component="li" />}
-                                </React.Fragment>
-                            ))}
-                        </List>
-                    ) : (
-                        <Typography variant="body1" color="textSecondary">
-                            Noch keine Spiele vorhanden. Starten Sie ein neues Spiel!
-                        </Typography>
-                    )}
-                </Box>
-                <Box sx={{ 
+                )}
+                <Box sx={{
                     position: 'fixed',
                     bottom: 0,
                     left: 0,
@@ -401,13 +396,13 @@ const GameGroupDetailPage: React.FC = () => {
                         Möchten Sie dieses Spiel wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
                     </DialogContentText>
                 </DialogContent>
-                <DialogActions sx={{ 
-                    px: isMobile ? 2 : 3, 
+                <DialogActions sx={{
+                    px: isMobile ? 2 : 3,
                     pb: isMobile ? 2 : 3,
                     flexDirection: isMobile ? 'column' : 'row',
                     gap: isMobile ? 1 : 2
                 }}>
-                    <Button 
+                    <Button
                         onClick={() => {
                             setIsDeleteDialogOpen(false);
                             setGameToDelete(null);
@@ -420,8 +415,8 @@ const GameGroupDetailPage: React.FC = () => {
                     >
                         Abbrechen
                     </Button>
-                    <Button 
-                        onClick={handleConfirmDelete} 
+                    <Button
+                        onClick={handleConfirmDelete}
                         color="error"
                         variant={isMobile ? 'contained' : 'outlined'}
                         disabled={loading}
