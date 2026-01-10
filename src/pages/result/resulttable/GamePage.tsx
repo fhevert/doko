@@ -5,44 +5,88 @@ import AddIcon from '@mui/icons-material/Add';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'; // Icon für den Geber
 import GroupsIcon from '@mui/icons-material/Groups'; // Icon für Spielerauswahl
-import {useNavigate} from 'react-router-dom';
+import {useNavigate, useParams} from 'react-router-dom';
 import {getResult} from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
 import {ResultType, Round} from "../../../model/Round";
 import RundenDialog from "../dialog/RundenDialog";
 import ErgebnisDialog from "../dialog/ErgebnisDialog";
 import {Player} from "../../../model/Player";
+import {ref, get} from 'firebase/database';
+import {firebaseDB} from "../../../firebase/firebase-config";
 
 function GamePage() {
     const { game, setGame } = useGameContext();
     const navigate = useNavigate();
+    const { gameId, groupId } = useParams<{ gameId: string, groupId: string }>();
     const [selectedRoundId, setSelectedRoundId] = useState<number | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const headerBlue = "#1a237e";
-
+    useEffect(() => {
+        const loadGame = async () => {
+            if (!gameId || !groupId) {
+                console.error('Game ID or Group ID is missing');
+                return;
+            }
+            
+            try {
+                setIsLoading(true);
+                const gameRef = ref(firebaseDB, `gameGroups/${groupId}/games/${gameId}`);
+                const snapshot = await get(gameRef);
+                
+                if (snapshot.exists()) {
+                    const gameData = snapshot.val();
+                    // Convert results to Map if needed (similar to loadGame in GameGroupDetailPage)
+                    const rounds = Array.isArray(gameData?.rounds) 
+                        ? gameData.rounds.map((round: any) => {
+                            const resultsMap = new Map<string, ResultType>();
+                            if (round.results) {
+                                if (Array.isArray(round.results)) {
+                                    round.results.forEach((result: {key: string, value: number}) => {
+                                        if (result && result.key !== undefined && result.value !== undefined) {
+                                            resultsMap.set(String(result.key), result.value as ResultType);
+                                        }
+                                    });
+                                } else if (typeof round.results === 'object') {
+                                    Object.entries(round.results).forEach(([key, value]) => {
+                                        if (value !== undefined) {
+                                            resultsMap.set(String(key), value as ResultType);
+                                        }
+                                    });
+                                }
+                            }
+                            return {
+                                ...round,
+                                results: resultsMap,
+                                date: round.date ? new Date(round.date) : new Date()
+                            };
+                        })
+                        : [];
+                    
+                    setGame({
+                        ...gameData,
+                        id: gameId,
+                        gameGroupId: groupId,
+                        rounds: rounds,
+                        date: gameData.date ? new Date(gameData.date) : new Date()
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading game:', error);
+                // Handle error (e.g., show error message to user)
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        
+        loadGame();
+    }, [gameId, groupId, setGame]);
+    
     const activePlayers = useMemo(() => game.players.filter(p => p.aktiv), [game.players]);
     const playerCount = activePlayers.length;
+    const headerBlue = "#1a237e";
 
-    const getAdaptiveStyles = () => {
-        if (playerCount <= 4) {
-            return { fontSizeName: '0.7rem', fontSizeScore: '1.5rem', padding: 2 };
-        } else if (playerCount === 5) {
-            return { fontSizeName: '0.6rem', fontSizeScore: '1.2rem', padding: 1.5 };
-        } else {
-            return { fontSizeName: '0.5rem', fontSizeScore: '1rem', padding: 1 };
-        }
-    };
-
-    const { fontSizeName, fontSizeScore, padding } = getAdaptiveStyles();
-
-    // Berechnung des Gebers für eine bestimmte Runde
-    // "Rechts vom Geber wird neuer Geber" bedeutet im Array-Index meist (alt - 1) oder (alt + 1).
-    // Hier wird der Geber einfach pro Runde durchrotiert.
-    const getDealerIndex = (roundIndex: number) => {
-        if (playerCount === 0) return -1;
-        return roundIndex % playerCount;
-    };
-
+    // Move the useEffect hook before any conditional returns
     useEffect(() => {
         const players = [...game.players];
         let totalActivePoints = 0;
@@ -67,6 +111,30 @@ function GamePage() {
             game.averagePoints = average;
         }
     }, [game, setGame]);
+
+    if (isLoading) {
+        return <div>Loading game data...</div>;
+    }
+
+    const getAdaptiveStyles = () => {
+        if (playerCount <= 4) {
+            return { fontSizeName: '0.7rem', fontSizeScore: '1.5rem', padding: 2 };
+        } else if (playerCount === 5) {
+            return { fontSizeName: '0.6rem', fontSizeScore: '1.2rem', padding: 1.5 };
+        } else {
+            return { fontSizeName: '0.5rem', fontSizeScore: '1rem', padding: 1 };
+        }
+    };
+
+    const { fontSizeName, fontSizeScore, padding } = getAdaptiveStyles();
+
+    // Berechnung des Gebers für eine bestimmte Runde
+    // "Rechts vom Geber wird neuer Geber" bedeutet im Array-Index meist (alt - 1) oder (alt + 1).
+    // Hier wird der Geber einfach pro Runde durchrotiert.
+    const getDealerIndex = (roundIndex: number) => {
+        if (playerCount === 0) return -1;
+        return roundIndex % playerCount;
+    };
 
     const handleNeueZeileClick = () => {
         const resultsMap = new Map<string, number>();
