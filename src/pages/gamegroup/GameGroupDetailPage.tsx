@@ -24,7 +24,7 @@ import {GameGroup} from '../../model/GameGroup';
 import {GameContext} from '../../model/context/GameContext';
 import {Game} from '../../model/Game';
 import {auth, firebaseDB as db} from '../../firebase/firebase-config';
-import {DataSnapshot, get, onValue, ref, remove, set} from 'firebase/database';
+import {DataSnapshot, get, onValue, ref, remove} from 'firebase/database';
 import {saveGameToFirebase} from "../../firebase/DbFunctions";
 import {ResultType} from "../../model/Round"; // Import from modular SDK
 
@@ -55,36 +55,10 @@ const GameGroupDetailPage: React.FC = () => {
             // Get the game to be deleted
             const gameToRemove = group.games?.[gameToDelete.index];
             if (!gameToRemove) throw new Error('Spiel nicht gefunden');
-            
-            // Delete the game from the user's games
-            const user = auth.currentUser;
-            if (!user) throw new Error('Nicht angemeldet');
-            
+
             // Remove the game from the user's games
-            const gameRef = ref(db, `games/${gameToDelete.id}`);
+            const gameRef = ref(db, `gameGroups/${groupId}/games/${gameToDelete.id}`);
             await remove(gameRef);
-            
-            // Update the group's games list
-            const updatedGames = [...(group.games || [])];
-            if (gameToDelete.index >= 0 && gameToDelete.index < updatedGames.length) {
-                updatedGames.splice(gameToDelete.index, 1);
-                
-                // Update the group in the database
-                const groupRef = ref(db, `gameGroups/${groupId}`);
-                await set(groupRef, {
-                    ...group,
-                    games: updatedGames,
-                    updatedAt: Date.now()
-                });
-                
-                // Update local state
-                setGroup(prev => prev ? {
-                    ...prev,
-                    games: updatedGames,
-                    updatedAt: Date.now()
-                } : null);
-            }
-            
             // Show success message
             setError(null);
         } catch (error) {
