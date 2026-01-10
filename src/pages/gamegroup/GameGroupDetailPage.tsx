@@ -19,7 +19,7 @@ import {
     useTheme
 } from '@mui/material';
 import {useNavigate, useParams} from 'react-router-dom';
-import {Add as AddIcon, Delete as DeleteIcon} from '@mui/icons-material';
+import {Add as AddIcon, Delete as DeleteIcon, BarChart as BarChartIcon} from '@mui/icons-material';
 import {GameGroup} from '../../model/GameGroup';
 import {GameContext} from '../../model/context/GameContext';
 import {Game} from '../../model/Game';
@@ -350,7 +350,7 @@ const GameGroupDetailPage: React.FC = () => {
                     bgcolor: 'background.paper',
                     boxShadow: '0 -2px 4px rgba(0,0,0,0.1)'
                 }}>
-                    <Container maxWidth="md">
+                    <Container maxWidth="md" sx={{ display: 'flex', gap: 2 }}>
                         <Button
                             fullWidth
                             variant="contained"
@@ -361,6 +361,17 @@ const GameGroupDetailPage: React.FC = () => {
                             size="large"
                         >
                             Neues Spiel starten
+                        </Button>
+                        <Button
+                            fullWidth
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<BarChartIcon/>}
+                            onClick={() => navigate(`/game-groups/${groupId}/statistics`)}
+                            disabled={!games || games.length === 0}
+                            size="large"
+                        >
+                            Statistiken
                         </Button>
                     </Container>
                 </Box>

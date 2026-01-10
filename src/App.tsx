@@ -21,6 +21,7 @@ import {GameContext} from './model/context/GameContext';
 import PlayersPage from "./pages/player/player/PlayersPage";
 import GameGroupPage from "./pages/gamegroup";
 import GameGroupDetailPage from "./pages/gamegroup/GameGroupDetailPage";
+import GroupStatisticsPage from "./pages/gamegroup/GroupStatisticsPage";
 import {Link as RouterLink, MemoryRouter, Navigate, Route, Routes, useLocation, useNavigate} from "react-router-dom";
 import {auth, firebaseDB} from "./firebase/firebase-config";
 import {DataSnapshot, onValue, ref} from "firebase/database";
@@ -269,6 +270,11 @@ function App() {
                             <Route path="/game-groups/:groupId/games/:gameId" element={
                                 <PrivateRoute>
                                     <GamePage />
+                                </PrivateRoute>
+                            } />
+                            <Route path="/game-groups/:groupId/statistics" element={
+                                <PrivateRoute>
+                                    <GroupStatisticsPage />
                                 </PrivateRoute>
                             } />
                         </Routes>
