@@ -19,7 +19,7 @@ import {
     useTheme
 } from '@mui/material';
 import {useNavigate, useParams} from 'react-router-dom';
-import {Add as AddIcon, ArrowBack as ArrowBackIcon} from '@mui/icons-material';
+import {Add as AddIcon, ArrowBack as ArrowBackIcon, Delete as DeleteIcon} from '@mui/icons-material';
 import {GameGroup} from '../../model/GameGroup';
 import {GameContext} from '../../model/context/GameContext';
 import {Game} from '../../model/Game';
@@ -340,8 +340,24 @@ const GameGroupDetailPage: React.FC = () => {
                                         '&:hover': {
                                             backgroundColor: 'action.hover',
                                             cursor: 'pointer'
-                                        }
+                                        },
+                                        pr: 12
                                     }}
+                                    secondaryAction={
+                                        <IconButton
+                                            edge="end"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setGameToDelete({id: game.id, index});
+                                                setIsDeleteDialogOpen(true);
+                                            }}
+                                            size="small"
+                                            color="error"
+                                            title="Spiel löschen"
+                                        >
+                                            <DeleteIcon fontSize="small" />
+                                        </IconButton>
+                                    }
                                 >
                                     <ListItemText
                                         primary={`Spiel am ${new Date(game.date).toLocaleDateString()}`}
