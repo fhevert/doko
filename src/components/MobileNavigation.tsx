@@ -40,17 +40,27 @@ export const MobileNavigation = () => {
       const groupsData = snapshot.val();
       if (groupsData) {
         const groupsList = Object.entries<GameGroup>(groupsData).map(([id, group]) => {
-          // Convert games object to array if it's an object
+          // Convert games object to array and ensure proper data structure
           let games: Game[] = [];
           if (group.games) {
             if (Array.isArray(group.games)) {
+              // If it's already an array, use it directly
               games = group.games;
-            } else if (typeof group.games === 'object') {
-              games = Object.entries(group.games).map(([gameId, game]) => ({
-                ...game as Game,
-                id: gameId
-              }));
+            } else if (typeof group.games === 'object' && group.games !== null) {
+              // If it's an object, convert to array
+              games = Object.entries(group.games).map(([gameId, game]) => {
+                // Ensure we have a proper game object with id
+                const gameData = game as Game;
+                return {
+                  ...gameData,
+                  id: gameId,
+                  // Ensure date is a proper Date object
+                  date: gameData.date ? (gameData.date instanceof Date ? gameData.date : new Date(gameData.date)) : new Date()
+                };
+              });
             }
+            // Sort games by date, newest first
+            games.sort((a, b) => b.date.getTime() - a.date.getTime());
           }
           
           return {
