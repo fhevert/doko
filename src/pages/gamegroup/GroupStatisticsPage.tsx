@@ -100,6 +100,9 @@ const GroupStatisticsPage: React.FC = () => {
       // Track points per player for this game
       const gamePoints = new Map<string, number>();
       
+      // Track which players participated in this game
+      const participants = new Set<string>();
+      
       // Process each round in the game
       game.rounds.forEach((round: Round) => {
         if (!round.results) return;
@@ -107,12 +110,14 @@ const GroupStatisticsPage: React.FC = () => {
         if (Array.isArray(round.results)) {
           round.results.forEach((result: any) => {
             if (result && result.key && result.value !== undefined) {
+              const playerId = result.key.toString();
               // 1 = win (0 points), 2 = loss (1 point)
               const points = result.value === 2 ? 1 : 0;
               gamePoints.set(
-                result.key.toString(),
-                (gamePoints.get(result.key.toString()) || 0) + points
+                playerId,
+                (gamePoints.get(playerId) || 0) + points
               );
+              participants.add(playerId);
             }
           });
         } else if (typeof round.results === 'object') {
@@ -123,7 +128,26 @@ const GroupStatisticsPage: React.FC = () => {
               playerId,
               (gamePoints.get(playerId) || 0) + points
             );
+            participants.add(playerId);
           });
+        }
+      });
+      
+      // Calculate average points for this game
+      let totalPoints = 0;
+      let participantCount = 0;
+      
+      participants.forEach(playerId => {
+        totalPoints += gamePoints.get(playerId) || 0;
+        participantCount++;
+      });
+      
+      const averagePoints = participantCount > 0 ? totalPoints / participantCount : 0;
+      
+      // Assign average points to non-participating players
+      groupData.players.forEach((player: Player) => {
+        if (!participants.has(player.id)) {
+          gamePoints.set(player.id, averagePoints);
         }
       });
 
