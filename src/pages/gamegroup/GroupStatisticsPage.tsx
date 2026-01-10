@@ -107,7 +107,8 @@ const GroupStatisticsPage: React.FC = () => {
         if (Array.isArray(round.results)) {
           round.results.forEach((result: any) => {
             if (result && result.key && result.value !== undefined) {
-              const points = result.value === 1 ? 1 : (result.value === 2 ? -1 : 0);
+              // 1 = win (0 points), 2 = loss (1 point)
+              const points = result.value === 2 ? 1 : 0;
               gamePoints.set(
                 result.key.toString(),
                 (gamePoints.get(result.key.toString()) || 0) + points
@@ -116,7 +117,8 @@ const GroupStatisticsPage: React.FC = () => {
           });
         } else if (typeof round.results === 'object') {
           Object.entries(round.results).forEach(([playerId, result]) => {
-            const points = result === 1 ? 1 : (result === 2 ? -1 : 0);
+            // 1 = win (0 points), 2 = loss (1 point)
+            const points = result === 2 ? 1 : 0;
             gamePoints.set(
               playerId,
               (gamePoints.get(playerId) || 0) + points
@@ -127,11 +129,11 @@ const GroupStatisticsPage: React.FC = () => {
 
       // Update player stats based on game results
       const sortedPlayers = Array.from(gamePoints.entries())
-        .sort((a, b) => b[1] - a[1]);
+        .sort((a, b) => a[1] - b[1]); // Sort by points ascending (lowest points first)
 
       if (sortedPlayers.length > 0) {
-        const maxPoints = sortedPlayers[0][1];
-        const winners = sortedPlayers.filter(([_, points]) => points === maxPoints);
+        const minPoints = sortedPlayers[0][1];
+        const winners = sortedPlayers.filter(([_, points]) => points === minPoints);
         
         gamePoints.forEach((points, playerId) => {
           const playerStat = statsMap.get(playerId);
