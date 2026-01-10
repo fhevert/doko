@@ -227,6 +227,11 @@ function App() {
                                     <GameGroupDetailPage />
                                 </PrivateRoute>
                             } />
+                            <Route path="/game-groups/:groupId/games/:gameId" element={
+                                <PrivateRoute>
+                                    <ResultTable />
+                                </PrivateRoute>
+                            } />
                         </Routes>
                     </MemoryRouter>
                 </GameContext.Provider>
