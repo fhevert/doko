@@ -21,7 +21,7 @@ import {GameContext} from './model/context/GameContext';
 import PlayersPage from "./pages/player/player/PlayersPage";
 import GameGroupPage from "./pages/gamegroup";
 import GameGroupDetailPage from "./pages/gamegroup/GameGroupDetailPage";
-import {Link as RouterLink, MemoryRouter, Navigate, Route, Routes} from "react-router-dom";
+import {Link as RouterLink, MemoryRouter, Navigate, Route, Routes, useLocation, useNavigate} from "react-router-dom";
 import {auth, firebaseDB} from "./firebase/firebase-config";
 import {DataSnapshot, onValue, ref} from "firebase/database";
 import {useAuth} from './firebase/AuthContext';
@@ -33,14 +33,41 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import {MobileNavigation} from './components/MobileNavigation';
 import {useTheme} from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 // Separate component for auth-dependent UI parts
 const AuthStatusBar = memo(() => {
     const { currentUser } = useAuth();
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [showBackButton, setShowBackButton] = useState(false);
     const open = Boolean(anchorEl);
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    // Handle back button visibility and browser navigation
+    useEffect(() => {
+        // Update back button visibility based on current path
+        const updateBackButton = () => {
+            setShowBackButton(window.location.pathname !== '/');
+        };
+        
+        // Initial check
+        updateBackButton();
+        
+        // Listen for browser back/forward navigation
+        window.addEventListener('popstate', updateBackButton);
+        
+        // Cleanup event listener on component unmount
+        return () => {
+            window.removeEventListener('popstate', updateBackButton);
+        };
+    }, []);
+
+    const handleBack = () => {
+        navigate(-1); // Go back to previous page
+    };
 
     const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
@@ -64,10 +91,27 @@ const AuthStatusBar = memo(() => {
             minHeight: '64px', 
             display: 'flex', 
             justifyContent: 'space-between',
-            padding: isMobile ? '0 8px' : '0 16px'
+            padding: isMobile ? '0 8px' : '0 16px',
+            gap: 2
         }}>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <MobileNavigation />
+                {showBackButton && (
+                    <IconButton
+                        color="inherit"
+                        onClick={handleBack}
+                        size="large"
+                        edge="start"
+                        sx={{
+                            mr: 1,
+                            '&:hover': {
+                                backgroundColor: 'rgba(255, 255, 255, 0.08)'
+                            }
+                        }}
+                    >
+                        <ArrowBackIcon />
+                    </IconButton>
+                )}
             </Box>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 {currentUser ? (
