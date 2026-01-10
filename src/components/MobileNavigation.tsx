@@ -166,7 +166,7 @@ export const MobileNavigation = () => {
     } else if (path.includes('game')) {
       return 'Aktuelles Spiel';
     }
-    return 'Doko App';
+    return 'Meine Gruppen';
   };
 
   return (
