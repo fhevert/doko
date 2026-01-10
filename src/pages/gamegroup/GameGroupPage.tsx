@@ -119,17 +119,6 @@ const GameGroupPage: React.FC = () => {
     return (
         <Container maxWidth="md">
             <Box sx={{mt: 4, mb: 4}}>
-                <Box sx={{display: 'flex', justifyContent: 'flex-end', mb: 3}}>
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={handleOpenDialog}
-                        startIcon={<AddIcon/>}
-                        disabled={loading}
-                    >
-                        Neue Gruppe
-                    </Button>
-                </Box>
 
                 {loading ? (
                     <Box display="flex" justifyContent="center" my={4}>
@@ -200,6 +189,30 @@ const GameGroupPage: React.FC = () => {
                         )}
                     </List>
                 )}
+            </Box>
+
+            {/* Fixed bottom button */}
+            <Box sx={{
+                position: 'fixed',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                p: 2,
+                bgcolor: 'background.paper',
+                boxShadow: '0 -2px 4px rgba(0,0,0,0.1)'
+            }}>
+                <Container maxWidth="md">
+                    <Button
+                        fullWidth
+                        variant="contained"
+                        color="primary"
+                        startIcon={<AddIcon />}
+                        onClick={handleOpenDialog}
+                        size="large"
+                    >
+                        Neue Gruppe erstellen
+                    </Button>
+                </Container>
             </Box>
 
             <GameGroupDialog
