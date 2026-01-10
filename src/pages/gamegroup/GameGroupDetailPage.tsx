@@ -19,7 +19,7 @@ import {
     useTheme
 } from '@mui/material';
 import {useNavigate, useParams} from 'react-router-dom';
-import {Add as AddIcon, ArrowBack as ArrowBackIcon, Delete as DeleteIcon} from '@mui/icons-material';
+import {Add as AddIcon, Delete as DeleteIcon} from '@mui/icons-material';
 import {GameGroup} from '../../model/GameGroup';
 import {GameContext} from '../../model/context/GameContext';
 import {Game} from '../../model/Game';
@@ -297,12 +297,6 @@ const GameGroupDetailPage: React.FC = () => {
     return (
         <Container maxWidth="md">
             <Box my={4}>
-                <Box mb={2}>
-                    <IconButton onClick={() => navigate(-1)}>
-                        <ArrowBackIcon/>
-                    </IconButton>
-                </Box>
-                
                 {games.length > 0 ? (
                     <List>
                         {games.map((game, index) => (
