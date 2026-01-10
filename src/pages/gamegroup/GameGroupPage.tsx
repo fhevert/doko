@@ -5,6 +5,11 @@ import {
     Button,
     CircularProgress,
     Container,
+    Dialog,
+    DialogActions,
+    DialogContent,
+    DialogContentText,
+    DialogTitle,
     IconButton,
     List,
     ListItem,
@@ -34,7 +39,26 @@ const GameGroupPage: React.FC = () => {
     const [selectedGroup, setSelectedGroup] = useState<GameGroup | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [groupToDelete, setGroupToDelete] = useState<string | null>(null);
+    const [isMobile, setIsMobile] = useState(false);
     const navigate = useNavigate();
+
+    // Check if mobile view
+    useEffect(() => {
+        const checkMobile = () => {
+            setIsMobile(window.innerWidth < 600);
+        };
+        
+        // Initial check
+        checkMobile();
+        
+        // Add event listener for window resize
+        window.addEventListener('resize', checkMobile);
+        
+        // Cleanup
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
 
     useEffect(() => {
         const unsubscribe = subscribeToGameGroups(
@@ -67,14 +91,23 @@ const GameGroupPage: React.FC = () => {
         }
     };
 
-    const handleDeleteGroup = async (groupId: string) => {
-        if (window.confirm('Möchten Sie diese Spielgruppe wirklich löschen?')) {
-            try {
-                await deleteGameGroup(groupId);
-            } catch (error) {
-                console.error('Error deleting game group:', error);
-                setError('Fehler beim Löschen der Spielgruppe');
-            }
+    const handleDeleteGroup = (groupId: string) => {
+        setGroupToDelete(groupId);
+        setIsDeleteDialogOpen(true);
+    };
+
+    const confirmDelete = async () => {
+        if (!groupToDelete) return;
+        
+        try {
+            await deleteGameGroup(groupToDelete);
+            setIsDeleteDialogOpen(false);
+            setGroupToDelete(null);
+        } catch (error) {
+            console.error('Error deleting game group:', error);
+            setError('Fehler beim Löschen der Spielgruppe');
+            setIsDeleteDialogOpen(false);
+            setGroupToDelete(null);
         }
     };
 
@@ -188,6 +221,48 @@ const GameGroupPage: React.FC = () => {
                     {error}
                 </Alert>
             </Snackbar>
+
+            {/* Delete Confirmation Dialog */}
+            <Dialog
+                open={isDeleteDialogOpen}
+                onClose={() => {
+                    setIsDeleteDialogOpen(false);
+                    setGroupToDelete(null);
+                }}
+            >
+                <DialogTitle>Spielgruppe löschen</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Möchten Sie diese Spielgruppe wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions sx={{
+                    px: isMobile ? 2 : 3,
+                    pb: isMobile ? 2 : 3,
+                    flexDirection: isMobile ? 'column' : 'row',
+                    gap: isMobile ? 1 : 2
+                }}>
+                    <Button
+                        onClick={() => {
+                            setIsDeleteDialogOpen(false);
+                            setGroupToDelete(null);
+                        }}
+                        variant="outlined"
+                        color="primary"
+                        fullWidth={isMobile}
+                    >
+                        Abbrechen
+                    </Button>
+                    <Button
+                        onClick={confirmDelete}
+                        color="error"
+                        variant="contained"
+                        fullWidth={isMobile}
+                    >
+                        Löschen
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Container>
     );
 };

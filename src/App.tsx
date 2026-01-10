@@ -212,11 +212,6 @@ function App() {
                                     <PlayersPage/>
                                 </PrivateRoute>
                             } />
-                            <Route path="/results" element={
-                                <PrivateRoute>
-                                    <GamePage />
-                                </PrivateRoute>
-                            } />
                             <Route path="/game-groups" element={
                                 <PrivateRoute>
                                     <GameGroupPage />
