@@ -96,6 +96,8 @@ const AuthStatusBar = memo(() => {
         }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <MobileNavigation />
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 {showBackButton && (
                     <IconButton
                         color="inherit"
@@ -112,8 +114,6 @@ const AuthStatusBar = memo(() => {
                         <ArrowBackIcon />
                     </IconButton>
                 )}
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 {currentUser ? (
                     <>
                         <IconButton
