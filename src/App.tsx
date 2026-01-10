@@ -14,7 +14,7 @@ import {
     Toolbar,
     Typography
 } from "@mui/material";
-import ResultTable from "./pages/result/resulttable/ResultTable";
+import GamePage from "./pages/result/resulttable/GamePage";
 import {emptyGame} from "./model/EmptyGame";
 import {Game} from "./model/Game";
 import {GameContext} from './model/context/GameContext';
@@ -214,7 +214,7 @@ function App() {
                             } />
                             <Route path="/results" element={
                                 <PrivateRoute>
-                                    <ResultTable />
+                                    <GamePage />
                                 </PrivateRoute>
                             } />
                             <Route path="/game-groups" element={
@@ -229,7 +229,7 @@ function App() {
                             } />
                             <Route path="/game-groups/:groupId/games/:gameId" element={
                                 <PrivateRoute>
-                                    <ResultTable />
+                                    <GamePage />
                                 </PrivateRoute>
                             } />
                         </Routes>

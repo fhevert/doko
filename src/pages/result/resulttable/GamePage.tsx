@@ -13,7 +13,7 @@ import RundenDialog from "../dialog/RundenDialog";
 import ErgebnisDialog from "../dialog/ErgebnisDialog";
 import {Player} from "../../../model/Player";
 
-function ResultTable() {
+function GamePage() {
     const { game, setGame } = useGameContext();
     const navigate = useNavigate();
     const [selectedRoundId, setSelectedRoundId] = useState<number | null>(null);
@@ -226,4 +226,4 @@ function ResultTable() {
     );
 }
 
-export default ResultTable;
+export default GamePage;
