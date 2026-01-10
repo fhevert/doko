@@ -4,7 +4,6 @@ import {Box, Button, Paper, Stack, Typography} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'; // Icon für den Geber
-import GroupsIcon from '@mui/icons-material/Groups'; // Icon für Spielerauswahl
 import {useNavigate, useParams} from 'react-router-dom';
 import {getResult} from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
@@ -12,7 +11,7 @@ import {ResultType, Round} from "../../../model/Round";
 import RundenDialog from "../dialog/RundenDialog";
 import ErgebnisDialog from "../dialog/ErgebnisDialog";
 import {Player} from "../../../model/Player";
-import {ref, get} from 'firebase/database';
+import {get, ref} from 'firebase/database';
 import {firebaseDB} from "../../../firebase/firebase-config";
 
 function GamePage() {
@@ -165,23 +164,7 @@ function GamePage() {
 
             {/* --- HEADER --- */}
             <Paper elevation={3} sx={{ borderRadius: 0, bgcolor: 'white', zIndex: 10, borderBottom: `3px solid ${headerBlue}` }}>
-                <Box sx={{ p: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<GroupsIcon />}
-                        onClick={() => navigate('/players')}
-                        sx={{
-                            textTransform: 'none',
-                            borderRadius: 2,
-                            ml: 1
-                        }}
-                    >
-                        Spieler
-                    </Button>
-                    <ErgebnisDialog />
-                </Box>
-                <Box sx={{ display: 'flex', width: '100%', px: padding, pb: 2 }}>
+                <Box sx={{ display: 'flex', width: '100%', px: padding, p: 2 }}>
                     {activePlayers.map((player) => (
                         <Box key={player.id} sx={{ flex: 1, textAlign: 'center', overflow: 'hidden' }}>
                             <Typography noWrap sx={{ fontSize: fontSizeName, color: 'text.secondary', fontWeight: 'bold' }}>
@@ -272,23 +255,52 @@ function GamePage() {
                 })}
             </Box>
 
-            {/* --- FIXIERTER BUTTON --- */}
+            {/* --- FIXIERTE BUTTONS --- */}
             <Box sx={{
-                position: 'fixed', bottom: 0, left: 0, right: 0, p: 2,
+                position: 'fixed', 
+                bottom: 0, 
+                left: 0, 
+                right: 0, 
+                p: 2,
                 background: 'linear-gradient(to top, #f5f5f5 70%, rgba(245,245,245,0) 100%)',
-                display: 'flex', justifyContent: 'center', zIndex: 20
+                display: 'flex', 
+                justifyContent: 'center', 
+                gap: 2,
+                zIndex: 20
             }}>
                 <Button
                     variant="contained"
                     onClick={handleNeueZeileClick}
                     startIcon={<AddIcon />}
                     sx={{
-                        borderRadius: '10px', px: 4, py: 1.5, width: '100%', maxWidth: '350px',
-                        fontWeight: '800', bgcolor: headerBlue, textTransform: 'none'
+                        borderRadius: '10px', 
+                        px: 4, 
+                        py: 1.5, 
+                        flex: 1,
+                        maxWidth: '350px',
+                        minWidth: '150px',
+                        fontWeight: '800', 
+                        bgcolor: headerBlue, 
+                        textTransform: 'none',
+                        '&:hover': {
+                            bgcolor: '#0d1b6b'
+                        }
                     }}
                 >
                     Nächste Runde
                 </Button>
+                <Box sx={{ 
+                    flex: 1,
+                    maxWidth: '350px',
+                    minWidth: '150px',
+                    '& .MuiButton-root': {
+                        width: '100%',
+                        height: '100%',
+                        minHeight: '48px'
+                    }
+                }}>
+                    <ErgebnisDialog />
+                </Box>
             </Box>
         </Box>
     );

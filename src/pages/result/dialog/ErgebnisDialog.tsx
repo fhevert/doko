@@ -45,13 +45,22 @@ function ErgebnisDialog() {
             <Button
                 variant="contained"
                 onClick={() => setOpen(true)}
-                sx={{ borderRadius: '20px'}}
+                startIcon={<EmojiEventsIcon />}
+                sx={{
+                    borderRadius: '10px',
+                    px: 4,
+                    py: 1.5,
+                    fontWeight: '800',
+                    bgcolor: '#1a237e',
+                    textTransform: 'none',
+                    '&:hover': {
+                        bgcolor: '#0d1b6b'
+                    },
+                    width: '100%',
+                    maxWidth: '350px'
+                }}
             >
-                {new Date(game.date).toLocaleDateString('de-DE', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
-                }) + ': ' + String.fromCharCode(216) + ' ' + game.averagePoints}
+                Ergebnis
             </Button>
 
             <Dialog
