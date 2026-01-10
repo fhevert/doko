@@ -107,6 +107,10 @@ function RundenDialog(parameters: { round: Round, open?: boolean, onClose?: () =
                                 variant="filled"
                                 value={parameters.round.roundPoints}
                                 onChange={handleValueChange('roundPoints')}
+                                onClick={(e) => {
+                                    const target = e.target as HTMLInputElement;
+                                    setTimeout(() => target.select(), 0);
+                                }}
                             />
                             <TextField
                                 label="Feigheit"
@@ -115,6 +119,10 @@ function RundenDialog(parameters: { round: Round, open?: boolean, onClose?: () =
                                 variant="filled"
                                 value={parameters.round.cowardicePoints}
                                 onChange={handleValueChange('cowardicePoints')}
+                                onClick={(e) => {
+                                    const target = e.target as HTMLInputElement;
+                                    setTimeout(() => target.select(), 0);
+                                }}
                             />
                         </Stack>
 
