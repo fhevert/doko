@@ -1,14 +1,14 @@
-import React, {useEffect, useState} from 'react';
-import {useNavigate, useParams} from 'react-router-dom';
-import {Box, Button, Card, CardContent, Container, Divider, Grid, Paper, Typography} from '@mui/material';
-import {Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis} from 'recharts';
-import {Game} from '../../model/Game';
-import {Round} from '../../model/Round';
-import {GameGroup} from '../../model/GameGroup';
-import {Player} from '../../model/Player';
-import {firebaseDB as db} from '../../firebase/firebase-config';
-import {onValue, ref} from 'firebase/database';
-import {ArrowBack} from '@mui/icons-material';
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { Box, Container, Typography, Paper, Grid, Card, CardContent, Divider, Button } from '@mui/material';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { Game } from '../../model/Game';
+import { Round } from '../../model/Round';
+import { GameGroup } from '../../model/GameGroup';
+import { Player } from '../../model/Player';
+import { auth, firebaseDB as db } from '../../firebase/firebase-config';
+import { ref, onValue } from 'firebase/database';
+import { ArrowBack } from '@mui/icons-material';
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8'];
 
@@ -265,12 +265,11 @@ const GroupStatisticsPage: React.FC = () => {
     );
   }
 
-  const gamesPlayedData = playerStats
-    .filter(stat => stat.gamesPlayed > 0)
-    .map(stat => ({
-      name: stat.name.split(' ')[0],
-      'Gespielte Spiele': stat.gamesPlayed
-    }));
+  const winLossData = playerStats.map(stat => ({
+    name: stat.name.split(' ')[0],
+    Gewonnen: stat.roundsWon || 0,
+    Verloren: stat.roundsLost || 0
+  }));
 
   const averagePointsData = playerStats
     .filter(stat => stat.gamesPlayed > 0)
@@ -356,28 +355,53 @@ const GroupStatisticsPage: React.FC = () => {
           ))}
         </Grid>
 
-        {/* Games Statistics */}
+        {/* Rounds Statistics */}
         <Grid container spacing={3} mt={2}>
-          {/* Games Played Chart */}
+          {/* Won Rounds Chart */}
           <Grid item xs={12} md={6}>
             <Paper elevation={3} sx={{ p: 2, height: '400px' }}>
               <Typography variant="h6" gutterBottom align="center">
-                Gespielte Spiele
+                Gewonnene Runden
               </Typography>
               <ResponsiveContainer width="100%" height="90%">
                 <BarChart
-                  data={gamesPlayedData}
+                  data={winLossData}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip
-                    formatter={(value: number | string | undefined) => [`${value} Spiele`, '']}
+                    formatter={(value: number | string | undefined) => [`${value} Runden`, '']}
                     labelFormatter={(label) => `Spieler: ${label}`}
                   />
                   <Legend />
-                  <Bar dataKey="Gespielte Spiele" name="Gespielte Spiele" fill="#2196f3" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Gewonnen" name="Gewonnene Runden" fill="#4caf50" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </Paper>
+          </Grid>
+
+          {/* Lost Rounds Chart */}
+          <Grid item xs={12} md={6}>
+            <Paper elevation={3} sx={{ p: 2, height: '400px' }}>
+              <Typography variant="h6" gutterBottom align="center">
+                Verlorene Runden
+              </Typography>
+              <ResponsiveContainer width="100%" height="90%">
+                <BarChart
+                  data={winLossData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip
+                    formatter={(value: number | string | undefined) => [`${value} Runden`, '']}
+                    labelFormatter={(label) => `Spieler: ${label}`}
+                  />
+                  <Legend />
+                  <Bar dataKey="Verloren" name="Verlorene Runden" fill="#f44336" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>
