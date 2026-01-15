@@ -61,7 +61,12 @@ const PlayerStatsCard: React.FC<PlayerStatsCardProps> = ({ player }) => (
             : 'N/A'
         } 
       />
-      
+
+        <StatItem
+            label="Gesamtpunkte"
+            value={player.totalPoints}
+        />
+
       <StatItem 
         label="Durchschnittl. Punkte/Spiel" 
         value={
