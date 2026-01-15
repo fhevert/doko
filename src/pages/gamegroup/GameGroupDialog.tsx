@@ -90,8 +90,13 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                 players: [...prev.players, newPlayer]
             }));
             
-            // Reset the selected user
-            setSelectedUser(null);
+            // Find the next available user who isn't already in the group
+            const nextUser = availableUsers.find(u => 
+                !formData.players.some(p => p.id === u.uid) && u.uid !== user.uid
+            );
+            
+            // Set the next user as selected
+            setSelectedUser(nextUser || null);
         }
     };
 
