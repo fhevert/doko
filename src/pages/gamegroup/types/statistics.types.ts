@@ -30,10 +30,15 @@ export interface PlayerStatsCardProps {
   player: PlayerStats;
 }
 
+export interface ChartSeries {
+  key: string;
+  name: string;
+  color: string;
+}
+
 export interface StatisticsChartProps {
   title: string;
   data: ChartData[];
-  dataKey: string;
-  color: string;
+  series: ChartSeries | ChartSeries[];
   formatter?: (value: number | string) => string;
 }

@@ -1,18 +1,18 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Container, Typography, Grid, Button, CircularProgress } from '@mui/material';
-import { ArrowBack } from '@mui/icons-material';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {useNavigate, useParams} from 'react-router-dom';
+import {Box, Button, CircularProgress, Container, Grid, Typography} from '@mui/material';
+import {ArrowBack} from '@mui/icons-material';
 
 // Firebase
-import { ref, onValue } from 'firebase/database';
-import { firebaseDB as db } from '../../firebase/firebase-config';
+import {onValue, ref} from 'firebase/database';
+import {firebaseDB as db} from '../../firebase/firebase-config';
 
 // Types
-import { GameGroup } from '../../model/GameGroup';
-import { PlayerStats, ChartData } from './types/statistics.types';
+import {GameGroup} from '../../model/GameGroup';
+import {ChartData, PlayerStats} from './types/statistics.types';
 
 // Utils
-import { calculatePlayerStats, processGroupData } from './utils/statistics.utils';
+import {calculatePlayerStats, processGroupData} from './utils/statistics.utils';
 
 // Components
 import PlayerStatsCard from './components/PlayerStatsCard';
@@ -139,14 +139,6 @@ const GroupStatisticsPage: React.FC = () => {
     <Container maxWidth="lg">
       <Box my={4}>
         <Box display="flex" alignItems="center" mb={4}>
-          <Button 
-            variant="outlined" 
-            onClick={handleBack}
-            startIcon={<ArrowBack />}
-            sx={{ mr: 2 }}
-          >
-            Zurück
-          </Button>
           <Typography variant="h4" component="h1">
             {group.name} - Statistiken
           </Typography>
@@ -163,24 +155,15 @@ const GroupStatisticsPage: React.FC = () => {
 
         {/* Charts Section */}
         <Grid container spacing={3} mt={2}>
-          {/* Won Rounds Chart */}
-          <Grid item xs={12} md={6}>
+          {/* Rounds Chart */}
+          <Grid item xs={12}>
             <StatisticsChart 
-              title="Gewonnene Runden"
+              title="Rundenstatistik"
               data={winLossData}
-              dataKey="Gewonnen"
-              color="#4caf50"
-              formatter={(value) => `${value} Runden`}
-            />
-          </Grid>
-
-          {/* Lost Rounds Chart */}
-          <Grid item xs={12} md={6}>
-            <StatisticsChart 
-              title="Verlorene Runden"
-              data={winLossData}
-              dataKey="Verloren"
-              color="#f44336"
+              series={[
+                { key: 'Gewonnen', name: 'Gewonnene Runden', color: '#4caf50' },
+                { key: 'Verloren', name: 'Verlorene Runden', color: '#f44336' }
+              ]}
               formatter={(value) => `${value} Runden`}
             />
           </Grid>
@@ -190,8 +173,11 @@ const GroupStatisticsPage: React.FC = () => {
             <StatisticsChart 
               title="Durchschnittliche Punkte pro Spiel"
               data={averagePointsData}
-              dataKey="Durchschnittliche Punkte"
-              color="#2196f3"
+              series={{
+                key: 'Durchschnittliche Punkte',
+                name: 'Durchschnittliche Punkte',
+                color: '#2196f3'
+              }}
               formatter={(value) => `${value} Punkte`}
             />
           </Grid>
