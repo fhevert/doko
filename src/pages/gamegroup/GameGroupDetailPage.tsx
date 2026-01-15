@@ -19,7 +19,7 @@ import {
     useTheme
 } from '@mui/material';
 import {useNavigate, useParams} from 'react-router-dom';
-import {Add as AddIcon, Delete as DeleteIcon, BarChart as BarChartIcon} from '@mui/icons-material';
+import {Add as AddIcon, BarChart as BarChartIcon, Delete as DeleteIcon} from '@mui/icons-material';
 import {GameGroup} from '../../model/GameGroup';
 import {GameContext} from '../../model/context/GameContext';
 import {Game} from '../../model/Game';
@@ -329,7 +329,7 @@ const GameGroupDetailPage: React.FC = () => {
                                 >
                                     <ListItemText
                                         primary={`Spiel am ${new Date(game.date).toLocaleDateString()}`}
-                                        secondary={`${game.players?.filter((p: any) => p.aktiv !== false).length || 0} Spieler • ${game.rounds?.length || 0} Runden`}
+                                        secondary={`${game.players?.length || 0} Spieler • ${game.rounds?.length || 0} Runden`}
                                     />
                                 </ListItem>
                                 {index < games.length - 1 && <Divider component="li" />}
