@@ -1,6 +1,6 @@
 import React from 'react';
-import { Card, CardContent, Typography, Divider, Box } from '@mui/material';
-import { PlayerStats } from '../types/statistics.types';
+import {Box, Card, CardContent, Divider, Typography} from '@mui/material';
+import {PlayerStats} from '../types/statistics.types';
 
 interface StatItemProps {
   label: string;
@@ -30,7 +30,12 @@ const PlayerStatsCard: React.FC<PlayerStatsCardProps> = ({ player }) => (
     <CardContent>
       <Typography variant="h6" gutterBottom>{player.name}</Typography>
       <Divider sx={{ mb: 2 }} />
-      
+
+        <StatItem
+            label="Spiele gespielt"
+            value={player.gamesPlayed}
+        />
+
       <StatItem 
         label="Runden gespielt" 
         value={player.roundsPlayed} 
