@@ -105,10 +105,12 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
     };
 
     const handleRemovePlayer = (id: string) => {
-        // Don't remove the player if they are the only active one
-        const activePlayers = formData.players.filter(p => p.aktiv);
-        if (activePlayers.length === 1 && activePlayers[0].id === id) {
-            return; // Don't remove the last active player
+        // Only check for active players if it's an existing group
+        if (group) {
+            const activePlayers = formData.players.filter(p => p.aktiv);
+            if (activePlayers.length === 1 && activePlayers[0].id === id) {
+                return; // Don't remove the last active player in an existing group
+            }
         }
 
         setFormData(prev => ({
