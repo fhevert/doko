@@ -279,12 +279,28 @@ export const MobileNavigation = () => {
                     }}
                   >
                     <ListItemText 
-                      primary={group.name || `Gruppe ${group.id.substring(0, 6)}`} 
-                      primaryTypographyProps={{
-                        fontWeight: location.pathname.includes(`/game-groups/${group.id}`) 
-                          ? 'bold' 
-                          : 'normal'
-                      }}
+                      primary={
+                        <Box 
+                          component="a"
+                          href={`/game-groups/${group.id}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/game-groups/${group.id}`);
+                            setIsOpen(false);
+                          }}
+                          sx={{
+                            color: 'inherit',
+                            textDecoration: 'none',
+                            '&:hover': {
+                              textDecoration: 'none',
+                            },
+                            cursor: 'pointer',
+                            fontWeight: 'normal'
+                          }}
+                        >
+                          {group.name || `Gruppe ${group.id.substring(0, 6)}`}
+                        </Box>
+                      }
                     />
                     {expandedGroups[group.id] ? <ExpandLess /> : <ExpandMore />}
                   </ListItemButton>
