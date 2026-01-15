@@ -281,8 +281,6 @@ export const MobileNavigation = () => {
                     <ListItemText 
                       primary={
                         <Box 
-                          component="a"
-                          href={`/game-groups/${group.id}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             navigate(`/game-groups/${group.id}`);
@@ -290,12 +288,10 @@ export const MobileNavigation = () => {
                           }}
                           sx={{
                             color: 'inherit',
-                            textDecoration: 'none',
+                            cursor: 'pointer',
                             '&:hover': {
                               textDecoration: 'none',
                             },
-                            cursor: 'pointer',
-                            fontWeight: 'normal'
                           }}
                         >
                           {group.name || `Gruppe ${group.id.substring(0, 6)}`}
