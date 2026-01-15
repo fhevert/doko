@@ -46,13 +46,20 @@ export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
       if (!round.results) return;
 
       const processResult = (playerId: string, result: number) => {
-        const points = result === 2 ? 1 : 0; // 1 = win (0 points), 2 = loss (1 point)
+        // result: 1 = winner, 2 = loser
+        const isWinner = result === 1;
+        const isLoser = result === 2;
+        
+        // Losers get the round points + cowardice points
+        const points = isLoser ? (round.roundPoints + round.cowardicePoints) : 0;
+        
         gameParticipants.add(playerId);
         allGameParticipants.add(playerId);
         
+        // Store points for this round
         gameRoundPoints.set(playerId, (gameRoundPoints.get(playerId) || 0) + points);
         
-        if (points === 0) {
+        if (isWinner) {
           roundWinners.add(playerId);
         }
         
@@ -61,8 +68,8 @@ export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
           statsMap.set(playerId, {
             ...playerStat,
             roundsPlayed: playerStat.roundsPlayed + 1,
-            roundsWon: playerStat.roundsWon + (points === 0 ? 1 : 0),
-            roundsLost: playerStat.roundsLost + (points > 0 ? 1 : 0),
+            roundsWon: playerStat.roundsWon + (isWinner ? 1 : 0),
+            roundsLost: playerStat.roundsLost + (isLoser ? 1 : 0),
             totalPoints: playerStat.totalPoints + points,
           });
         }
@@ -70,19 +77,31 @@ export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
         gamePoints.set(playerId, (gamePoints.get(playerId) || 0) + points);
       };
 
-      if (Array.isArray(round.results)) {
-        round.results.forEach((result: { key: string | number; value: number }) => {
-          if (result?.key !== undefined && result.value !== undefined) {
-            processResult(result.key.toString(), result.value);
-          }
-        });
-      } else if (round.results && typeof round.results === 'object') {
-        Object.entries(round.results).forEach(([playerId, result]) => {
-          if (typeof result === 'number') {
-            processResult(playerId, result);
-          }
-        });
-      }
+      // First, process all results to identify winners and losers
+      const roundResults = new Map<string, number>();
+      
+      const collectResults = (results: any) => {
+        if (Array.isArray(results)) {
+          results.forEach((result: { key: string | number; value: number }) => {
+            if (result?.key !== undefined && result.value !== undefined) {
+              roundResults.set(result.key.toString(), result.value);
+            }
+          });
+        } else if (results && typeof results === 'object') {
+          Object.entries(results).forEach(([playerId, result]) => {
+            if (typeof result === 'number') {
+              roundResults.set(playerId, result);
+            }
+          });
+        }
+      };
+      
+      collectResults(round.results);
+      
+      // Now process each result with the full context of all results
+      roundResults.forEach((result, playerId) => {
+        processResult(playerId, result);
+      });
     });
 
     // Determine game winners (players with minimum points)
