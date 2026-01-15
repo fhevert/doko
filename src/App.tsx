@@ -4,7 +4,7 @@ import {
     AppBar,
     Avatar,
     Box,
-    Button,
+    Button, CircularProgress,
     createTheme,
     CssBaseline,
     IconButton,
@@ -193,8 +193,17 @@ interface PrivateRouteProps {
 
 // Separate component for private routes
 const PrivateRoute: React.FC<PrivateRouteProps> = memo(({ children }) => {
-    const { currentUser } = useAuth();
-    return currentUser ? <>{children}</> : <Navigate to="/login" />; // Verwende <></> für fragment
+    const { currentUser, loading } = useAuth();
+    
+    if (loading) {
+        return (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <CircularProgress />
+            </Box>
+        );
+    }
+    
+    return currentUser ? <>{children}</> : <Navigate to="/login" replace />;
 });
 
 function App() {
@@ -250,7 +259,6 @@ function App() {
                                     <ProfilePage />
                                 </PrivateRoute>
                             } />
-                            <Route path="/" element={<Navigate to="/doko" replace />} />
                             <Route path="*" element={<div>404 Not Found</div>} />
                             <Route path="/players" element={
                                 <PrivateRoute>

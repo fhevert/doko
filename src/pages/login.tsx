@@ -1,16 +1,8 @@
-import React, { useState, FormEvent } from 'react';
-import {
-    TextField,
-    Button,
-    Container,
-    Typography,
-    Box,
-    Alert,
-    CircularProgress,
-} from '@mui/material';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
-import { useNavigate } from 'react-router-dom';
-import { auth } from "../firebase/firebase-config";
+import React, {FormEvent, useState} from 'react';
+import {Alert, Box, Button, Container, TextField, Typography,} from '@mui/material';
+import {createUserWithEmailAndPassword, signInWithEmailAndPassword} from 'firebase/auth';
+import {useNavigate} from 'react-router-dom';
+import {auth} from "../firebase/firebase-config";
 
 function Login() {
     const [email, setEmail] = useState<string>('');
@@ -31,7 +23,7 @@ function Login() {
         
         try {
             await signInWithEmailAndPassword(auth, email, password);
-            navigate('/doko');
+            navigate('/game-groups');
         } catch (err: any) {
             console.error('Login error:', err);
             setError('Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.');

@@ -7,6 +7,7 @@ import { createUserProfile, getUserProfile } from './UserService';
 // Define the context value type
 interface AuthContextType {
     currentUser: User | null;
+    loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,8 +31,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
+            setCurrentUser(user);
+            
             if (user) {
-                // Check if user profile exists, if not create one
                 try {
                     const userProfile = await getUserProfile(user.uid);
                     if (!userProfile) {
@@ -41,7 +43,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                     console.error('Error handling user profile:', error);
                 }
             }
-            setCurrentUser(user);
+            
             setLoading(false);
         });
 
@@ -50,6 +52,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
     const value: AuthContextType = {
         currentUser,
+        loading,
     };
 
     return (
