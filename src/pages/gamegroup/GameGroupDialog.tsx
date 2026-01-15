@@ -47,13 +47,6 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                 const users = await getAllUsers();
                 setAvailableUsers(users);
                 setError(null);
-                
-                // When creating a new group (group is null) and there are users available,
-                // automatically add the first user to the group
-                if (!group && users.length > 0) {
-                    const firstUser = users[0];
-                    handleAddPlayer(firstUser);
-                }
             } catch (err) {
                 console.error('Error loading users:', err);
                 setError('Fehler beim Laden der Benutzer');
