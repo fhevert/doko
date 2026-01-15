@@ -1,30 +1,24 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
+    Autocomplete,
+    Box,
     Button,
+    Checkbox,
     Dialog,
     DialogActions,
     DialogContent,
     DialogTitle,
-    TextField,
-    FormControl,
-    InputLabel,
-    Select,
-    MenuItem,
+    FormControlLabel,
+    IconButton,
     List,
     ListItem,
-    ListItemText,
     ListItemSecondaryAction,
-    IconButton,
-    Checkbox,
-    FormControlLabel,
-    Box,
-    Typography,
-    SelectChangeEvent,
-    Autocomplete
+    TextField,
+    Typography
 } from '@mui/material';
 import {Player} from '../../model/Player';
 import {GameGroup} from '../../model/GameGroup';
-import {Add as AddIcon, Delete as DeleteIcon, PersonAdd as PersonAddIcon} from '@mui/icons-material';
+import {Delete as DeleteIcon, PersonAdd as PersonAddIcon} from '@mui/icons-material';
 import {getAllUsers, UserProfile} from '../../firebase/UserService';
 
 type GameGroupFormData = Omit<GameGroup, 'id' | 'createdAt' | 'updatedAt' | 'games' | 'rounds'>;
@@ -106,6 +100,12 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
     };
 
     const handleRemovePlayer = (id: string) => {
+        // Don't remove the player if they are the only active one
+        const activePlayers = formData.players.filter(p => p.aktiv);
+        if (activePlayers.length === 1 && activePlayers[0].id === id) {
+            return; // Don't remove the last active player
+        }
+
         setFormData(prev => ({
             ...prev,
             players: prev.players.filter(player => player.id !== id)
@@ -224,7 +224,7 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                 <Button
                     onClick={handleSubmit}
                     variant="contained"
-                    disabled={!formData.name.trim() || formData.players.filter(p => p.aktiv).length < 2}
+                    disabled={!formData.name.trim() || formData.players.filter(p => p.aktiv).length < 1}
                 >
                     Speichern
                 </Button>
