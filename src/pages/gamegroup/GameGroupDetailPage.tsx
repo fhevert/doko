@@ -329,7 +329,7 @@ const GameGroupDetailPage: React.FC = () => {
                                 >
                                     <ListItemText
                                         primary={`Spiel am ${new Date(game.date).toLocaleDateString()}`}
-                                        secondary={`${game.players?.length || 0} Spieler • ${game.rounds?.length || 0} Runden`}
+                                        secondary={`${game.players?.filter((p: any) => p.aktiv !== false).length || 0} Spieler • ${game.rounds?.length || 0} Runden`}
                                     />
                                 </ListItem>
                                 {index < games.length - 1 && <Divider component="li" />}
