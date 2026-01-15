@@ -97,91 +97,70 @@ const GroupStatisticsPage: React.FC = () => {
     groupData.games.forEach(game => {
       if (!game.rounds || game.rounds.length === 0) return;
 
-      // Track points per player for this game
       const gamePoints = new Map<string, number>();
-      
-      // Track which players participated in this game
       const participants = new Set<string>();
       
-      // Process each round in the game
+      // Process each round to collect points and participants
       game.rounds.forEach((round: Round) => {
         if (!round.results) return;
 
         if (Array.isArray(round.results)) {
           round.results.forEach((result: any) => {
-            if (result && result.key && result.value !== undefined) {
+            if (result?.key !== undefined && result.value !== undefined) {
               const playerId = result.key.toString();
-              // 1 = win (0 points), 2 = loss (1 point)
-              const points = result.value === 2 ? 1 : 0;
-              gamePoints.set(
-                playerId,
-                (gamePoints.get(playerId) || 0) + points
-              );
+              const points = result.value === 2 ? 1 : 0; // 1 = win (0 points), 2 = loss (1 point)
+              gamePoints.set(playerId, (gamePoints.get(playerId) || 0) + points);
               participants.add(playerId);
             }
           });
         } else if (typeof round.results === 'object') {
           Object.entries(round.results).forEach(([playerId, result]) => {
-            // 1 = win (0 points), 2 = loss (1 point)
-            const points = result === 2 ? 1 : 0;
-            gamePoints.set(
-              playerId,
-              (gamePoints.get(playerId) || 0) + points
-            );
+            const points = result === 2 ? 1 : 0; // 1 = win (0 points), 2 = loss (1 point)
+            gamePoints.set(playerId, (gamePoints.get(playerId) || 0) + points);
             participants.add(playerId);
           });
         }
       });
-      
-      // Calculate average points for this game
-      let totalPoints = 0;
-      let participantCount = 0;
-      
-      participants.forEach(playerId => {
-        totalPoints += gamePoints.get(playerId) || 0;
-        participantCount++;
-      });
-      
-      const averagePoints = participantCount > 0 ? totalPoints / participantCount : 0;
-      
-      // Assign average points to non-participating players
-      groupData.players.forEach((player: Player) => {
-        if (!participants.has(player.id)) {
-          gamePoints.set(player.id, averagePoints);
-        }
-      });
 
-      // Update player stats based on game results
+      // Only process if there are participants
+      if (participants.size === 0) return;
+
+      // Calculate statistics for this game
       const sortedPlayers = Array.from(gamePoints.entries())
-        .sort((a, b) => a[1] - b[1]); // Sort by points ascending (lowest points first)
+        .filter(([playerId]) => participants.has(playerId))
+        .sort((a, b) => a[1] - b[1]); // Sort by points (ascending - lowest points win)
 
-      if (sortedPlayers.length > 0) {
-        const minPoints = sortedPlayers[0][1];
-        const winners = sortedPlayers.filter(([_, points]) => points === minPoints);
+      if (sortedPlayers.length === 0) return;
+
+      const minPoints = sortedPlayers[0][1];
+      const winners = sortedPlayers.filter(([_, points]) => points === minPoints);
+
+      // Update stats for participants
+      participants.forEach(playerId => {
+        const playerStat = statsMap.get(playerId);
+        if (!playerStat) return;
+
+        const isWinner = winners.some(([id]) => id === playerId);
+        const points = gamePoints.get(playerId) || 0;
         
-        gamePoints.forEach((points, playerId) => {
-          const playerStat = statsMap.get(playerId);
-          if (!playerStat) return;
-
-          const isWinner = winners.some(([id]) => id === playerId);
-          
-          statsMap.set(playerId, {
-            ...playerStat,
-            totalPoints: playerStat.totalPoints + points,
-            gamesPlayed: playerStat.gamesPlayed + 1,
-            wins: playerStat.wins + (isWinner ? 1 : 0),
-            losses: playerStat.losses + (isWinner ? 0 : 1)
-          });
+        statsMap.set(playerId, {
+          ...playerStat,
+          totalPoints: playerStat.totalPoints + points,
+          gamesPlayed: playerStat.gamesPlayed + 1,
+          wins: playerStat.wins + (isWinner ? 1 : 0),
+          losses: playerStat.losses + (isWinner ? 0 : 1)
         });
-      }
+      });
     });
 
     // Calculate averages
     statsMap.forEach((stat, playerId) => {
-      statsMap.set(playerId, {
-        ...stat,
-        averagePoints: stat.gamesPlayed > 0 ? stat.totalPoints / stat.gamesPlayed : 0
-      });
+      if (stat.gamesPlayed > 0) {
+        statsMap.set(playerId, {
+          ...stat,
+          averagePoints: stat.totalPoints / stat.gamesPlayed
+        });
+      }
     });
 
     setPlayerStats(Array.from(statsMap.values()));
@@ -405,20 +384,38 @@ const GroupStatisticsPage: React.FC = () => {
                 <BarChart
                   data={playerStats.map(stat => ({
                     name: stat.name.split(' ')[0],
-                    'Gesamte Spiele': totalGames,
                     'Teilgenommen': stat.gamesPlayed,
                     'Nicht teilgenommen': totalGames - stat.gamesPlayed
                   }))}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  stackOffset="expand"
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
+                  <YAxis domain={[0, totalGames]} />
+                  <Tooltip 
+                    formatter={(value: number | undefined, name: string | undefined) => {
+                      if (name === 'Teilgenommen') {
+                        return [`${value || 0} von ${totalGames} Spielen`];
+                      }
+                      return null;
+                    }}
+                    labelFormatter={(label) => label}
+                  />
                   <Legend />
-                  <Bar dataKey="Teilgenommen" stackId="a" fill="#4caf50" />
-                  <Bar dataKey="Nicht teilgenommen" stackId="a" fill="#e0e0e0" />
+                  <Bar 
+                    name="Teilgenommen" 
+                    dataKey="Teilgenommen" 
+                    stackId="a" 
+                    fill="#4caf50"
+                    label={false}
+                  />
+                  <Bar 
+                    name="Nicht teilgenommen" 
+                    dataKey="Nicht teilgenommen" 
+                    stackId="a" 
+                    fill="#e0e0e0"
+                    label={false}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>
