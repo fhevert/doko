@@ -255,7 +255,7 @@ export const MobileNavigation = () => {
                 },
               }}
             >
-              <ListItemText primary="Gruppen" />
+              <ListItemText primary="Meine Gruppen" />
             </ListItemButton>
 
             {loading ? (
