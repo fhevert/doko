@@ -65,9 +65,11 @@ export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
         
         const playerStat = statsMap.get(playerId);
         if (playerStat) {
+          // Only count rounds where the player has either won or lost (result is 1 or 2)
+          const hasPlayed = isWinner || isLoser;
           statsMap.set(playerId, {
             ...playerStat,
-            roundsPlayed: playerStat.roundsPlayed + 1,
+            roundsPlayed: playerStat.roundsPlayed + (hasPlayed ? 1 : 0),
             roundsWon: playerStat.roundsWon + (isWinner ? 1 : 0),
             roundsLost: playerStat.roundsLost + (isLoser ? 1 : 0),
             totalPoints: playerStat.totalPoints + points,
@@ -116,13 +118,19 @@ export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
     gameParticipants.forEach((playerId) => {
       const playerStat = statsMap.get(playerId);
       if (playerStat) {
-        const isWinner = gameWinners.includes(playerId);
-        statsMap.set(playerId, {
-          ...playerStat,
-          gamesPlayed: playerStat.gamesPlayed + 1,
-          gamesWon: playerStat.gamesWon + (isWinner ? 1 : 0),
-          gamesLost: playerStat.gamesLost + (isWinner ? 0 : 1),
-        });
+        // Check if player is active in this game
+        const playerInGame = game.players.find(p => p.id === playerId);
+        const isActiveInGame = playerInGame?.aktiv === true;
+        
+        if (isActiveInGame) {
+          const isWinner = gameWinners.includes(playerId);
+          statsMap.set(playerId, {
+            ...playerStat,
+            gamesPlayed: playerStat.gamesPlayed + 1,
+            gamesWon: playerStat.gamesWon + (isWinner ? 1 : 0),
+            gamesLost: playerStat.gamesLost + (isWinner ? 0 : 1),
+          });
+        }
       }
     });
   });
