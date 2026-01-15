@@ -16,10 +16,14 @@ interface PlayerStats {
   id: string;
   name: string;
   totalPoints: number;
+  roundsPlayed: number;
   gamesPlayed: number;
-  wins: number;
-  losses: number;
-  averagePoints: number;
+  gamesWon: number;
+  gamesLost: number;
+  roundsWon: number;
+  roundsLost: number;
+  averagePointsPerGame: number;
+  averagePointsPerRound: number;
 }
 
 const GroupStatisticsPage: React.FC = () => {
@@ -56,12 +60,16 @@ const GroupStatisticsPage: React.FC = () => {
             }));
         }
 
-        const processedGroup = {
+        const processedGroup: GameGroup = {
           ...groupData,
-          id: groupId,
+          id: groupId || '',
+          name: groupData.name || 'Unbenannte Gruppe',
           games: games,
-          players: groupData.players || []
-        } as GameGroup;
+          players: groupData.players || [],
+          createdBy: groupData.createdBy || '',
+          createdAt: groupData.createdAt || '',
+          updatedAt: groupData.updatedAt || new Date().toISOString()
+        };
 
         setGroup(processedGroup);
         calculateStats(processedGroup);
@@ -79,86 +87,148 @@ const GroupStatisticsPage: React.FC = () => {
     if (!groupData.players || !groupData.games) return;
 
     const statsMap = new Map<string, PlayerStats>();
+    const allGameParticipants = new Set<string>(); // Track all players who participated in any game
+    const allGameWinners = new Set<string>(); // Track all game winners across all games
 
     // Initialize player stats
     groupData.players.forEach((player: Player) => {
-      statsMap.set(player.id, {
-        id: player.id,
-        name: `${player.firstname} ${player.name}`,
-        totalPoints: 0,
-        gamesPlayed: 0,
-        wins: 0,
-        losses: 0,
-        averagePoints: 0
-      });
+      if (player) {
+        statsMap.set(player.id, {
+          id: player.id,
+          name: `${player.firstname || ''} ${player.name || ''}`.trim() || `Spieler ${player.id}`,
+          totalPoints: 0,
+          roundsPlayed: 0,
+          gamesPlayed: 0,
+          gamesWon: 0,
+          gamesLost: 0,
+          roundsWon: 0,
+          roundsLost: 0,
+          averagePointsPerGame: 0,
+          averagePointsPerRound: 0
+        });
+      }
     });
 
+    const gamePoints = new Map<string, number>(); // Track points per player across all games
+    
     // Process each game
     groupData.games.forEach(game => {
       if (!game.rounds || game.rounds.length === 0) return;
 
-      const gamePoints = new Map<string, number>();
-      const participants = new Set<string>();
+      const gameParticipants = new Set<string>();
+      const currentGameWinners = new Set<string>();
+      const currentGameLosers = new Set<string>();
+      const gameRoundPoints = new Map<string, number>(); // Points for current game only
       
-      // Process each round to collect points and participants
+      // Process each round to collect points and track round wins/losses
       game.rounds.forEach((round: Round) => {
         if (!round.results) return;
 
+        // Process round results
+        const processResult = (playerId: string, result: number) => {
+          const points = result === 2 ? 1 : 0; // 1 = win (0 points), 2 = loss (1 point)
+          gameParticipants.add(playerId);
+          allGameParticipants.add(playerId);
+          
+          // Update points for this game
+          gameRoundPoints.set(playerId, (gameRoundPoints.get(playerId) || 0) + points);
+          
+          // Track if player won or lost this round
+          if (points === 0) {
+            currentGameWinners.add(playerId);
+          } else {
+            currentGameLosers.add(playerId);
+          }
+          
+          // Update round statistics
+          const playerStat = statsMap.get(playerId);
+          if (playerStat) {
+            statsMap.set(playerId, {
+              ...playerStat,
+              roundsPlayed: playerStat.roundsPlayed + 1,
+              roundsWon: playerStat.roundsWon + (points === 0 ? 1 : 0),
+              roundsLost: playerStat.roundsLost + (points > 0 ? 1 : 0),
+              totalPoints: playerStat.totalPoints + points
+            });
+          }
+          
+          // Track points for this game
+          gamePoints.set(playerId, (gamePoints.get(playerId) || 0) + points);
+        };
+
         if (Array.isArray(round.results)) {
-          round.results.forEach((result: any) => {
+          round.results.forEach((result: { key: string | number, value: number }) => {
             if (result?.key !== undefined && result.value !== undefined) {
-              const playerId = result.key.toString();
-              const points = result.value === 2 ? 1 : 0; // 1 = win (0 points), 2 = loss (1 point)
-              gamePoints.set(playerId, (gamePoints.get(playerId) || 0) + points);
-              participants.add(playerId);
+              processResult(result.key.toString(), result.value);
             }
           });
-        } else if (typeof round.results === 'object') {
+        } else if (round.results && typeof round.results === 'object') {
           Object.entries(round.results).forEach(([playerId, result]) => {
-            const points = result === 2 ? 1 : 0; // 1 = win (0 points), 2 = loss (1 point)
-            gamePoints.set(playerId, (gamePoints.get(playerId) || 0) + points);
-            participants.add(playerId);
+            if (typeof result === 'number') {
+              processResult(playerId, result);
+            }
           });
         }
       });
-
-      // Only process if there are participants
-      if (participants.size === 0) return;
-
-      // Calculate statistics for this game
-      const sortedPlayers = Array.from(gamePoints.entries())
-        .filter(([playerId]) => participants.has(playerId))
-        .sort((a, b) => a[1] - b[1]); // Sort by points (ascending - lowest points win)
-
-      if (sortedPlayers.length === 0) return;
-
-      const minPoints = sortedPlayers[0][1];
-      const winners = sortedPlayers.filter(([_, points]) => points === minPoints);
-
-      // Update stats for participants
-      participants.forEach(playerId => {
+      
+      // After processing all rounds in a game, determine the game winner (player with most points in this game)
+      let minPoints = Infinity;
+      let gameWinners: string[] = [];
+      
+      gameRoundPoints.forEach((points, playerId) => {
+        if (points < minPoints) {
+          minPoints = points;
+          gameWinners = [playerId];
+        } else if (points === minPoints) {
+          gameWinners.push(playerId);
+        }
+      });
+      
+      // Add the winners to the global winners set
+      gameWinners.forEach(winner => allGameWinners.add(winner));
+      
+      // Update games played count for all participants
+      gameParticipants.forEach(playerId => {
         const playerStat = statsMap.get(playerId);
-        if (!playerStat) return;
-
-        const isWinner = winners.some(([id]) => id === playerId);
-        const points = gamePoints.get(playerId) || 0;
-        
-        statsMap.set(playerId, {
-          ...playerStat,
-          totalPoints: playerStat.totalPoints + points,
-          gamesPlayed: playerStat.gamesPlayed + 1,
-          wins: playerStat.wins + (isWinner ? 1 : 0),
-          losses: playerStat.losses + (isWinner ? 0 : 1)
-        });
+        if (playerStat) {
+          const isWinner = gameWinners.includes(playerId);
+          statsMap.set(playerId, {
+            ...playerStat,
+            gamesPlayed: playerStat.gamesPlayed + 1,
+            gamesWon: playerStat.gamesWon + (isWinner ? 1 : 0),
+            gamesLost: playerStat.gamesLost + (isWinner ? 0 : 1)
+          });
+        }
       });
     });
 
+    // After processing all games, update player statistics
+    Array.from(allGameParticipants).forEach(playerId => {
+      const playerStat = statsMap.get(playerId);
+      if (playerStat) {
+        const totalPoints = playerStat.totalPoints;
+        const gamesPlayed = playerStat.gamesPlayed;
+        const roundsPlayed = playerStat.roundsPlayed;
+        const roundsWon = playerStat.roundsWon;
+        const roundsLost = playerStat.roundsLost;
+        statsMap.set(playerId, {
+          ...playerStat,
+          roundsPlayed,
+          roundsWon,
+          roundsLost,
+          averagePointsPerGame: gamesPlayed > 0 ? totalPoints / gamesPlayed : 0,
+          averagePointsPerRound: roundsPlayed > 0 ? totalPoints / roundsPlayed : 0
+        });
+      }
+    });
+    
     // Calculate averages
     statsMap.forEach((stat, playerId) => {
-      if (stat.gamesPlayed > 0) {
+      if (stat.roundsPlayed > 0) {
         statsMap.set(playerId, {
           ...stat,
-          averagePoints: stat.totalPoints / stat.gamesPlayed
+          averagePointsPerRound: stat.totalPoints / stat.roundsPlayed,
+          averagePointsPerGame: stat.gamesPlayed > 0 ? stat.totalPoints / stat.gamesPlayed : 0
         });
       }
     });
@@ -197,18 +267,18 @@ const GroupStatisticsPage: React.FC = () => {
 
   const winLossData = playerStats.map(stat => ({
     name: stat.name.split(' ')[0],
-    Gewonnen: stat.wins,
-    Verloren: stat.losses
+    Gewonnen: stat.roundsWon || 0,
+    Verloren: stat.roundsLost || 0
   }));
 
   const averagePointsData = playerStats
     .filter(stat => stat.gamesPlayed > 0)
     .map(stat => ({
       name: stat.name.split(' ')[0],
-      'Durchschnittliche Punkte': stat.averagePoints.toFixed(2)
+      'Durchschnittliche Punkte': parseFloat(stat.averagePointsPerGame.toFixed(2))
     }));
 
-  const totalGames = playerStats.reduce((max, stat) => Math.max(max, stat.gamesPlayed), 0);
+  const totalRounds = playerStats.reduce((sum, stat) => sum + stat.roundsPlayed, 0);
 
   return (
     <Container maxWidth="lg">
@@ -223,13 +293,13 @@ const GroupStatisticsPage: React.FC = () => {
             Zurück
           </Button>
           <Typography variant="h4" component="h1">
-            {group.name} - Statistiken
+            {group?.name || 'Gruppe'} - Statistiken
           </Typography>
         </Box>
 
         <Grid container spacing={3}>
           {/* Player Stats Cards */}
-          {playerStats.map((stat, index) => (
+          {playerStats.map((stat) => (
             <Grid item xs={12} sm={6} md={4} key={stat.id}>
               <Card elevation={3}>
                 <CardContent>
@@ -237,39 +307,46 @@ const GroupStatisticsPage: React.FC = () => {
                   <Divider sx={{ mb: 2 }} />
                   
                   <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2">Spiele gespielt:</Typography>
+                    <Typography variant="body2">Runden gespielt:</Typography>
                     <Typography variant="body2" fontWeight="bold">
-                      {stat.gamesPlayed} / {totalGames}
+                      {stat.roundsPlayed}
                     </Typography>
                   </Box>
                   
                   <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2">Gewonnen:</Typography>
+                    <Typography variant="body2">Runden gewonnen:</Typography>
                     <Typography variant="body2" color="success.main" fontWeight="bold">
-                      {stat.wins}
+                      {stat.roundsWon || 0}
                     </Typography>
                   </Box>
                   
                   <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2">Verloren:</Typography>
+                    <Typography variant="body2">Runden verloren:</Typography>
                     <Typography variant="body2" color="error.main" fontWeight="bold">
-                      {stat.losses}
+                      {stat.roundsLost || 0}
                     </Typography>
                   </Box>
                   
                   <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2">Gewinnrate:</Typography>
+                    <Typography variant="body2">Gewinnrate (Runden):</Typography>
                     <Typography variant="body2" fontWeight="bold">
-                      {stat.gamesPlayed > 0 
-                        ? `${((stat.wins / stat.gamesPlayed) * 100).toFixed(1)}%` 
+                      {stat.roundsPlayed > 0 
+                        ? `${((stat.roundsWon / stat.roundsPlayed) * 100).toFixed(1)}%` 
                         : 'N/A'}
                     </Typography>
                   </Box>
                   
-                  <Box display="flex" justifyContent="space-between">
-                    <Typography variant="body2">Durchschnittliche Punkte:</Typography>
+                  <Box display="flex" justifyContent="space-between" mb={1}>
+                    <Typography variant="body2">Durchschnittl. Punkte/Spiel:</Typography>
                     <Typography variant="body2" fontWeight="bold">
-                      {stat.averagePoints.toFixed(2)}
+                      {stat.gamesPlayed > 0 ? (stat.totalPoints / stat.gamesPlayed).toFixed(2) : 'N/A'}
+                    </Typography>
+                  </Box>
+                  
+                  <Box display="flex" justifyContent="space-between">
+                    <Typography variant="body2">Durchschnittl. Punkte/Runde:</Typography>
+                    <Typography variant="body2" fontWeight="bold">
+                      {stat.roundsPlayed > 0 ? stat.averagePointsPerRound.toFixed(2) : 'N/A'}
                     </Typography>
                   </Box>
                 </CardContent>
@@ -278,13 +355,13 @@ const GroupStatisticsPage: React.FC = () => {
           ))}
         </Grid>
 
-        {/* Charts Section */}
+        {/* Rounds Statistics */}
         <Grid container spacing={3} mt={2}>
-          {/* Win/Loss Chart */}
+          {/* Rounds Won/Lost Chart */}
           <Grid item xs={12} md={6}>
             <Paper elevation={3} sx={{ p: 2, height: '400px' }}>
               <Typography variant="h6" gutterBottom align="center">
-                Gewonnen vs. Verloren
+                Gewonnene vs. Verlorene Runden
               </Typography>
               <ResponsiveContainer width="100%" height="90%">
                 <BarChart
@@ -294,10 +371,16 @@ const GroupStatisticsPage: React.FC = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip
+                    formatter={(value: number | undefined, name: string | undefined) =>
+                      name === 'Gewonnen'
+                        ? [`${value || 0} gewonnene Runden`, 'Gewonnen']
+                        : [`${value || 0} verlorene Runden`, 'Verloren']
+                    }
+                  />
                   <Legend />
-                  <Bar dataKey="Gewonnen" fill="#4caf50" />
-                  <Bar dataKey="Verloren" fill="#f44336" />
+                  <Bar dataKey="Gewonnen" name="Gewonnene Runden" fill="#4caf50" />
+                  <Bar dataKey="Verloren" name="Verlorene Runden" fill="#f44336" />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>
@@ -317,11 +400,15 @@ const GroupStatisticsPage: React.FC = () => {
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
-                  <Tooltip />
+                  <Tooltip
+                    formatter={(value: number | string | undefined) => [`${value ?? 0} Punkte`, 'Durchschnitt']}
+                    labelFormatter={(label) => `Spieler: ${label}`}
+                  />
                   <Legend />
-                  <Bar 
-                    dataKey="Durchschnittliche Punkte" 
-                    fill="#2196f3" 
+                  <Bar
+                    dataKey="Durchschnittliche Punkte"
+                    name="Durchschnittliche Punkte pro Spiel"
+                    fill="#2196f3"
                     radius={[4, 4, 0, 0]}
                   />
                 </BarChart>
@@ -329,93 +416,37 @@ const GroupStatisticsPage: React.FC = () => {
             </Paper>
           </Grid>
 
-          {/* Win/Loss Distribution Pie Chart */}
-          <Grid item xs={12} md={6}>
-            <Paper elevation={3} sx={{ p: 2, height: '400px' }}>
+          {/* Rounds Distribution Chart */}
+          <Grid item xs={12}>
+            <Paper elevation={3} sx={{ p: 2, height: '500px' }}>
               <Typography variant="h6" gutterBottom align="center">
-                Gewinnverteilung
-              </Typography>
-              <ResponsiveContainer width="100%" height="90%">
-                <PieChart>
-                  <Pie
-                    data={playerStats
-                      .filter(stat => stat.wins > 0)
-                      .map(stat => ({
-                        name: stat.name.split(' ')[0],
-                        value: stat.wins
-                      }))}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={120}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => 
-                      `${name}: ${(percent ? percent * 100 : 0).toFixed(0)}%`
-                    }
-                  >
-                    {playerStats
-                      .filter(stat => stat.wins > 0)
-                      .map((_, index) => (
-                        <Cell 
-                          key={`cell-${index}`} 
-                          fill={COLORS[index % COLORS.length]} 
-                        />
-                      ))
-                    }
-                  </Pie>
-                  <Tooltip formatter={(value, name, props) => [
-                    `${props.payload.name}: ${value} Siege`,
-                    'Anzahl Siege'
-                  ]} />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            </Paper>
-          </Grid>
-
-          {/* Games Played Chart */}
-          <Grid item xs={12} md={6}>
-            <Paper elevation={3} sx={{ p: 2, height: '400px' }}>
-              <Typography variant="h6" gutterBottom align="center">
-                Teilnahme an Spielen
+                Verteilung der Runden
               </Typography>
               <ResponsiveContainer width="100%" height="90%">
                 <BarChart
                   data={playerStats.map(stat => ({
                     name: stat.name.split(' ')[0],
-                    'Teilgenommen': stat.gamesPlayed,
-                    'Nicht teilgenommen': totalGames - stat.gamesPlayed
+                    'Gewonnen': stat.roundsWon,
+                    'Verloren': stat.roundsLost,
+                    'Gesamt': stat.roundsPlayed
                   }))}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
-                  <YAxis domain={[0, totalGames]} />
-                  <Tooltip 
+                  <YAxis />
+                  <Tooltip
                     formatter={(value: number | undefined, name: string | undefined) => {
-                      if (name === 'Teilgenommen') {
-                        return [`${value || 0} von ${totalGames} Spielen`];
+                      if (value === undefined) return [''].filter(Boolean) as [string];
+                      if (name === 'Gesamt') {
+                        return [`${value} Runden insgesamt`];
                       }
-                      return null;
+                      return [`${value} ${name?.toLowerCase() ?? ''}e Runden`];
                     }}
-                    labelFormatter={(label) => label}
                   />
                   <Legend />
-                  <Bar 
-                    name="Teilgenommen" 
-                    dataKey="Teilgenommen" 
-                    stackId="a" 
-                    fill="#4caf50"
-                    label={false}
-                  />
-                  <Bar 
-                    name="Nicht teilgenommen" 
-                    dataKey="Nicht teilgenommen" 
-                    stackId="a" 
-                    fill="#e0e0e0"
-                    label={false}
-                  />
+                  <Bar dataKey="Gewonnen" name="Gewonnene Runden" stackId="a" fill="#4caf50" />
+                  <Bar dataKey="Verloren" name="Verlorene Runden" stackId="a" fill="#f44336" />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>
