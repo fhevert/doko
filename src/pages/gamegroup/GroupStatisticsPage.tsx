@@ -265,10 +265,9 @@ const GroupStatisticsPage: React.FC = () => {
     );
   }
 
-  const winLossData = playerStats.map(stat => ({
+  const gamesPlayedData = playerStats.map(stat => ({
     name: stat.name.split(' ')[0],
-    Gewonnen: stat.roundsWon || 0,
-    Verloren: stat.roundsLost || 0
+    'Gespielte Spiele': stat.gamesPlayed || 0
   }));
 
   const averagePointsData = playerStats
@@ -314,24 +313,24 @@ const GroupStatisticsPage: React.FC = () => {
                   </Box>
                   
                   <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2">Runden gewonnen:</Typography>
-                    <Typography variant="body2" color="success.main" fontWeight="bold">
-                      {stat.roundsWon || 0}
-                    </Typography>
-                  </Box>
-                  
-                  <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2">Runden verloren:</Typography>
-                    <Typography variant="body2" color="error.main" fontWeight="bold">
-                      {stat.roundsLost || 0}
-                    </Typography>
-                  </Box>
-                  
-                  <Box display="flex" justifyContent="space-between" mb={1}>
-                    <Typography variant="body2">Gewinnrate (Runden):</Typography>
+                    <Typography variant="body2">Gespielte Spiele:</Typography>
                     <Typography variant="body2" fontWeight="bold">
-                      {stat.roundsPlayed > 0 
-                        ? `${((stat.roundsWon / stat.roundsPlayed) * 100).toFixed(1)}%` 
+                      {stat.gamesPlayed}
+                    </Typography>
+                  </Box>
+                  
+                  <Box display="flex" justifyContent="space-between" mb={1}>
+                    <Typography variant="body2">Gewonnene Spiele:</Typography>
+                    <Typography variant="body2" color="success.main" fontWeight="bold">
+                      {stat.gamesWon || 0}
+                    </Typography>
+                  </Box>
+                  
+                  <Box display="flex" justifyContent="space-between" mb={1}>
+                    <Typography variant="body2">Gewinnrate (Spiele):</Typography>
+                    <Typography variant="body2" fontWeight="bold">
+                      {stat.gamesPlayed > 0 
+                        ? `${((stat.gamesWon / stat.gamesPlayed) * 100).toFixed(1)}%` 
                         : 'N/A'}
                     </Typography>
                   </Box>
@@ -355,53 +354,28 @@ const GroupStatisticsPage: React.FC = () => {
           ))}
         </Grid>
 
-        {/* Rounds Statistics */}
+        {/* Games Played Statistics */}
         <Grid container spacing={3} mt={2}>
-          {/* Won Rounds Chart */}
+          {/* Games Played Chart */}
           <Grid item xs={12} md={6}>
             <Paper elevation={3} sx={{ p: 2, height: '400px' }}>
               <Typography variant="h6" gutterBottom align="center">
-                Gewonnene Runden
+                Gespielte Spiele
               </Typography>
               <ResponsiveContainer width="100%" height="90%">
                 <BarChart
-                  data={winLossData}
+                  data={gamesPlayedData}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip
-                    formatter={(value: number | string | undefined) => [`${value} Runden`, '']}
+                    formatter={(value: number | string | undefined) => [`${value} Spiele`, '']}
                     labelFormatter={(label) => `Spieler: ${label}`}
                   />
                   <Legend />
-                  <Bar dataKey="Gewonnen" name="Gewonnene Runden" fill="#4caf50" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </Paper>
-          </Grid>
-
-          {/* Lost Rounds Chart */}
-          <Grid item xs={12} md={6}>
-            <Paper elevation={3} sx={{ p: 2, height: '400px' }}>
-              <Typography variant="h6" gutterBottom align="center">
-                Verlorene Runden
-              </Typography>
-              <ResponsiveContainer width="100%" height="90%">
-                <BarChart
-                  data={winLossData}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip
-                    formatter={(value: number | string | undefined) => [`${value} Runden`, '']}
-                    labelFormatter={(label) => `Spieler: ${label}`}
-                  />
-                  <Legend />
-                  <Bar dataKey="Verloren" name="Verlorene Runden" fill="#f44336" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Gespielte Spiele" name="Gespielte Spiele" fill="#2196f3" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </Paper>
