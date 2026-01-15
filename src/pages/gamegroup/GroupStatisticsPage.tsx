@@ -136,16 +136,16 @@ const GroupStatisticsPage: React.FC = () => {
   const totalRounds = playerStats.reduce((sum, stat) => sum + stat.roundsPlayed, 0);
 
   return (
-    <Container maxWidth="lg">
-      <Box my={4}>
-        <Box display="flex" alignItems="center" mb={4}>
-          <Typography variant="h4" component="h1">
+    <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2 } }}>
+      <Box my={{ xs: 2, sm: 4 }}>
+        <Box mb={{ xs: 2, sm: 4 }}>
+          <Typography variant="h4" component="h1" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
             {group.name} - Statistiken
           </Typography>
         </Box>
 
         {/* Player Stats Grid */}
-        <Grid container spacing={3}>
+        <Grid container spacing={{ xs: 2, sm: 3 }}>
           {playerStats.map((stat) => (
             <Grid item xs={12} sm={6} md={4} key={stat.id}>
               <PlayerStatsCard player={stat} />
@@ -154,7 +154,7 @@ const GroupStatisticsPage: React.FC = () => {
         </Grid>
 
         {/* Charts Section */}
-        <Grid container spacing={3} mt={2}>
+        <Grid container spacing={{ xs: 2, sm: 3 }} mt={{ xs: 2, sm: 3 }}>
           {/* Rounds Chart */}
           <Grid item xs={12}>
             <StatisticsChart 
@@ -184,7 +184,7 @@ const GroupStatisticsPage: React.FC = () => {
         </Grid>
 
         {/* Summary */}
-        <Box mt={4} textAlign="center">
+        <Box mt={{ xs: 3, sm: 4 }} textAlign="center">
           <Typography variant="body2" color="text.secondary">
             Insgesamt {totalRounds} Runden in {group.games?.length || 0} Spielen gespielt
           </Typography>
