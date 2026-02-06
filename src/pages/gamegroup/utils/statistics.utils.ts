@@ -1,7 +1,7 @@
-import { GameGroup } from '../../../model/GameGroup';
-import { Game } from '../../../model/Game';
-import { Round } from '../../../model/Round';
-import { PlayerStats } from '../types/statistics.types';
+import {GameGroup} from '../../../model/GameGroup';
+import {Game} from '../../../model/Game';
+import {Round} from '../../../model/Round';
+import {PlayerStats} from '../types/statistics.types';
 
 export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
   if (!groupData.players?.length || !groupData.games?.length) {
@@ -49,9 +49,15 @@ export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
         // result: 1 = winner, 2 = loser
         const isWinner = result === 1;
         const isLoser = result === 2;
-        
+
         // Losers get the round points + cowardice points
-        const points = isLoser ? (round.roundPoints + round.cowardicePoints) : 0;
+        let points = 0;
+        if (isLoser){
+          points = round.roundPoints * round.multiplier;
+        }else if (isWinner){
+          points = round.cowardicePoints * round.multiplier;
+        }
+
         
         gameParticipants.add(playerId);
         allGameParticipants.add(playerId);
