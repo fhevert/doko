@@ -21,6 +21,7 @@ const initializePlayerStats = (players: any[]): Map<string, PlayerStats> => {
       roundsLost: 0,
       averagePointsPerGame: 0,
       averagePointsPerRound: 0,
+      cashShare: 0,
     });
   });
   
@@ -167,17 +168,20 @@ export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
   });
 
   // Calculate final averages
+  const totalGroupGames = groupData.games.length;
+  const groupGameTotal = totalGroupGames * 5;
+  
   return Array.from(statsMap.values()).map((stat) => {
     const avgPointsPerGame = stat.gamesPlayed > 0 ? Math.round((stat.totalPoints / stat.gamesPlayed) * 10) / 10 : 0;
     const avgPointsPerRound = stat.roundsPlayed > 0 ? Math.round((stat.totalPoints / stat.roundsPlayed) * 10) / 10 : 0;
-    const winRate = stat.gamesPlayed > 0 ? (stat.gamesWon / stat.gamesPlayed) * 100 : 0;
+    const cashShare = groupGameTotal + (stat.totalPoints * 0.1);
     
     return {
       ...stat,
       totalPoints: Math.round(stat.totalPoints * 10) / 10, // Round to 1 decimal place
       averagePointsPerGame: avgPointsPerGame,
       averagePointsPerRound: avgPointsPerRound,
-      winRate: Math.round(winRate * 10) / 10, // Round to 1 decimal place
+      cashShare: Math.round(cashShare * 100) / 100, // Round to 2 decimal places for money
     };
   });
 };

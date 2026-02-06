@@ -13,6 +13,7 @@ export interface PlayerStats {
   roundsLost: number;
   averagePointsPerGame: number;
   averagePointsPerRound: number;
+  cashShare: number;
 }
 
 export interface ChartData {

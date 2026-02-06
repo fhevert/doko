@@ -67,7 +67,12 @@ const PlayerStatsCard: React.FC<PlayerStatsCardProps> = ({ player }) => (
             value={player.totalPoints}
         />
 
-      <StatItem 
+        <StatItem
+            label="Anteil an der Kasse"
+            value={`${player.cashShare.toFixed(2)} €`}
+        />
+
+        <StatItem
         label="Durchschnittl. Punkte/Spiel" 
         value={
           player.gamesPlayed > 0 
