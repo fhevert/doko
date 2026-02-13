@@ -1,214 +1,453 @@
 import {GameGroup} from '../../../model/GameGroup';
 import {Game} from '../../../model/Game';
-import {Round} from '../../../model/Round';
 import {PlayerStats} from '../types/statistics.types';
 
-const initializePlayerStats = (players: any[]): Map<string, PlayerStats> => {
-  const statsMap = new Map<string, PlayerStats>();
-  
-  players.forEach((player) => {
-    if (!player) return;
-    
-    statsMap.set(player.id, {
-      id: player.id,
-      name: `${player.firstname || ''} ${player.name || ''}`.trim() || `Spieler ${player.id}`,
-      totalPoints: 0,
-      roundsPlayed: 0,
-      gamesPlayed: 0,
-      gamesWon: 0,
-      gamesLost: 0,
-      roundsWon: 0,
-      roundsLost: 0,
-      averagePointsPerGame: 0,
-      averagePointsPerRound: 0,
-      cashShare: 0,
+const PLAYER_RESULT = {
+  WINNER: 1,
+  LOSER: 2,
+} as const;
+
+// Hilfsfunktionen
+const getPlayerName = (player: any): string => {
+  return `${player.firstname || ''} ${player.name || ''}`.trim() || `Spieler ${player.id}`;
+};
+
+const normalizeRoundResults = (results: any): Map<string, number> => {
+  const normalizedResults = new Map<string, number>();
+
+  if (Array.isArray(results)) {
+    results.forEach((result: { key: string | number; value: number }) => {
+      if (result?.key !== undefined && result.value !== undefined) {
+        normalizedResults.set(result.key.toString(), result.value);
+      }
+    });
+  } else if (results && typeof results === 'object') {
+    Object.entries(results).forEach(([playerId, result]) => {
+      if (typeof result === 'number') {
+        normalizedResults.set(playerId, result);
+      }
+    });
+  }
+
+  return normalizedResults;
+};
+
+const isPlayerActiveInGame = (game: Game, playerId: string): boolean => {
+  const playerInGame = game.players.find(p => p.id === playerId);
+  return playerInGame?.aktiv === true;
+};
+
+// Unabhängige Statistik-Methoden
+export const calculateTotalPoints = (groupData: GameGroup): Map<string, number> => {
+  const pointsMap = new Map<string, number>();
+
+  if (!groupData.players?.length || !groupData.games?.length) {
+    return pointsMap;
+  }
+
+  // Initialisiere mit 0 für alle Spieler
+  groupData.players.forEach(player => {
+    if (player) pointsMap.set(player.id, 0);
+  });
+
+  groupData.games.forEach(game => {
+    if (!game.rounds?.length) return;
+
+    const gameRoundPoints = new Map<string, number>();
+
+    game.rounds.forEach(round => {
+      if (!round.results) return;
+
+      const normalizedResults = normalizeRoundResults(round.results);
+
+      normalizedResults.forEach((result, playerId) => {
+        if (isPlayerActiveInGame(game, playerId)){
+          let points = 0;
+
+          if (result === PLAYER_RESULT.LOSER) {
+            points = round.roundPoints * round.multiplier;
+          } else if (result === PLAYER_RESULT.WINNER) {
+            points = round.cowardicePoints * round.multiplier;
+          }
+
+          gameRoundPoints.set(playerId, (gameRoundPoints.get(playerId) || 0) + points);
+        }
+      });
+    });
+
+    // Addiere Punkte für aktive Spieler
+    gameRoundPoints.forEach((points, playerId) => {
+      if (isPlayerActiveInGame(game, playerId)) {
+        pointsMap.set(playerId, (pointsMap.get(playerId) || 0) + points);
+      }
+    });
+
+    // Durchschnittspunkte für abwesende Spieler
+    const participatingPlayers = Array.from(gameRoundPoints.keys());
+    const totalGamePoints = Array.from(gameRoundPoints.values()).reduce((sum, points) => sum + points, 0);
+    const averageGamePoints = participatingPlayers.length > 0 ? totalGamePoints / participatingPlayers.length : 0;
+
+    groupData.players.forEach(player => {
+      if (player && !isPlayerActiveInGame(game, player.id)) {
+        pointsMap.set(player.id, (pointsMap.get(player.id) || 0) + averageGamePoints);
+      }
     });
   });
-  
-  return statsMap;
+
+  return pointsMap;
 };
 
-const processRoundResults = (round: Round, gameParticipants: Set<string>, gameRoundPoints: Map<string, number>, statsMap: Map<string, PlayerStats>) => {
-  if (!round.results) return;
+export const calculateRoundsPlayed = (groupData: GameGroup): Map<string, number> => {
+  const roundsMap = new Map<string, number>();
 
-  const processResult = (playerId: string, result: number) => {
-    const isWinner = result === 1;
-    const isLoser = result === 2;
+  if (!groupData.players?.length || !groupData.games?.length) {
+    return roundsMap;
+  }
 
-    let points = 0;
-    if (isLoser) {
-      points = round.roundPoints * round.multiplier;
-    } else if (isWinner) {
-      points = round.cowardicePoints * round.multiplier;
-    }
-
-    gameParticipants.add(playerId);
-    gameRoundPoints.set(playerId, (gameRoundPoints.get(playerId) || 0) + points);
-    
-    const playerStat = statsMap.get(playerId);
-    if (playerStat) {
-      const hasPlayed = isWinner || isLoser;
-      statsMap.set(playerId, {
-        ...playerStat,
-        roundsPlayed: playerStat.roundsPlayed + (hasPlayed ? 1 : 0),
-        roundsWon: playerStat.roundsWon + (isWinner ? 1 : 0),
-        roundsLost: playerStat.roundsLost + (isLoser ? 1 : 0),
-        totalPoints: playerStat.totalPoints + points,
-      });
-    }
-  };
-
-  const roundResults = new Map<string, number>();
-  
-  const collectResults = (results: any) => {
-    if (Array.isArray(results)) {
-      results.forEach((result: { key: string | number; value: number }) => {
-        if (result?.key !== undefined && result.value !== undefined) {
-          roundResults.set(result.key.toString(), result.value);
-        }
-      });
-    } else if (results && typeof results === 'object') {
-      Object.entries(results).forEach(([playerId, result]) => {
-        if (typeof result === 'number') {
-          roundResults.set(playerId, result);
-        }
-      });
-    }
-  };
-  
-  collectResults(round.results);
-  
-  roundResults.forEach((result, playerId) => {
-    processResult(playerId, result);
+  // Initialisiere mit 0 für alle Spieler
+  groupData.players.forEach(player => {
+    if (player) roundsMap.set(player.id, 0);
   });
+
+  groupData.games.forEach(game => {
+    if (!game.rounds?.length) return;
+
+    game.rounds.forEach(round => {
+      if (!round.results) return;
+
+      const normalizedResults = normalizeRoundResults(round.results);
+
+      normalizedResults.forEach((result, playerId) => {
+        if (result === PLAYER_RESULT.WINNER || result === PLAYER_RESULT.LOSER) {
+          roundsMap.set(playerId, (roundsMap.get(playerId) || 0) + 1);
+        }
+      });
+    });
+  });
+
+  return roundsMap;
 };
 
-const determineGameWinners = (gameRoundPoints: Map<string, number>): string[] => {
-  return Array.from(gameRoundPoints.entries())
-    .sort((a, b) => a[1] - b[1])
-    .filter(([_playerId, points], _index, arr) => points === arr[0][1])
-    .map(([playerId]) => playerId);
+export const calculateRoundsWon = (groupData: GameGroup): Map<string, number> => {
+  const winsMap = new Map<string, number>();
+
+  if (!groupData.players?.length || !groupData.games?.length) {
+    return winsMap;
+  }
+
+  // Initialisiere mit 0 für alle Spieler
+  groupData.players.forEach(player => {
+    if (player) winsMap.set(player.id, 0);
+  });
+
+  groupData.games.forEach(game => {
+    if (!game.rounds?.length) return;
+
+    game.rounds.forEach(round => {
+      if (!round.results) return;
+
+      const normalizedResults = normalizeRoundResults(round.results);
+
+      normalizedResults.forEach((result, playerId) => {
+        if (result === PLAYER_RESULT.WINNER) {
+          winsMap.set(playerId, (winsMap.get(playerId) || 0) + 1);
+        }
+      });
+    });
+  });
+
+  return winsMap;
 };
 
-const updateGameStatistics = (
-  game: Game, 
-  gameParticipants: Set<string>, 
-  gameWinners: string[], 
-  averageGamePoints: number, 
-  statsMap: Map<string, PlayerStats>,
-  groupPlayers: any[]
-) => {
-  // Update statistics for participants (they get gamesPlayed++)
-  gameParticipants.forEach((playerId) => {
-    const playerStat = statsMap.get(playerId);
-    if (playerStat) {
-      const playerInGame = game.players.find(p => p.id === playerId);
-      const isActiveInGame = playerInGame?.aktiv === true;
-      
-      if (isActiveInGame) {
-        const isWinner = gameWinners.includes(playerId);
-        statsMap.set(playerId, {
-          ...playerStat,
-          gamesPlayed: playerStat.gamesPlayed + 1,
-          gamesWon: playerStat.gamesWon + (isWinner ? 1 : 0),
-          gamesLost: playerStat.gamesLost + (isWinner ? 0 : 1),
-        });
+export const calculateRoundsLost = (groupData: GameGroup): Map<string, number> => {
+  const lossesMap = new Map<string, number>();
+
+  if (!groupData.players?.length || !groupData.games?.length) {
+    return lossesMap;
+  }
+
+  // Initialisiere mit 0 für alle Spieler
+  groupData.players.forEach(player => {
+    if (player) lossesMap.set(player.id, 0);
+  });
+
+  groupData.games.forEach(game => {
+    if (!game.rounds?.length) return;
+
+    game.rounds.forEach(round => {
+      if (!round.results) return;
+
+      const normalizedResults = normalizeRoundResults(round.results);
+
+      normalizedResults.forEach((result, playerId) => {
+        if (result === PLAYER_RESULT.LOSER) {
+          lossesMap.set(playerId, (lossesMap.get(playerId) || 0) + 1);
+        }
+      });
+    });
+  });
+
+  return lossesMap;
+};
+
+export const calculateGamesPlayed = (groupData: GameGroup): Map<string, number> => {
+  const gamesMap = new Map<string, number>();
+
+  if (!groupData.players?.length || !groupData.games?.length) {
+    return gamesMap;
+  }
+
+  // Initialisiere mit 0 für alle Spieler
+  groupData.players.forEach(player => {
+    if (player) gamesMap.set(player.id, 0);
+  });
+
+  groupData.games.forEach(game => {
+    if (!game.rounds?.length) return;
+
+    const gameParticipants = new Set<string>();
+
+    game.rounds.forEach(round => {
+      if (!round.results) return;
+
+      const normalizedResults = normalizeRoundResults(round.results);
+
+      normalizedResults.forEach((result, playerId) => {
+        if (result === PLAYER_RESULT.WINNER || result === PLAYER_RESULT.LOSER) {
+          gameParticipants.add(playerId);
+        }
+      });
+    });
+
+    // Zähle nur aktive Spieler
+    gameParticipants.forEach(playerId => {
+      if (isPlayerActiveInGame(game, playerId)) {
+        gamesMap.set(playerId, (gamesMap.get(playerId) || 0) + 1);
       }
-    }
+    });
   });
 
-  // Give average points to group players who are not present in this game at all
-  groupPlayers.forEach((groupPlayer) => {
-    if (!groupPlayer) return;
-    
-    const playerStat = statsMap.get(groupPlayer.id);
-    const playerInGame = game.players.find(p => p.id === groupPlayer.id);
-    
-    // Player is in group but not in this game at all
-    if (playerStat && (!playerInGame || playerInGame?.aktiv === false)) {
-      statsMap.set(groupPlayer.id, {
-        ...playerStat,
-        totalPoints: playerStat.totalPoints + averageGamePoints,
-        // gamesPlayed is NOT incremented here!
+  return gamesMap;
+};
+
+export const calculateGamesWon = (groupData: GameGroup): Map<string, number> => {
+  const winsMap = new Map<string, number>();
+
+  if (!groupData.players?.length || !groupData.games?.length) {
+    return winsMap;
+  }
+
+  // Initialisiere mit 0 für alle Spieler
+  groupData.players.forEach(player => {
+    if (player) winsMap.set(player.id, 0);
+  });
+
+  groupData.games.forEach(game => {
+    if (!game.rounds?.length) return;
+
+    const gameRoundPoints = new Map<string, number>();
+
+    game.rounds.forEach(round => {
+      if (!round.results) return;
+
+      const normalizedResults = normalizeRoundResults(round.results);
+
+      normalizedResults.forEach((result, playerId) => {
+        let points = 0;
+
+        if (result === PLAYER_RESULT.LOSER) {
+          points = round.roundPoints * round.multiplier;
+        } else if (result === PLAYER_RESULT.WINNER) {
+          points = round.cowardicePoints * round.multiplier;
+        }
+
+        gameRoundPoints.set(playerId, (gameRoundPoints.get(playerId) || 0) + points);
+      });
+    });
+
+    // Finde Gewinner (niedrigste Punktzahl)
+    const sortedEntries = Array.from(gameRoundPoints.entries())
+        .sort(([, pointsA], [, pointsB]) => pointsA - pointsB);
+
+    if (sortedEntries.length > 0) {
+      const lowestScore = sortedEntries[0][1];
+      const winners = sortedEntries
+          .filter(([, points]) => points === lowestScore)
+          .map(([playerId]) => playerId);
+
+      winners.forEach(winnerId => {
+        if (isPlayerActiveInGame(game, winnerId)) {
+          winsMap.set(winnerId, (winsMap.get(winnerId) || 0) + 1);
+        }
       });
     }
   });
+
+  return winsMap;
 };
 
+export const calculateGamesLost = (groupData: GameGroup): Map<string, number> => {
+  const lossesMap = new Map<string, number>();
+
+  if (!groupData.players?.length || !groupData.games?.length) {
+    return lossesMap;
+  }
+
+  // Initialisiere mit 0 für alle Spieler
+  groupData.players.forEach(player => {
+    if (player) lossesMap.set(player.id, 0);
+  });
+
+  groupData.games.forEach(game => {
+    if (!game.rounds?.length) return;
+
+    const gameRoundPoints = new Map<string, number>();
+
+    game.rounds.forEach(round => {
+      if (!round.results) return;
+
+      const normalizedResults = normalizeRoundResults(round.results);
+
+      normalizedResults.forEach((result, playerId) => {
+        let points = 0;
+
+        if (result === PLAYER_RESULT.LOSER) {
+          points = round.roundPoints * round.multiplier;
+        } else if (result === PLAYER_RESULT.WINNER) {
+          points = round.cowardicePoints * round.multiplier;
+        }
+
+        gameRoundPoints.set(playerId, (gameRoundPoints.get(playerId) || 0) + points);
+      });
+    });
+
+    // Finde Gewinner (niedrigste Punktzahl)
+    const sortedEntries = Array.from(gameRoundPoints.entries())
+        .sort(([, pointsA], [, pointsB]) => pointsA - pointsB);
+
+    if (sortedEntries.length > 0) {
+      const lowestScore = sortedEntries[0][1];
+      const winners = sortedEntries
+          .filter(([, points]) => points === lowestScore)
+          .map(([playerId]) => playerId);
+
+      // Alle aktiven Spieler, die nicht gewonnen haben, haben verloren
+      gameRoundPoints.forEach((points, playerId) => {
+        if (isPlayerActiveInGame(game, playerId) && !winners.includes(playerId)) {
+          lossesMap.set(playerId, (lossesMap.get(playerId) || 0) + 1);
+        }
+      });
+    }
+  });
+
+  return lossesMap;
+};
+
+export const calculateAveragePointsPerGame = (groupData: GameGroup): Map<string, number> => {
+  const totalPoints = calculateTotalPoints(groupData);
+  const averagesMap = new Map<string, number>();
+
+  totalPoints.forEach((points, playerId) => {
+    const games = groupData.games.length;
+    const average = games > 0 ? Math.round((points / games) * 10) / 10 : 0;
+    averagesMap.set(playerId, average);
+  });
+
+  return averagesMap;
+};
+
+export const calculateAveragePointsPerRound = (groupData: GameGroup): Map<string, number> => {
+  const totalPoints = calculateTotalPoints(groupData);
+  const roundsPlayed = calculateRoundsPlayed(groupData);
+  const averagesMap = new Map<string, number>();
+
+  totalPoints.forEach((points, playerId) => {
+    const rounds = roundsPlayed.get(playerId) || 0;
+    const average = rounds > 0 ? Math.round((points / rounds) * 10) / 10 : 0;
+    averagesMap.set(playerId, average);
+  });
+
+  return averagesMap;
+};
+
+export const calculateCashShare = (groupData: GameGroup): Map<string, number> => {
+  const totalPoints = calculateTotalPoints(groupData);
+  const totalGroupGames = groupData.games?.length || 0;
+  const cashMap = new Map<string, number>();
+
+  totalPoints.forEach((points, playerId) => {
+    const groupGameTotal = totalGroupGames * 5;
+    const cashShare = groupGameTotal + (points * 0.1);
+    cashMap.set(playerId, Math.round(cashShare * 100) / 100);
+  });
+
+  return cashMap;
+};
+
+// Hauptfunktion, die alle Statistiken kombiniert
 export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
   if (!groupData.players?.length || !groupData.games?.length) {
     return [];
   }
 
-  const statsMap = initializePlayerStats(groupData.players);
-  const allGameWinners = new Set<string>();
+  const totalPoints = calculateTotalPoints(groupData);
+  const roundsPlayed = calculateRoundsPlayed(groupData);
+  const roundsWon = calculateRoundsWon(groupData);
+  const roundsLost = calculateRoundsLost(groupData);
+  const gamesPlayed = calculateGamesPlayed(groupData);
+  const gamesWon = calculateGamesWon(groupData);
+  const gamesLost = calculateGamesLost(groupData);
+  const avgPointsPerGame = calculateAveragePointsPerGame(groupData);
+  const avgPointsPerRound = calculateAveragePointsPerRound(groupData);
+  const cashShare = calculateCashShare(groupData);
 
-  // Process each game
-  groupData.games.forEach((game) => {
-    if (!game.rounds?.length) return;
+  return groupData.players
+      .filter(Boolean)
+      .map(player => ({
+        id: player.id,
+        name: getPlayerName(player),
+        totalPoints: Math.round((totalPoints.get(player.id) || 0) * 10) / 10,
+        roundsPlayed: roundsPlayed.get(player.id) || 0,
+        roundsWon: roundsWon.get(player.id) || 0,
+        roundsLost: roundsLost.get(player.id) || 0,
+        gamesPlayed: gamesPlayed.get(player.id) || 0,
+        gamesWon: gamesWon.get(player.id) || 0,
+        gamesLost: gamesLost.get(player.id) || 0,
+        averagePointsPerGame: avgPointsPerGame.get(player.id) || 0,
+        averagePointsPerRound: avgPointsPerRound.get(player.id) || 0,
+        cashShare: cashShare.get(player.id) || 0,
+      }));
+};
 
-    const gameParticipants = new Set<string>();
-    const gameRoundPoints = new Map<string, number>();
-    
-    // Process all rounds in the game
-    game.rounds.forEach((round: Round) => {
-      processRoundResults(round, gameParticipants, gameRoundPoints, statsMap);
-    });
+const normalizeGameData = (games: any): Game[] => {
+  if (Array.isArray(games)) {
+    return games
+        .filter(Boolean)
+        .map((game: any) => ({
+          ...game,
+          date: game.date ? new Date(game.date) : new Date(),
+          rounds: Array.isArray(game.rounds) ? game.rounds : [],
+        }));
+  }
 
-    // Determine game winners and calculate averages
-    const gameWinners = determineGameWinners(gameRoundPoints);
-    gameWinners.forEach((winner) => allGameWinners.add(winner));
+  if (games && typeof games === 'object') {
+    return Object.entries(games)
+        .filter(([, game]) => game)
+        .map(([id, game]: [string, any]) => ({
+          ...game,
+          id,
+          date: game.date ? new Date(game.date) : new Date(),
+          rounds: Array.isArray(game.rounds) ? game.rounds : [],
+        }));
+  }
 
-    const participatingPlayers = Array.from(gameRoundPoints.keys());
-    const totalGamePoints = Array.from(gameRoundPoints.values()).reduce((sum, points) => sum + points, 0);
-    const averageGamePoints = participatingPlayers.length > 0 ? totalGamePoints / participatingPlayers.length : 0;
-
-    // Update game statistics
-    updateGameStatistics(game, gameParticipants, gameWinners, averageGamePoints, statsMap, groupData.players);
-  });
-
-  // Calculate final averages
-  const totalGroupGames = groupData.games.length;
-  const groupGameTotal = totalGroupGames * 5;
-  
-  return Array.from(statsMap.values()).map((stat) => {
-    const avgPointsPerGame = stat.gamesPlayed > 0 ? Math.round((stat.totalPoints / stat.gamesPlayed) * 10) / 10 : 0;
-    const avgPointsPerRound = stat.roundsPlayed > 0 ? Math.round((stat.totalPoints / stat.roundsPlayed) * 10) / 10 : 0;
-    const cashShare = groupGameTotal + (stat.totalPoints * 0.1);
-    
-    return {
-      ...stat,
-      totalPoints: Math.round(stat.totalPoints * 10) / 10, // Round to 1 decimal place
-      averagePointsPerGame: avgPointsPerGame,
-      averagePointsPerRound: avgPointsPerRound,
-      cashShare: Math.round(cashShare * 100) / 100, // Round to 2 decimal places for money
-    };
-  });
+  return [];
 };
 
 export const processGroupData = (groupId: string, groupData: any): GameGroup | null => {
   if (!groupData) return null;
 
-  let games: Game[] = [];
-  
-  if (Array.isArray(groupData.games)) {
-    games = groupData.games
-      .filter(Boolean)
-      .map((game: any) => ({
-        ...game,
-        date: game.date ? new Date(game.date) : new Date(),
-        rounds: Array.isArray(game.rounds) ? game.rounds : [],
-      }));
-  } else if (groupData.games && typeof groupData.games === 'object') {
-    games = Object.entries(groupData.games)
-      .filter(([_, game]) => game)
-      .map(([id, game]: [string, any]) => ({
-        ...game,
-        id,
-        date: game.date ? new Date(game.date) : new Date(),
-        rounds: Array.isArray(game.rounds) ? game.rounds : [],
-      }));
-  }
+  const games = normalizeGameData(groupData.games);
 
   return {
     ...groupData,
