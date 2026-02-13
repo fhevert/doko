@@ -56,8 +56,8 @@ const PlayerStatsCard: React.FC<PlayerStatsCardProps> = ({ player }) => (
       <StatItem 
         label="Gewinnrate (Runden)" 
         value={
-          player.roundsPlayed > 0 
-            ? `${((player.roundsWon / player.roundsPlayed) * 100).toFixed(1)}%` 
+          player.roundsPlayed > 0
+            ? `${((player.roundsWon / player.roundsPlayed) * 100).toFixed(1)}%`
             : 'N/A'
         } 
       />
@@ -75,18 +75,7 @@ const PlayerStatsCard: React.FC<PlayerStatsCardProps> = ({ player }) => (
         <StatItem
         label="Durchschnittl. Punkte/Spiel" 
         value={
-          player.gamesPlayed > 0 
-            ? player.averagePointsPerGame.toFixed(2) 
-            : 'N/A'
-        } 
-      />
-      
-      <StatItem 
-        label="Durchschnittl. Punkte/Runde" 
-        value={
-          player.roundsPlayed > 0 
-            ? player.averagePointsPerRound.toFixed(2) 
-            : 'N/A'
+          player.averagePointsPerGame.toFixed(2)
         } 
       />
     </CardContent>

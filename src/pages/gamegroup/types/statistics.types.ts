@@ -1,5 +1,4 @@
-import { GameGroup } from '../../../model/GameGroup';
-import { Player } from '../../../model/Player';
+import {GameGroup} from '../../../model/GameGroup';
 
 export interface PlayerStats {
   id: string;
@@ -12,7 +11,6 @@ export interface PlayerStats {
   roundsWon: number;
   roundsLost: number;
   averagePointsPerGame: number;
-  averagePointsPerRound: number;
   cashShare: number;
 }
 

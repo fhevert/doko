@@ -356,20 +356,6 @@ export const calculateAveragePointsPerGame = (groupData: GameGroup): Map<string,
   return averagesMap;
 };
 
-export const calculateAveragePointsPerRound = (groupData: GameGroup): Map<string, number> => {
-  const totalPoints = calculateTotalPoints(groupData);
-  const roundsPlayed = calculateRoundsPlayed(groupData);
-  const averagesMap = new Map<string, number>();
-
-  totalPoints.forEach((points, playerId) => {
-    const rounds = roundsPlayed.get(playerId) || 0;
-    const average = rounds > 0 ? Math.round((points / rounds) * 10) / 10 : 0;
-    averagesMap.set(playerId, average);
-  });
-
-  return averagesMap;
-};
-
 export const calculateCashShare = (groupData: GameGroup): Map<string, number> => {
   const totalPoints = calculateTotalPoints(groupData);
   const totalGroupGames = groupData.games?.length || 0;
@@ -398,7 +384,6 @@ export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
   const gamesWon = calculateGamesWon(groupData);
   const gamesLost = calculateGamesLost(groupData);
   const avgPointsPerGame = calculateAveragePointsPerGame(groupData);
-  const avgPointsPerRound = calculateAveragePointsPerRound(groupData);
   const cashShare = calculateCashShare(groupData);
 
   return groupData.players
@@ -414,8 +399,7 @@ export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
         gamesWon: gamesWon.get(player.id) || 0,
         gamesLost: gamesLost.get(player.id) || 0,
         averagePointsPerGame: avgPointsPerGame.get(player.id) || 0,
-        averagePointsPerRound: avgPointsPerRound.get(player.id) || 0,
-        cashShare: cashShare.get(player.id) || 0,
+        cashShare: cashShare.get(player.id) || 0
       }));
 };
 
