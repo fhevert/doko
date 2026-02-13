@@ -17,6 +17,7 @@ import {calculatePlayerStats, processGroupData} from './utils/statistics.utils';
 // Components
 import PlayerStatsCard from './components/PlayerStatsCard';
 import StatisticsChart from './components/StatisticsChart';
+import CashSharePieChart from './components/CashSharePieChart';
 
 const GroupStatisticsPage: React.FC = () => {
   const { groupId } = useParams<{ groupId: string }>();
@@ -169,7 +170,7 @@ const GroupStatisticsPage: React.FC = () => {
           </Grid>
 
           {/* Average Points Chart */}
-          <Grid item xs={12}>
+          <Grid item xs={12} sm={6}>
             <StatisticsChart 
               title="Durchschnittliche Punkte pro Spiel"
               data={averagePointsData}
@@ -179,6 +180,14 @@ const GroupStatisticsPage: React.FC = () => {
                 color: '#2196f3'
               }}
               formatter={(value) => `${value} Punkte`}
+            />
+          </Grid>
+
+          {/* Cash Share Pie Chart */}
+          <Grid item xs={12} sm={6}>
+            <CashSharePieChart 
+              players={playerStats}
+              title="Anteil an der Kasse"
             />
           </Grid>
         </Grid>
