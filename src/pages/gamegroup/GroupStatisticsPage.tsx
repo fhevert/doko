@@ -134,8 +134,6 @@ const GroupStatisticsPage: React.FC = () => {
     );
   }
 
-  const totalRounds = playerStats.reduce((sum, stat) => sum + stat.roundsPlayed, 0);
-
   return (
     <Container maxWidth="lg" sx={{ px: { xs: 1, sm: 2 } }}>
       <Box my={{ xs: 2, sm: 4 }}>
@@ -191,13 +189,6 @@ const GroupStatisticsPage: React.FC = () => {
             />
           </Grid>
         </Grid>
-
-        {/* Summary */}
-        <Box mt={{ xs: 3, sm: 4 }} textAlign="center">
-          <Typography variant="body2" color="text.secondary">
-            Insgesamt {totalRounds} Runden in {group.games?.length || 0} Spielen gespielt
-          </Typography>
-        </Box>
       </Box>
     </Container>
   );
