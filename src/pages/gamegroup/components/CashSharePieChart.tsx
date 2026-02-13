@@ -1,7 +1,7 @@
 import React from 'react';
-import { Paper, Typography, useTheme, useMediaQuery } from '@mui/material';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import { PlayerStats } from '../types/statistics.types';
+import {Paper, Typography, useMediaQuery, useTheme} from '@mui/material';
+import {Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip} from 'recharts';
+import {PlayerStats} from '../types/statistics.types';
 
 interface CashSharePieChartProps {
   players: PlayerStats[];
@@ -83,14 +83,6 @@ export const CashSharePieChart: React.FC<CashSharePieChartProps> = ({
     item.percentage = total > 0 ? (item.value / total) * 100 : 0;
   });
 
-  // Legende-Daten (bereits sortiert)
-  const legendData = chartData.map((item, index) => ({
-    id: index,
-    value: item.fullName,
-    color: COLORS[index % COLORS.length],
-    percentage: item.percentage
-  }));
-
   const renderLegend = (props: any) => {
     const { payload } = props;
     
@@ -102,7 +94,7 @@ export const CashSharePieChart: React.FC<CashSharePieChartProps> = ({
         padding: '10px',
         fontSize: isMobile ? '12px' : '14px'
       }}>
-        {payload.map((entry: any, index: number) => (
+        {payload.sort((a: any, b: any) => b.payload.percentage - a.payload.percentage).map((entry: any, index: number) => (
           <div key={`item-${index}`} style={{
             display: 'flex',
             alignItems: 'center',
@@ -187,7 +179,7 @@ export const CashSharePieChart: React.FC<CashSharePieChartProps> = ({
             ))}
           </Pie>
           <Tooltip content={<CustomTooltip />} />
-          <Legend 
+          <Legend
             content={renderLegend}
             verticalAlign="middle"
             align="right"
