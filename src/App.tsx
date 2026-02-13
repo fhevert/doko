@@ -36,6 +36,29 @@ import {useTheme} from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
+// Simple route persistence for MemoryRouter
+const ROUTE_KEY = 'currentRoute';
+
+const saveRoute = (route: string) => {
+    localStorage.setItem(ROUTE_KEY, route);
+};
+
+const loadRoute = (): string => {
+    return localStorage.getItem(ROUTE_KEY) || '/';
+};
+
+// Component to track and save current route
+const RouteTracker: React.FC = () => {
+    const location = useLocation();
+
+    useEffect(() => {
+        // Save current route whenever it changes
+        saveRoute(location.pathname);
+    }, [location.pathname]);
+
+    return null; // This component doesn't render anything
+};
+
 // Separate component for auth-dependent UI parts
 const AuthStatusBar = memo(() => {
     const { currentUser } = useAuth();
@@ -210,6 +233,7 @@ function App() {
     const [gameId, setGameId] = useState('gameId');
     const [game, setGame] = React.useState(emptyGame);
     const [isLoading, setIsLoading] = React.useState(true);
+    const [initialRoute] = useState<string>(() => loadRoute());
 
 
     const darkTheme = createTheme({
@@ -243,10 +267,11 @@ function App() {
             <CssBaseline/>
             <ThemeProvider theme={darkTheme}>
                 <GameContext.Provider value={{game, setGame, isLoading}}>
-                    <MemoryRouter>
+                    <MemoryRouter initialEntries={[initialRoute]}>
                         <AppBar position="static" sx={{ position: 'relative' }}>
                             <AuthStatusBar />
                         </AppBar>
+                        <RouteTracker />
                         <Routes>
                             <Route path="/" element={
                                 <PrivateRoute>
