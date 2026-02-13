@@ -28,13 +28,14 @@ import {
     updateGameGroup
 } from "../../firebase/GameGroupService";
 import AddIcon from "@mui/icons-material/Add";
+import {useGameGroups} from '../../contexts/GameGroupsContext';
 
 interface GameGroups {
     [key: string]: GameGroup;
 }
 
 const GameGroupPage: React.FC = () => {
-    const [gameGroups, setGameGroups] = useState<GameGroups>({});
+    const { gameGroups, setGameGroups } = useGameGroups();
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState<GameGroup | null>(null);
     const [loading, setLoading] = useState(true);
@@ -81,7 +82,13 @@ const GameGroupPage: React.FC = () => {
             if (selectedGroup) {
                 await updateGameGroup(selectedGroup.id, group);
             } else {
-                await createGameGroup(group);
+                // Erstelle die Gruppe und füge sie sofort zum State hinzu
+                const newGroup = await createGameGroup(group);
+                // Füge die neue Gruppe sofort zum lokalen State hinzu
+                setGameGroups(prev => ({
+                    ...prev,
+                    [newGroup.id]: newGroup
+                }));
             }
             setOpenDialog(false);
             setSelectedGroup(null);
@@ -101,6 +108,12 @@ const GameGroupPage: React.FC = () => {
         
         try {
             await deleteGameGroup(groupToDelete);
+            // Entferne die Gruppe sofort aus dem lokalen State
+            setGameGroups(prev => {
+                const newGroups = { ...prev };
+                delete newGroups[groupToDelete];
+                return newGroups;
+            });
             setIsDeleteDialogOpen(false);
             setGroupToDelete(null);
         } catch (error) {

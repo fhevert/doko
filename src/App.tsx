@@ -35,6 +35,7 @@ import {MobileNavigation} from './components/MobileNavigation';
 import {useTheme} from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import {GameGroupsProvider} from './contexts/GameGroupsContext';
 
 // Simple route persistence for MemoryRouter
 const ROUTE_KEY = 'currentRoute';
@@ -266,53 +267,55 @@ function App() {
         <>
             <CssBaseline/>
             <ThemeProvider theme={darkTheme}>
-                <GameContext.Provider value={{game, setGame, isLoading}}>
-                    <MemoryRouter initialEntries={[initialRoute]}>
-                        <AppBar position="static" sx={{ position: 'relative' }}>
-                            <AuthStatusBar />
-                        </AppBar>
-                        <RouteTracker />
-                        <Routes>
-                            <Route path="/" element={
-                                <PrivateRoute>
-                                    <GameGroupPage />
-                                </PrivateRoute>
-                            } />
-                            <Route path="/login" element={<Login />} />
-                            <Route path="/profile" element={
-                                <PrivateRoute>
-                                    <ProfilePage />
-                                </PrivateRoute>
-                            } />
-                            <Route path="*" element={<div>404 Not Found</div>} />
-                            <Route path="/players" element={
-                                <PrivateRoute>
-                                    <PlayersPage/>
-                                </PrivateRoute>
-                            } />
-                            <Route path="/game-groups" element={
-                                <PrivateRoute>
-                                    <GameGroupPage />
-                                </PrivateRoute>
-                            } />
-                            <Route path="/game-groups/:groupId" element={
-                                <PrivateRoute>
-                                    <GameGroupDetailPage />
-                                </PrivateRoute>
-                            } />
-                            <Route path="/game-groups/:groupId/games/:gameId" element={
-                                <PrivateRoute>
-                                    <GamePage />
-                                </PrivateRoute>
-                            } />
-                            <Route path="/game-groups/:groupId/statistics" element={
-                                <PrivateRoute>
-                                    <GroupStatisticsPage />
-                                </PrivateRoute>
-                            } />
-                        </Routes>
-                    </MemoryRouter>
-                </GameContext.Provider>
+                <GameGroupsProvider>
+                    <GameContext.Provider value={{game, setGame, isLoading}}>
+                        <MemoryRouter initialEntries={[initialRoute]}>
+                            <AppBar position="static" sx={{ position: 'relative' }}>
+                                <AuthStatusBar />
+                            </AppBar>
+                            <RouteTracker />
+                            <Routes>
+                                <Route path="/" element={
+                                    <PrivateRoute>
+                                        <GameGroupPage />
+                                    </PrivateRoute>
+                                } />
+                                <Route path="/login" element={<Login />} />
+                                <Route path="/profile" element={
+                                    <PrivateRoute>
+                                        <ProfilePage />
+                                    </PrivateRoute>
+                                } />
+                                <Route path="*" element={<div>404 Not Found</div>} />
+                                <Route path="/players" element={
+                                    <PrivateRoute>
+                                        <PlayersPage/>
+                                    </PrivateRoute>
+                                } />
+                                <Route path="/game-groups" element={
+                                    <PrivateRoute>
+                                        <GameGroupPage />
+                                    </PrivateRoute>
+                                } />
+                                <Route path="/game-groups/:groupId" element={
+                                    <PrivateRoute>
+                                        <GameGroupDetailPage />
+                                    </PrivateRoute>
+                                } />
+                                <Route path="/game-groups/:groupId/games/:gameId" element={
+                                    <PrivateRoute>
+                                        <GamePage />
+                                    </PrivateRoute>
+                                } />
+                                <Route path="/game-groups/:groupId/statistics" element={
+                                    <PrivateRoute>
+                                        <GroupStatisticsPage />
+                                    </PrivateRoute>
+                                } />
+                            </Routes>
+                        </MemoryRouter>
+                    </GameContext.Provider>
+                </GameGroupsProvider>
             </ThemeProvider>
         </>
     );

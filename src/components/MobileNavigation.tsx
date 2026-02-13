@@ -18,9 +18,8 @@ import ExpandLess from '@mui/icons-material/ExpandLess';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import {useEffect, useState} from 'react';
 import {GameGroup} from '../model/GameGroup';
-import {onValue, ref} from 'firebase/database';
-import {firebaseDB} from '../firebase/firebase-config';
 import {Game} from "../model/Game";
+import {useGameGroups} from '../contexts/GameGroupsContext';
 
 export const MobileNavigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -30,72 +29,60 @@ export const MobileNavigation = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const { gameGroups } = useGameGroups();
 
-  // Lade Gruppen und deren Spiele
+  // Konvertiere die GameGroups aus dem Context in das Array-Format
   useEffect(() => {
-    setLoading(true);
-    const groupsRef = ref(firebaseDB, 'gameGroups');
-    
-    const unsubscribe = onValue(groupsRef, (snapshot) => {
-      const groupsData = snapshot.val();
-      if (groupsData) {
-        const groupsList = Object.entries<GameGroup>(groupsData).map(([id, group]) => {
-          // Convert games object to array and ensure proper data structure
-          let games: Game[] = [];
-          if (group.games) {
-            if (Array.isArray(group.games)) {
-              // If it's already an array, use it directly
-              games = group.games;
-            } else if (typeof group.games === 'object' && group.games !== null) {
-              // If it's an object, convert to array
-              games = Object.entries(group.games).map(([gameId, game]) => {
-                // Ensure we have a proper game object with id
-                const gameData = game as Game;
-                return {
-                  ...gameData,
-                  id: gameId,
-                  // Ensure date is a proper Date object
-                  date: gameData.date ? (gameData.date instanceof Date ? gameData.date : new Date(gameData.date)) : new Date()
-                };
-              });
-            }
-            // Sort games by date, newest first
-            games.sort((a, b) => b.date.getTime() - a.date.getTime());
+    if (gameGroups) {
+      const groupsList = Object.entries<GameGroup>(gameGroups).map(([id, group]) => {
+        // Convert games object to array and ensure proper data structure
+        let games: Game[] = [];
+        if (group.games) {
+          if (Array.isArray(group.games)) {
+            // If it's already an array, use it directly
+            games = group.games;
+          } else if (typeof group.games === 'object' && group.games !== null) {
+            // If it's an object, convert to array
+            games = Object.entries(group.games).map(([gameId, game]) => {
+              // Ensure we have a proper game object with id
+              const gameData = game as Game;
+              return {
+                ...gameData,
+                id: gameId,
+                // Ensure date is a proper Date object
+                date: gameData.date ? (gameData.date instanceof Date ? gameData.date : new Date(gameData.date)) : new Date()
+              };
+            });
           }
-          
-          return {
-            ...group,
-            id,
-            games
-          };
-        });
+          // Sort games by date, newest first
+          games.sort((a, b) => b.date.getTime() - a.date.getTime());
+        }
         
-        // Set initial expanded state for groups
-        const initialExpanded = groupsList.reduce((acc, group) => {
-          acc[group.id] = expandedGroups[group.id] || false;
-          return acc;
-        }, {} as {[key: string]: boolean});
-        
-        setExpandedGroups(prev => ({
-          ...initialExpanded,
-          ...prev // Preserve any existing expanded states
-        }));
-        
-        setGroups(groupsList);
-      } else {
-        setGroups([]);
-      }
+        return {
+          ...group,
+          id,
+          games
+        };
+      });
+      
+      // Set initial expanded state for groups
+      const initialExpanded = groupsList.reduce((acc, group) => {
+        acc[group.id] = expandedGroups[group.id] || false;
+        return acc;
+      }, {} as {[key: string]: boolean});
+      
+      setExpandedGroups(prev => ({
+        ...initialExpanded,
+        ...prev // Preserve any existing expanded states
+      }));
+      
+      setGroups(groupsList);
       setLoading(false);
-    }, (error) => {
-      console.error('Error loading groups:', error);
+    } else {
+      setGroups([]);
       setLoading(false);
-    });
-
-    return () => {
-      // Cleanup listener when component unmounts
-      unsubscribe();
-    };
-  }, []); // Remove isOpen from dependencies to load data once
+    }
+  }, [gameGroups]);
 
   const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
     if (event.type === 'keydown' && 

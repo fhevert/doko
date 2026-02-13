@@ -12,6 +12,7 @@ export interface UserProfile {
   lastName?: string;
   photoURL?: string;
   createdAt?: number;
+  groupIds?: string[];
 }
 
 export const createUserProfile = async (user: User, additionalData: { firstName?: string; lastName?: string } = {}): Promise<void> => {
