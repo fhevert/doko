@@ -14,7 +14,9 @@ import {
     ListItem,
     ListItemSecondaryAction,
     TextField,
-    Typography
+    Typography,
+    useMediaQuery,
+    useTheme
 } from '@mui/material';
 import {Player} from '../../model/Player';
 import {GameGroup} from '../../model/GameGroup';
@@ -31,6 +33,8 @@ interface GameGroupDialogProps {
 }
 
 const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave, group}) => {
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [formData, setFormData] = useState<GameGroupFormData>({
         name: '',
         players: []
@@ -136,9 +140,17 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
     };
 
     return (
-        <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-            <DialogTitle>{group ? 'Gruppe bearbeiten' : 'Neue Gruppe erstellen'}</DialogTitle>
-            <DialogContent>
+        <Dialog 
+            open={open} 
+            onClose={onClose} 
+            maxWidth={isMobile ? 'xs' : 'sm'} 
+            fullWidth
+            fullScreen={isMobile}
+        >
+            <DialogTitle sx={{ fontSize: isMobile ? '1.1rem' : '1.25rem' }}>
+                {group ? 'Gruppe bearbeiten' : 'Neue Gruppe erstellen'}
+            </DialogTitle>
+            <DialogContent sx={{ pb: 2 }}>
                 <TextField
                     autoFocus
                     margin="dense"
@@ -148,10 +160,20 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
                     sx={{mb: 3}}
+                    size={isMobile ? 'small' : 'medium'}
                 />
 
-                <Typography variant="h6" gutterBottom>Spieler</Typography>
-                <Box sx={{display: 'flex', gap: 2, mb: 2, alignItems: 'center'}}>
+                <Typography variant={isMobile ? 'subtitle1' : 'h6'} gutterBottom>
+                    Spieler
+                </Typography>
+                <Box sx={{
+                    display: 'flex', 
+                    gap: 2, 
+                    mb: 2, 
+                    alignItems: 'center',
+                    flexDirection: isMobile ? 'column' : 'row',
+                    width: '100%'
+                }}>
                     <Autocomplete
                         options={availableUsers.filter(user => 
                             !formData.players.some(player => player.id === user.uid)
@@ -168,8 +190,11 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                                 {...params}
                                 label="Spieler auswählen"
                                 variant="outlined"
-                                size="small"
-                                sx={{ minWidth: 300 }}
+                                size={isMobile ? 'small' : 'small'}
+                                sx={{ 
+                                    minWidth: isMobile ? '100%' : 300,
+                                    width: isMobile ? '100%' : 'auto'
+                                }}
                             />
                         )}
                         renderOption={(props, user) => (
@@ -181,16 +206,21 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                         )}
                         isOptionEqualToValue={(option, value) => option.uid === value.uid}
                         noOptionsText="Keine weiteren Spieler verfügbar"
-                        loading={loading}
                         loadingText="Lade Benutzer..."
+                        loading={loading}
                         disabled={loading}
+                        fullWidth={isMobile}
                     />
                     <Button
                         variant="contained"
                         onClick={() => selectedUser && handleAddPlayer(selectedUser)}
                         startIcon={<PersonAddIcon/>}
                         disabled={!selectedUser}
-                        sx={{ height: '40px' }}
+                        sx={{ 
+                            height: '40px',
+                            width: isMobile ? '100%' : 'auto',
+                            minWidth: isMobile ? '100%' : 'auto'
+                        }}
                     >
                         Hinzufügen
                     </Button>
@@ -201,18 +231,23 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                     </Typography>
                 )}
 
-                <List dense>
+                <List dense sx={{ maxHeight: isMobile ? '300px' : 'auto', overflowY: 'auto' }}>
                     {formData.players.map((player) => (
-                        <ListItem key={player.id} divider>
+                        <ListItem key={player.id} divider sx={{ pr: isMobile ? 8 : 16 }}>
                             <FormControlLabel
                                 control={
                                     <Checkbox
                                         checked={player.aktiv}
                                         onChange={() => handleToggleActive(player.id)}
+                                        size={isMobile ? 'small' : 'medium'}
                                     />
                                 }
                                 label={`${player.firstname} ${player.name}`}
-                                sx={{ textDecoration: player.aktiv ? 'none' : 'line-through', opacity: player.aktiv ? 1 : 0.7 }}
+                                sx={{ 
+                                    textDecoration: player.aktiv ? 'none' : 'line-through', 
+                                    opacity: player.aktiv ? 1 : 0.7,
+                                    fontSize: isMobile ? '0.875rem' : '1rem'
+                                }}
                             />
                             <ListItemSecondaryAction>
                                 <IconButton
@@ -226,12 +261,25 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                     ))}
                 </List>
             </DialogContent>
-            <DialogActions>
-                <Button onClick={onClose}>Abbrechen</Button>
+            <DialogActions sx={{ 
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: isMobile ? 1 : 0,
+                px: isMobile ? 2 : 3,
+                pb: isMobile ? 2 : 3
+            }}>
+                <Button 
+                    onClick={onClose}
+                    fullWidth={isMobile}
+                    sx={{ order: isMobile ? 2 : 1 }}
+                >
+                    Abbrechen
+                </Button>
                 <Button
                     onClick={handleSubmit}
                     variant="contained"
                     disabled={!formData.name.trim() || formData.players.filter(p => p.aktiv).length < 1}
+                    fullWidth={isMobile}
+                    sx={{ order: isMobile ? 1 : 2 }}
                 >
                     Speichern
                 </Button>
