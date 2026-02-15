@@ -16,7 +16,10 @@ import {
     TextField,
     Typography,
     useMediaQuery,
-    useTheme
+    useTheme,
+    Tabs,
+    Tab,
+    Alert
 } from '@mui/material';
 import {Player} from '../../model/Player';
 import {GameGroup} from '../../model/GameGroup';
@@ -44,6 +47,9 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [playerInputTab, setPlayerInputTab] = useState(0); // 0 = registrierte Spieler, 1 = manuelle Eingabe
+    const [manualPlayerName, setManualPlayerName] = useState('');
+    const [manualPlayerEmail, setManualPlayerEmail] = useState('');
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -89,7 +95,8 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                 name: user.lastName || 'Unbekannt',
                 firstname: user.firstName || user.email?.split('@')[0] || 'Unbekannt',
                 result: 0,
-                aktiv: true
+                aktiv: true,
+                isTemporary: false
             };
 
             setFormData(prev => ({
@@ -105,6 +112,32 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
             // Set the next user as selected
             setSelectedUser(nextUser || null);
         }
+    };
+
+    const handleAddManualPlayer = () => {
+        if (!manualPlayerName.trim()) return;
+        
+        // Generate temporary ID with timestamp to avoid conflicts
+        const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        
+        const newPlayer: Player = {
+            id: tempId,
+            email: manualPlayerEmail.trim() || `${tempId}@temp.local`,
+            name: manualPlayerName.split(' ').slice(1).join(' ') || '',
+            firstname: manualPlayerName.split(' ')[0] || manualPlayerName,
+            result: 0,
+            aktiv: true,
+            isTemporary: true
+        };
+
+        setFormData(prev => ({
+            ...prev,
+            players: [...prev.players, newPlayer]
+        }));
+        
+        // Clear manual input fields
+        setManualPlayerName('');
+        setManualPlayerEmail('');
     };
 
     const handleUserSelect = (event: React.SyntheticEvent, value: UserProfile | null) => {
@@ -183,65 +216,127 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                 <Typography variant={isMobile ? 'subtitle1' : 'h6'} gutterBottom>
                     Spieler
                 </Typography>
-                <Box sx={{
-                    display: 'flex', 
-                    gap: 2, 
-                    mb: 2, 
-                    alignItems: 'center',
-                    flexDirection: isMobile ? 'column' : 'row',
-                    width: '100%'
-                }}>
-                    <Autocomplete
-                        options={availableUsers.filter(user => 
-                            !formData.players.some(player => player.id === user.uid)
-                        )}
-                        getOptionLabel={(user) => 
-                            user.firstName && user.lastName 
-                                ? `${user.firstName} ${user.lastName}` 
-                                : user.email?.split('@')[0] || 'Unbekannt'
-                        }
-                        value={selectedUser}
-                        onChange={handleUserSelect}
-                        renderInput={(params) => (
-                            <TextField
-                                {...params}
-                                label="Spieler auswählen"
-                                variant="outlined"
-                                size={isMobile ? 'small' : 'small'}
-                                sx={{ 
-                                    minWidth: isMobile ? '100%' : 300,
-                                    width: isMobile ? '100%' : 'auto'
-                                }}
-                            />
-                        )}
-                        renderOption={(props, user) => (
-                            <li {...props}>
-                                {user.firstName && user.lastName 
-                                    ? `${user.firstName} ${user.lastName}` 
-                                    : user.email?.split('@')[0] || 'Unbekannter Benutzer'}
-                            </li>
-                        )}
-                        isOptionEqualToValue={(option, value) => option.uid === value.uid}
-                        noOptionsText="Keine weiteren Spieler verfügbar"
-                        loadingText="Lade Benutzer..."
-                        loading={loading}
-                        disabled={loading}
-                        fullWidth={isMobile}
-                    />
-                    <Button
-                        variant="contained"
-                        onClick={() => selectedUser && handleAddPlayer(selectedUser)}
-                        startIcon={<PersonAddIcon/>}
-                        disabled={!selectedUser}
-                        sx={{ 
-                            height: '40px',
-                            width: isMobile ? '100%' : 'auto',
-                            minWidth: isMobile ? '100%' : 'auto'
-                        }}
+                
+                <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                    <Tabs 
+                        value={playerInputTab} 
+                        onChange={(e, newValue) => setPlayerInputTab(newValue)}
+                        variant={isMobile ? 'fullWidth' : 'standard'}
                     >
-                        Hinzufügen
-                    </Button>
+                        <Tab label="Registrierte Spieler" />
+                        <Tab label="Manuelle Eingabe" />
+                    </Tabs>
                 </Box>
+
+                {playerInputTab === 0 && (
+                    <Box sx={{
+                        display: 'flex', 
+                        gap: 2, 
+                        mb: 2, 
+                        alignItems: 'center',
+                        flexDirection: isMobile ? 'column' : 'row',
+                        width: '100%'
+                    }}>
+                        <Autocomplete
+                            options={availableUsers.filter(user => 
+                                !formData.players.some(player => player.id === user.uid)
+                            )}
+                            getOptionLabel={(user) => 
+                                user.firstName && user.lastName 
+                                    ? `${user.firstName} ${user.lastName}` 
+                                    : user.email?.split('@')[0] || 'Unbekannt'
+                            }
+                            value={selectedUser}
+                            onChange={handleUserSelect}
+                            renderInput={(params) => (
+                                <TextField
+                                    {...params}
+                                    label="Spieler auswählen"
+                                    variant="outlined"
+                                    size={isMobile ? 'small' : 'small'}
+                                    sx={{ 
+                                        minWidth: isMobile ? '100%' : 300,
+                                        width: isMobile ? '100%' : 'auto'
+                                    }}
+                                />
+                            )}
+                            renderOption={(props, user) => (
+                                <li {...props}>
+                                    {user.firstName && user.lastName 
+                                        ? `${user.firstName} ${user.lastName}` 
+                                        : user.email?.split('@')[0] || 'Unbekannter Benutzer'}
+                                </li>
+                            )}
+                            isOptionEqualToValue={(option, value) => option.uid === value.uid}
+                            noOptionsText="Keine weiteren Spieler verfügbar"
+                            loadingText="Lade Benutzer..."
+                            loading={loading}
+                            disabled={loading}
+                            fullWidth={isMobile}
+                        />
+                        <Button
+                            variant="contained"
+                            onClick={() => selectedUser && handleAddPlayer(selectedUser)}
+                            startIcon={<PersonAddIcon/>}
+                            disabled={!selectedUser}
+                            sx={{ 
+                                height: '40px',
+                                width: isMobile ? '100%' : 'auto',
+                                minWidth: isMobile ? '100%' : 'auto'
+                            }}
+                        >
+                            Hinzufügen
+                        </Button>
+                    </Box>
+                )}
+
+                {playerInputTab === 1 && (
+                    <Box sx={{
+                        display: 'flex', 
+                        gap: 2, 
+                        mb: 2, 
+                        alignItems: 'flex-end',
+                        flexDirection: isMobile ? 'column' : 'row',
+                        width: '100%'
+                    }}>
+                        <TextField
+                            label="Spielername"
+                            variant="outlined"
+                            value={manualPlayerName}
+                            onChange={(e) => setManualPlayerName(e.target.value)}
+                            size={isMobile ? 'small' : 'small'}
+                            sx={{ 
+                                width: isMobile ? '100%' : '200px'
+                            }}
+                            placeholder="Vorname Nachname"
+                        />
+                        <TextField
+                            label="E-Mail (optional)"
+                            variant="outlined"
+                            value={manualPlayerEmail}
+                            onChange={(e) => setManualPlayerEmail(e.target.value)}
+                            size={isMobile ? 'small' : 'small'}
+                            type="email"
+                            sx={{ 
+                                width: isMobile ? '100%' : '200px'
+                            }}
+                            placeholder="spieler@email.de"
+                        />
+                        <Button
+                            variant="contained"
+                            onClick={handleAddManualPlayer}
+                            startIcon={<PersonAddIcon/>}
+                            disabled={!manualPlayerName.trim()}
+                            sx={{ 
+                                height: '40px',
+                                width: isMobile ? '100%' : 'auto',
+                                minWidth: isMobile ? '100%' : 'auto'
+                            }}
+                        >
+                            Hinzufügen
+                        </Button>
+                    </Box>
+                )}
                 {error && (
                     <Typography color="error" variant="body2" sx={{ mb: 2 }}>
                         {error}
@@ -259,7 +354,22 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                                         size={isMobile ? 'small' : 'medium'}
                                     />
                                 }
-                                label={`${player.firstname} ${player.name}`}
+                                label={
+                                    <Box>
+                                        <Typography sx={{ 
+                                            textDecoration: player.aktiv ? 'none' : 'line-through', 
+                                            opacity: player.aktiv ? 1 : 0.7,
+                                            fontSize: isMobile ? '0.875rem' : '1rem'
+                                        }}>
+                                            {player.firstname} {player.name}
+                                        </Typography>
+                                        {player.isTemporary && (
+                                            <Typography variant="caption" color="warning.main">
+                                                Temporärer Spieler
+                                            </Typography>
+                                        )}
+                                    </Box>
+                                }
                                 sx={{ 
                                     textDecoration: player.aktiv ? 'none' : 'line-through', 
                                     opacity: player.aktiv ? 1 : 0.7,
@@ -277,6 +387,12 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                         </ListItem>
                     ))}
                 </List>
+                
+                {formData.players.some(p => p.isTemporary) && (
+                    <Alert severity="info" sx={{ mt: 2 }}>
+                        Temporäre Spieler können später ersetzt werden, wenn sich die entsprechenden Benutzer registrieren.
+                    </Alert>
+                )}
             </DialogContent>
             <DialogActions sx={{ 
                 flexDirection: isMobile ? 'column' : 'row',
