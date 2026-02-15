@@ -288,16 +288,12 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
             }
         }
 
-        // Prüfe, ob es ein temporärer Spieler ist und lösche ihn aus Firebase
+        // Prüfe, ob es ein temporärer Spieler ist und entferne ihn nur aus dem lokalen Speicher
         const playerToRemove = fullPlayers.find(p => p.id === id);
         if (playerToRemove?.isTemporary) {
-            try {
-                await deleteTemporaryUser(id);
-                console.log(`Temporary player ${id} deleted from Firebase`);
-            } catch (error) {
-                console.error('Error deleting temporary player:', error);
-                // Trotzdem aus der lokalen Liste entfernen, auch wenn Firebase-Löschung fehlschlägt
-            }
+            // Nur aus dem lokalen PlayerDataService entfernen, nicht aus der Datenbank
+            PlayerDataService.removeTemporaryPlayer(id);
+            console.log(`Temporary player ${id} removed from local storage`);
         }
 
         setFormData(prev => ({
@@ -309,9 +305,9 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
     const handleToggleActive = async (id: string) => {
         const targetPlayer = fullPlayers.find(p => p.id === id);
         if (targetPlayer) {
-            // Update the player in PlayerDataService
+            // Update the player in PlayerDataService nur lokal
             if (targetPlayer.isTemporary) {
-                await PlayerDataService.updateTemporaryPlayer(id, { aktiv: !targetPlayer.aktiv });
+                PlayerDataService.updateTemporaryPlayer(id, { aktiv: !targetPlayer.aktiv });
                 // Aktualisiere die lokale Liste
                 setFullPlayers(prev => prev.map(p => 
                     p.id === id ? { ...p, aktiv: !p.aktiv } : p

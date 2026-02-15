@@ -18,19 +18,8 @@ export class PlayerDataService {
     }
 
     // Temporäre Spieler verwalten
-    async addTemporaryPlayer(player: Player): Promise<void> {
+    addTemporaryPlayer(player: Player): void {
         this.temporaryPlayers.set(player.id, player);
-        try {
-            await createTemporaryPlayer({
-                id: player.id,
-                email: player.email,
-                firstName: player.firstname,
-                lastName: player.name
-            });
-        } catch (error) {
-            console.error('Failed to save temporary player to database:', error);
-            // Behalte den Spieler im lokalen Speicher, auch wenn DB speichern fehlschlägt
-        }
     }
 
     getTemporaryPlayer(id: string): Player | undefined {
@@ -50,6 +39,35 @@ export class PlayerDataService {
 
     removeTemporaryPlayer(id: string): void {
         this.temporaryPlayers.delete(id);
+    }
+
+    // Temporäre Spieler in die Datenbank speichern
+    async saveTemporaryPlayersToDatabase(): Promise<void> {
+        const savePromises = Array.from(this.temporaryPlayers.values()).map(async (player) => {
+            try {
+                await createTemporaryPlayer({
+                    id: player.id,
+                    email: player.email,
+                    firstName: player.firstname,
+                    lastName: player.name
+                });
+            } catch (error) {
+                console.error(`Failed to save temporary player ${player.id} to database:`, error);
+            }
+        });
+        await Promise.all(savePromises);
+    }
+
+    // Alle temporären Spieler aus der Datenbank löschen
+    async deleteTemporaryPlayersFromDatabase(): Promise<void> {
+        const deletePromises = Array.from(this.temporaryPlayers.keys()).map(async (playerId) => {
+            try {
+                await deleteTemporaryUser(playerId);
+            } catch (error) {
+                console.error(`Failed to delete temporary player ${playerId} from database:`, error);
+            }
+        });
+        await Promise.all(deletePromises);
     }
 
     // Registrierte Benutzer verwalten

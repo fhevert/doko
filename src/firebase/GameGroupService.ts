@@ -4,10 +4,14 @@ import {GameGroup} from '../model/GameGroup';
 import {updateUserProfile, getUserProfile, deleteTemporaryUser} from './UserService';
 import { Game } from '../model/Game';
 import { saveGameToFirebase } from './DbFunctions';
+import PlayerDataService from '../services/PlayerDataService';
 
 export const createGameGroup = async (group: Omit<GameGroup, 'id' | 'createdAt' | 'updatedAt' | 'games' | 'rounds'>) => {
     const user = auth.currentUser;
     if (!user) throw new Error('User not authenticated');
+
+    // Speichere temporäre Spieler zuerst in der Datenbank
+    await PlayerDataService.saveTemporaryPlayersToDatabase();
 
     const gameGroupRef = ref(firebaseDB, `gameGroups`);
     const newGroupRef = push(gameGroupRef);
@@ -53,6 +57,9 @@ export const updateGameGroup = async (groupId: string, updates: Partial<GameGrou
     // Bestimme die finale Spielerliste nach dem Update
     const finalPlayers = updates.players || currentGroup.players;
     
+    // Speichere temporäre Spieler zuerst in der Datenbank
+    await PlayerDataService.saveTemporaryPlayersToDatabase();
+    
     await update(groupRef, {
         ...updates,
         updatedAt: Date.now()
@@ -82,6 +89,15 @@ export const updateGameGroup = async (groupId: string, updates: Partial<GameGrou
                 if (profile?.groupIds) {
                     const updatedGroupIds = profile.groupIds.filter(id => id !== groupId);
                     await updateUserProfile(playerId, { groupIds: updatedGroupIds });
+                    
+                    // Wenn es ein temporärer Spieler ist, lösche ihn vollständig aus der Datenbank
+                    if (profile.isTemporary) {
+                        try {
+                            await deleteTemporaryUser(playerId);
+                        } catch (error) {
+                            console.error(`Failed to delete temporary user ${playerId}:`, error);
+                        }
+                    }
                 }
             }
         }
