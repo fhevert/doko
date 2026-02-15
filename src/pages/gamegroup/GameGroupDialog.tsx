@@ -1,5 +1,6 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
+    Alert,
     Autocomplete,
     Box,
     Button,
@@ -12,24 +13,23 @@ import {
     IconButton,
     List,
     ListItem,
+    ListItemIcon,
     ListItemSecondaryAction,
+    ListItemText,
+    Menu,
+    MenuItem,
+    Tab,
+    Tabs,
     TextField,
     Typography,
     useMediaQuery,
-    useTheme,
-    Tabs,
-    Tab,
-    Alert,
-    Menu,
-    MenuItem,
-    ListItemText,
-    ListItemIcon
+    useTheme
 } from '@mui/material';
 import {Player} from '../../model/Player';
 import {GameGroup, GroupPlayer} from '../../model/GameGroup';
 import {Game} from '../../model/Game';
 import {Delete as DeleteIcon, PersonAdd as PersonAddIcon, SwapHoriz as SwapIcon} from '@mui/icons-material';
-import {getAllUsers, UserProfile, deleteTemporaryUser} from '../../firebase/UserService';
+import {deleteTemporaryUser, getAllUsers, UserProfile} from '../../firebase/UserService';
 import {replaceTemporaryPlayerInGroup} from '../../utils/playerUtils';
 import PlayerDataService from '../../services/PlayerDataService';
 import {useAuth} from '../../firebase/AuthContext';
@@ -52,7 +52,7 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
     const [formData, setFormData] = useState<GameGroupFormData>({
         name: '',
         players: [],
-        startFee: 5
+        startFee: 0
     });
     const [availableUsers, setAvailableUsers] = useState<UserProfile[]>([]);
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);

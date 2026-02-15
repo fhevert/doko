@@ -363,7 +363,7 @@ export const calculateCashShare = (groupData: GameGroup): Map<string, number> =>
   const cashMap = new Map<string, number>();
 
   totalPoints.forEach((points, playerId) => {
-    const startFee = groupData.startFee || 5; // Verwende die dynamische Startgeb�hr, fallback auf 5�\n    const groupGameTotal = totalGroupGames * startFee;
+    const startFee = groupData.startFee || 0; // Verwende die dynamische Startgeb�hr, fallback auf 5�\n    const groupGameTotal = totalGroupGames * startFee;
     const groupGameTotal = totalGroupGames * startFee;
     const cashShare = groupGameTotal + (points * 0.1);
     cashMap.set(playerId, Math.round(cashShare * 100) / 100);
