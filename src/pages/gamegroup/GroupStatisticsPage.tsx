@@ -31,7 +31,7 @@ const GroupStatisticsPage: React.FC = () => {
   const navigate = useNavigate();
 
   // Handle group data loading and processing
-  const loadGroupData = useCallback(() => {
+  const loadGroupData = useCallback(async () => {
     if (!groupId) {
       setError('Keine Gruppen-ID angegeben');
       setLoading(false);
@@ -43,7 +43,7 @@ const GroupStatisticsPage: React.FC = () => {
     
     const unsubscribe = onValue(
       groupRef, 
-      (snapshot) => {
+      async (snapshot) => {
         try {
           const groupData = snapshot.val();
           if (groupData) {
@@ -51,7 +51,7 @@ const GroupStatisticsPage: React.FC = () => {
             setGroup(processedGroup);
             
             if (processedGroup) {
-              const stats = calculatePlayerStats(processedGroup);
+              const stats = await calculatePlayerStats(processedGroup);
               setPlayerStats(stats);
               
               // Set default selected player to current user if available
@@ -85,10 +85,7 @@ const GroupStatisticsPage: React.FC = () => {
 
   // Load group data on component mount
   useEffect(() => {
-    const unsubscribe = loadGroupData();
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
+    loadGroupData();
   }, [loadGroupData]);
 
   // Handle back navigation

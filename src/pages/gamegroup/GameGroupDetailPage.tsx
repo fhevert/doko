@@ -27,6 +27,7 @@ import {auth, firebaseDB as db} from '../../firebase/firebase-config';
 import {DataSnapshot, get, onValue, ref, remove} from 'firebase/database';
 import {saveGameToFirebase} from "../../firebase/DbFunctions";
 import {ResultType} from "../../model/Round"; // Import from modular SDK
+import PlayerDataService from '../../services/PlayerDataService';
 
 const GameGroupDetailPage: React.FC = () => {
     const {groupId} = useParams<{ groupId: string }>();
@@ -233,10 +234,11 @@ const GameGroupDetailPage: React.FC = () => {
                 if (!user) throw new Error('User not authenticated');
 
                 // Create a new game with the group's players
+                const fullPlayers = await PlayerDataService.groupPlayersToFullPlayers(group.players);
                 const newGame: Game = {
                     id: `game_${Date.now()}`, // More descriptive ID
                     gameGroupId: groupId,
-                    players: group.players.map(player => ({
+                    players: fullPlayers.map(player => ({
                         ...player,
                         aktiv: true,
                         result: 0

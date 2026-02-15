@@ -1,5 +1,5 @@
 import { User } from 'firebase/auth';
-import { getDatabase, ref, set, update, get, child } from 'firebase/database';
+import { getDatabase, ref, set, update, get, child, remove } from 'firebase/database';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { firebaseDB, firebaseApp } from './firebase-config';
 
@@ -13,7 +13,27 @@ export interface UserProfile {
   photoURL?: string;
   createdAt?: number;
   groupIds?: string[];
+  isTemporary?: boolean;
 }
+
+export const createTemporaryPlayer = async (player: { id: string; email?: string; firstName?: string; lastName?: string }): Promise<void> => {
+  try {
+    const userRef = ref(firebaseDB, `users/${player.id}`);
+    
+    await set(userRef, {
+      uid: player.id,
+      email: player.email,
+      firstName: player.firstName,
+      lastName: player.lastName,
+      photoURL: '',
+      createdAt: Date.now(),
+      isTemporary: true
+    });
+  } catch (error) {
+    console.error('Error creating temporary player:', error);
+    throw error;
+  }
+};
 
 export const createUserProfile = async (user: User, additionalData: { firstName?: string; lastName?: string } = {}): Promise<void> => {
   try {
@@ -110,6 +130,17 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
   } catch (error) {
     console.error('Error fetching users:', error);
     return [];
+  }
+};
+
+export const deleteTemporaryUser = async (userId: string): Promise<void> => {
+  try {
+    const userRef = ref(firebaseDB, `users/${userId}`);
+    await remove(userRef);
+    console.log(`Temporary user ${userId} deleted successfully`);
+  } catch (error) {
+    console.error('Error deleting temporary user:', error);
+    throw error;
   }
 };
 

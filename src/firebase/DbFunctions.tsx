@@ -7,7 +7,7 @@ export function saveGameToFirebase(game: Game): Promise<void> {
     const user = auth.currentUser;
     if (!user) return Promise.reject(new Error('User not authenticated'));
     if (!game.gameGroupId) return Promise.reject(new Error('Game is missing gameGroupId'));
-    
+
     const gameRef = ref(firebaseDB, `gameGroups/${game.gameGroupId}/games/${game.id}`);
     const gameToSave = {
         id: game.id,  // Make sure to include the id
@@ -20,14 +20,14 @@ export function saveGameToFirebase(game: Game): Promise<void> {
             aktiv: player.aktiv
         })),
         averagePoints: game.averagePoints,
-        date: game.date ? game.date.toISOString() : new Date().toISOString(),  // Ensure date is included
+        date: game.date ? (typeof game.date === 'string' ? game.date : game.date.toISOString()) : new Date().toISOString(),  // Ensure date is included
         rounds: game.rounds.map(round => {
             // Convert Map to array of entries for Firebase, ensuring ResultType is properly handled
             const resultsArray = Array.from(round.results.entries()).map(([key, value]) => ({
                 key,
                 value: value as number  // Cast to number since enum values are numbers at runtime
             }));
-            
+
             return {
                 id: round.id,
                 roundPoints: round.roundPoints,
@@ -46,17 +46,17 @@ export function saveGameToFirebase(game: Game): Promise<void> {
 
 export function convertFromDbGame(gameToConvert: any): Game {
     // Convert date from string to Date object
-    const date = gameToConvert.date 
-        ? new Date(gameToConvert.date) 
+    const date = gameToConvert.date
+        ? new Date(gameToConvert.date)
         : new Date();
-    
+
     // Convert rounds if they exist
     let rounds: Round[] = [];
     if (gameToConvert.rounds && Array.isArray(gameToConvert.rounds)) {
         rounds = gameToConvert.rounds.map((round: any) => {
             // Convert results array back to Map with ResultType
             let resultsMap = new Map<string, ResultType>();
-            
+
             if (round.results && Array.isArray(round.results)) {
                 round.results.forEach((result: {key: string, value: number}) => {
                     if (result && result.key !== undefined && result.value !== undefined) {
@@ -72,7 +72,7 @@ export function convertFromDbGame(gameToConvert: any): Game {
                     }
                 });
             }
-            
+
             return {
                 id: round.id || `round_${Date.now()}`,
                 roundPoints: round.roundPoints || 0,
@@ -87,7 +87,7 @@ export function convertFromDbGame(gameToConvert: any): Game {
     }
 
     // Ensure players is an array and has required fields
-    const players = Array.isArray(gameToConvert.players) 
+    const players = Array.isArray(gameToConvert.players)
         ? gameToConvert.players.map((player: any) => ({
             id: player.id || `player_${Date.now()}`,
             email: player.email || `unknown-${Date.now()}@doko.app`,

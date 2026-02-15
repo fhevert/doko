@@ -18,15 +18,19 @@ import {
     Typography
 } from '@mui/material';
 import {GameGroup} from '../../model/GameGroup';
+import {Game} from '../../model/Game';
 import {Link, useNavigate} from 'react-router-dom';
 import GameGroupDialog from './GameGroupDialog';
 import {Delete as DeleteIcon, Edit as EditIcon} from '@mui/icons-material';
 import {
     createGameGroup,
     deleteGameGroup,
+    getGameGroup,
     subscribeToGameGroups,
-    updateGameGroup
+    updateGameGroup,
+    updateGamesInGroup
 } from "../../firebase/GameGroupService";
+import { saveGameToFirebase } from '../../firebase/DbFunctions';
 import AddIcon from "@mui/icons-material/Add";
 import {useGameGroups} from '../../contexts/GameGroupsContext';
 
@@ -38,6 +42,7 @@ const GameGroupPage: React.FC = () => {
     const { gameGroups, setGameGroups } = useGameGroups();
     const [openDialog, setOpenDialog] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState<GameGroup | null>(null);
+    const [groupGames, setGroupGames] = useState<{ [key: string]: Game[] }>({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -76,6 +81,26 @@ const GameGroupPage: React.FC = () => {
 
         return () => unsubscribe();
     }, []);
+
+    // Funktion zum Laden der Spiele einer Gruppe
+    const loadGroupGames = async (groupId: string) => {
+        try {
+            const group = await getGameGroup(groupId);
+            if (group?.games) {
+                const games = Object.values(group.games);
+                setGroupGames(prev => ({ ...prev, [groupId]: games }));
+            }
+        } catch (error) {
+            console.error('Error loading group games:', error);
+        }
+    };
+
+    // Lade Spiele wenn eine Gruppe zum Bearbeiten ausgewählt wird
+    useEffect(() => {
+        if (selectedGroup) {
+            loadGroupGames(selectedGroup.id);
+        }
+    }, [selectedGroup]);
 
     const handleSaveGroup = async (group: Omit<GameGroup, 'id' | 'createdAt' | 'updatedAt' | 'games' | 'rounds'>) => {
         try {
@@ -121,6 +146,28 @@ const GameGroupPage: React.FC = () => {
             setError('Fehler beim Löschen der Spielgruppe');
             setIsDeleteDialogOpen(false);
             setGroupToDelete(null);
+        }
+    };
+
+    // Callback für aktualisierte Spiele nach Tausch
+    const handleGamesUpdate = async (updatedGames: Game[]) => {
+        if (selectedGroup) {
+            try {
+                console.log('Updating games in group:', selectedGroup.id);
+                console.log('Games to update:', updatedGames.length);
+                
+                // Speichere die aktualisierten Spiele direkt in der Gruppe
+                await updateGamesInGroup(selectedGroup.id, updatedGames);
+                
+                // Update local state
+                setGroupGames(prev => ({ ...prev, [selectedGroup.id]: updatedGames }));
+                console.log('Games updated successfully in group:', selectedGroup.id);
+            } catch (error) {
+                console.error('Error updating games in group:', error);
+                console.error('Error details:', JSON.stringify(error, null, 2));
+                // Zeige Fehlermeldung an
+                setError('Fehler beim Speichern der aktualisierten Spiele: ' + (error as Error).message);
+            }
         }
     };
 
@@ -236,6 +283,8 @@ const GameGroupPage: React.FC = () => {
                 }}
                 onSave={handleSaveGroup}
                 group={selectedGroup}
+                games={selectedGroup ? groupGames[selectedGroup.id] || [] : []}
+                onGamesUpdate={handleGamesUpdate}
             />
             <Snackbar
                 open={!!error}

@@ -5,4 +5,5 @@ export interface Player {
     name?: string;       // Optional as it will be loaded from user profile
     result: number;
     aktiv: boolean;
+    isTemporary?: boolean; // Markiert ob Spieler noch nicht registriert ist
 }
