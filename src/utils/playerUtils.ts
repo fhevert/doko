@@ -1,25 +1,22 @@
 import {Player} from '../model/Player';
 import {UserProfile} from '../firebase/UserService';
 import {Game} from '../model/Game';
+import {GroupPlayer} from '../model/GameGroup';
 import {ResultType} from '../model/Round';
+import PlayerDataService from '../services/PlayerDataService';
 
 /**
  * Ersetzt einen temporären Spieler durch einen registrierten Benutzer
  */
 export function replaceTemporaryPlayer(
-    players: Player[], 
+    players: GroupPlayer[], 
     temporaryPlayerId: string, 
     registeredUser: UserProfile
-): Player[] {
+): GroupPlayer[] {
     return players.map(player => {
         if (player.id === temporaryPlayerId && player.isTemporary) {
             return {
                 id: registeredUser.uid,
-                email: registeredUser.email || '',
-                name: registeredUser.lastName || player.name || '',
-                firstname: registeredUser.firstName || player.firstname || '',
-                result: player.result,
-                aktiv: player.aktiv,
                 isTemporary: false
             };
         }
@@ -64,6 +61,28 @@ export function replacePlayerInAllGames(
             rounds: updatedRounds
         };
     });
+}
+
+/**
+ * Ersetzt einen temporären Spieler vollständig in einer Spielgruppe
+ * (Spielerliste + alle Spiele und Runden)
+ */
+export function replaceTemporaryPlayerInGroup(
+    players: GroupPlayer[],
+    games: Game[],
+    temporaryPlayerId: string,
+    registeredUser: UserProfile
+): { updatedPlayers: GroupPlayer[], updatedGames: Game[] } {
+    // Ersetze in der Spielerliste
+    const updatedPlayers = replaceTemporaryPlayer(players, temporaryPlayerId, registeredUser);
+    
+    // Ersetze in allen Spielen
+    const updatedGames = replacePlayerInAllGames(games, temporaryPlayerId, registeredUser.uid);
+
+    // Aktualisiere den zentralen PlayerDataService
+    PlayerDataService.replaceTemporaryWithRegistered(temporaryPlayerId, registeredUser);
+
+    return { updatedPlayers, updatedGames };
 }
 
 /**

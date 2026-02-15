@@ -13,7 +13,27 @@ export interface UserProfile {
   photoURL?: string;
   createdAt?: number;
   groupIds?: string[];
+  isTemporary?: boolean;
 }
+
+export const createTemporaryPlayer = async (player: { id: string; email?: string; firstName?: string; lastName?: string }): Promise<void> => {
+  try {
+    const userRef = ref(firebaseDB, `users/${player.id}`);
+    
+    await set(userRef, {
+      uid: player.id,
+      email: player.email,
+      firstName: player.firstName,
+      lastName: player.lastName,
+      photoURL: '',
+      createdAt: Date.now(),
+      isTemporary: true
+    });
+  } catch (error) {
+    console.error('Error creating temporary player:', error);
+    throw error;
+  }
+};
 
 export const createUserProfile = async (user: User, additionalData: { firstName?: string; lastName?: string } = {}): Promise<void> => {
   try {
