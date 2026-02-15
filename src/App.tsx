@@ -28,6 +28,7 @@ import {DataSnapshot, onValue, ref} from "firebase/database";
 import {useAuth} from './firebase/AuthContext';
 import {signOut} from 'firebase/auth';
 import Login from "./pages/login";
+import Register from "./pages/register";
 import ProfilePage from "./pages/profile/ProfilePage";
 import {convertFromDbGame} from "./firebase/DbFunctions";
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -281,6 +282,7 @@ function App() {
                                     </PrivateRoute>
                                 } />
                                 <Route path="/login" element={<Login />} />
+                                <Route path="/register" element={<Register />} />
                                 <Route path="/profile" element={
                                     <PrivateRoute>
                                         <ProfilePage />

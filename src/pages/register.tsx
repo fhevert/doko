@@ -1,41 +1,23 @@
 import React, {FormEvent, useState} from 'react';
 import {Alert, Box, Button, Container, TextField, Typography,} from '@mui/material';
-import {createUserWithEmailAndPassword, signInWithEmailAndPassword} from 'firebase/auth';
+import {createUserWithEmailAndPassword} from 'firebase/auth';
 import {useNavigate} from 'react-router-dom';
 import {auth} from "../firebase/firebase-config";
+import {createUserProfile} from "../firebase/UserService";
 
-function Login() {
+function Register() {
     const [email, setEmail] = useState<string>('');
     const [password, setPassword] = useState<string>('');
+    const [firstName, setFirstName] = useState<string>('');
+    const [lastName, setLastName] = useState<string>('');
     const [error, setError] = useState<string>('');
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const navigate = useNavigate();
 
-    const handleLogin = async (e: FormEvent) => {
-        e.preventDefault();
-        if (!email || !password) {
-            setError('Bitte geben Sie E-Mail und Passwort ein');
-            return;
-        }
-        
-        setError('');
-        setIsLoading(true);
-        
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            navigate('/game-groups');
-        } catch (err: any) {
-            console.error('Login error:', err);
-            setError('Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.');
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const handleRegister = async (e: FormEvent) => {
         e.preventDefault();
-        if (!email || !password) {
-            setError('Bitte geben Sie E-Mail und Passwort ein');
+        if (!email || !password || !firstName || !lastName) {
+            setError('Bitte füllen Sie alle Felder aus');
             return;
         }
         
@@ -43,15 +25,23 @@ function Login() {
         setIsLoading(true);
         
         try {
-            // User creation and profile creation is handled in AuthContext
-            await createUserWithEmailAndPassword(auth, email, password);
-            // No need to navigate here, as the AuthContext will handle the redirect
-            // after the user profile is created
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            
+            await createUserProfile(userCredential.user, {
+                firstName,
+                lastName
+            });
+            
+            navigate('/game-groups');
         } catch (err: any) {
             console.error('Registration error:', err);
             setError('Registrierung fehlgeschlagen. ' + 
                 (err.code === 'auth/email-already-in-use' 
                     ? 'Diese E-Mail wird bereits verwendet.' 
+                    : err.code === 'auth/weak-password'
+                    ? 'Das Passwort ist zu schwach. Bitte wählen Sie ein stärkeres Passwort.'
+                    : err.code === 'auth/invalid-email'
+                    ? 'Die E-Mail-Adresse ist ungültig.'
                     : err.message || 'Bitte versuchen Sie es später erneut.')
             );
         } finally {
@@ -70,9 +60,32 @@ function Login() {
                 }}
             >
                 <Typography component="h1" variant="h5">
-                    Login
+                    Registrieren
                 </Typography>
-                <Box component="form" onSubmit={handleLogin} sx={{ mt: 1 }}>
+                <Box component="form" onSubmit={handleRegister} sx={{ mt: 1 }}>
+                    <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        id="firstName"
+                        label="Vorname"
+                        name="firstName"
+                        autoComplete="given-name"
+                        autoFocus
+                        value={firstName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFirstName(e.target.value)}
+                    />
+                    <TextField
+                        margin="normal"
+                        required
+                        fullWidth
+                        id="lastName"
+                        label="Nachname"
+                        name="lastName"
+                        autoComplete="family-name"
+                        value={lastName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLastName(e.target.value)}
+                    />
                     <TextField
                         margin="normal"
                         required
@@ -81,9 +94,8 @@ function Login() {
                         label="E-Mail-Adresse"
                         name="email"
                         autoComplete="email"
-                        autoFocus
                         value={email}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)} // Typisierung des ChangeEvent
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                     />
                     <TextField
                         margin="normal"
@@ -93,9 +105,9 @@ function Login() {
                         label="Passwort"
                         name="password"
                         type="password"
-                        autoComplete="current-password"
+                        autoComplete="new-password"
                         value={password}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)} // Typisierung des ChangeEvent
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                     />
                     {error && (
                         <Alert severity="error" sx={{ mt: 2 }}>
@@ -107,17 +119,17 @@ function Login() {
                         fullWidth
                         variant="contained"
                         sx={{ mt: 3, mb: 2 }}
-                        onClick={handleLogin}
+                        disabled={isLoading}
                     >
-                        Login
+                        {isLoading ? 'Registrierung...' : 'Registrieren'}
                     </Button>
                     <Button
                         fullWidth
                         variant="outlined"
                         sx={{ mt: 1, mb: 2 }}
-                        onClick={() => navigate("/register")}
+                        onClick={() => navigate('/login')}
                     >
-                        Registrieren
+                        Zurück zum Login
                     </Button>
                 </Box>
             </Box>
@@ -125,6 +137,5 @@ function Login() {
     );
 }
 
-export default Login;
-// Add this line at the very end of the file if you're still getting TS1208
+export default Register;
 export {};
