@@ -1,5 +1,7 @@
 import {Player} from '../model/Player';
 import {UserProfile} from '../firebase/UserService';
+import {Game} from '../model/Game';
+import {ResultType} from '../model/Round';
 
 /**
  * Ersetzt einen temporären Spieler durch einen registrierten Benutzer
@@ -22,6 +24,45 @@ export function replaceTemporaryPlayer(
             };
         }
         return player;
+    });
+}
+
+/**
+ * Ersetzt einen Spieler in allen Spielen und Runden einer Spielgruppe
+ */
+export function replacePlayerInAllGames(
+    games: Game[],
+    oldPlayerId: string,
+    newPlayerId: string
+): Game[] {
+    return games.map(game => {
+        // Ersetze Spieler in der Spielerliste des Spiels
+        const updatedPlayers = game.players.map(player => 
+            player.id === oldPlayerId ? {...player, id: newPlayerId} : player
+        );
+
+        // Ersetze Spieler in allen Runden-Ergebnissen
+        const updatedRounds = game.rounds.map(round => {
+            // Erstelle eine neue Map mit den aktualisierten Spieler-IDs
+            const updatedResults = new Map<string, ResultType>();
+            
+            // Kopiere alle Ergebnisse und ersetze die alte Spieler-ID
+            round.results.forEach((result, playerId) => {
+                const newPlayerIdForKey = playerId === oldPlayerId ? newPlayerId : playerId;
+                updatedResults.set(newPlayerIdForKey, result);
+            });
+
+            return {
+                ...round,
+                results: updatedResults
+            };
+        });
+
+        return {
+            ...game,
+            players: updatedPlayers,
+            rounds: updatedRounds
+        };
     });
 }
 

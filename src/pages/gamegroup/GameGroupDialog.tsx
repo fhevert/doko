@@ -19,12 +19,18 @@ import {
     useTheme,
     Tabs,
     Tab,
-    Alert
+    Alert,
+    Menu,
+    MenuItem,
+    ListItemText,
+    ListItemIcon
 } from '@mui/material';
 import {Player} from '../../model/Player';
 import {GameGroup} from '../../model/GameGroup';
-import {Delete as DeleteIcon, PersonAdd as PersonAddIcon} from '@mui/icons-material';
+import {Game} from '../../model/Game';
+import {Delete as DeleteIcon, PersonAdd as PersonAddIcon, SwapHoriz as SwapIcon} from '@mui/icons-material';
 import {getAllUsers, UserProfile} from '../../firebase/UserService';
+import {replaceTemporaryPlayer, replacePlayerInAllGames} from '../../utils/playerUtils';
 
 type GameGroupFormData = Omit<GameGroup, 'id' | 'createdAt' | 'updatedAt' | 'games' | 'rounds'>;
 
@@ -33,9 +39,11 @@ interface GameGroupDialogProps {
     onClose: () => void;
     onSave: (group: Omit<GameGroup, 'id' | 'createdAt' | 'updatedAt' | 'games' | 'rounds'>) => void;
     group: GameGroup | null;
+    games?: Game[]; // Spiele der Gruppe für den Austausch
+    onGamesUpdate?: (games: Game[]) => void; // Callback für aktualisierte Spiele
 }
 
-const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave, group}) => {
+const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave, group, games = [], onGamesUpdate}) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [formData, setFormData] = useState<GameGroupFormData>({
@@ -50,6 +58,10 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
     const [playerInputTab, setPlayerInputTab] = useState(0); // 0 = registrierte Spieler, 1 = manuelle Eingabe
     const [manualPlayerName, setManualPlayerName] = useState('');
     const [manualPlayerEmail, setManualPlayerEmail] = useState('');
+    const [swapMenuAnchor, setSwapMenuAnchor] = useState<null | HTMLElement>(null);
+    const [selectedPlayerToSwap, setSelectedPlayerToSwap] = useState<Player | null>(null);
+    const [pendingSwaps, setPendingSwaps] = useState<Map<string, UserProfile>>(new Map());
+    const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
     useEffect(() => {
         const fetchUsers = async () => {
@@ -140,6 +152,65 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
         setManualPlayerEmail('');
     };
 
+    const handleOpenSwapMenu = (event: React.MouseEvent<HTMLElement>, player: Player) => {
+        setSwapMenuAnchor(event.currentTarget);
+        setSelectedPlayerToSwap(player);
+    };
+
+    const handleCloseSwapMenu = () => {
+        setSwapMenuAnchor(null);
+        setSelectedPlayerToSwap(null);
+    };
+
+    const handleSelectSwapPlayer = (user: UserProfile) => {
+        if (!selectedPlayerToSwap) return;
+        
+        // Speichere den Austausch als pending
+        setPendingSwaps(prev => new Map(prev).set(selectedPlayerToSwap.id, user));
+        handleCloseSwapMenu();
+    };
+
+    const handleConfirmSwaps = () => {
+        setConfirmDialogOpen(true);
+    };
+
+    const handleExecuteSwaps = () => {
+        let updatedPlayers = [...formData.players];
+        let updatedGames = [...games];
+
+        // Führe alle pending Swaps aus
+        pendingSwaps.forEach((user, tempPlayerId) => {
+            // Ersetze in der Spielerliste
+            updatedPlayers = replaceTemporaryPlayer(updatedPlayers, tempPlayerId, user);
+            
+            // Ersetze in allen Spielen
+            updatedGames = replacePlayerInAllGames(updatedGames, tempPlayerId, user.uid);
+        });
+
+        setFormData(prev => ({ ...prev, players: updatedPlayers }));
+        
+        // Informiere Eltern-Komponente über aktualisierte Spiele
+        if (onGamesUpdate) {
+            onGamesUpdate(updatedGames);
+        }
+
+        // Clear pending swaps
+        setPendingSwaps(new Map());
+        setConfirmDialogOpen(false);
+        
+        // Speichere die Gruppe nach dem Austausch
+        onSave({
+            name: formData.name,
+            players: updatedPlayers.filter(p => p.aktiv),
+            startFee: formData.startFee
+        });
+    };
+
+    const handleCancelSwaps = () => {
+        setPendingSwaps(new Map());
+        setConfirmDialogOpen(false);
+    };
+
     const handleUserSelect = (event: React.SyntheticEvent, value: UserProfile | null) => {
         setSelectedUser(value);
     };
@@ -169,6 +240,12 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
     };
 
     const handleSubmit = () => {
+        // Wenn es pending Swaps gibt, zuerst bestätigen
+        if (pendingSwaps.size > 0) {
+            handleConfirmSwaps();
+            return;
+        }
+        
         onSave({
             name: formData.name,
             players: formData.players.filter(p => p.aktiv),
@@ -377,12 +454,24 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                                 }}
                             />
                             <ListItemSecondaryAction>
-                                <IconButton
-                                    edge="end"
-                                    onClick={() => handleRemovePlayer(player.id)}
-                                >
-                                    <DeleteIcon/>
-                                </IconButton>
+                                <Box sx={{ display: 'flex', gap: 0.5 }}>
+                                    {player.isTemporary && (
+                                        <IconButton
+                                            edge="end"
+                                            onClick={(e) => handleOpenSwapMenu(e, player)}
+                                            title="Spieler austauschen"
+                                        >
+                                            <SwapIcon />
+                                        </IconButton>
+                                    )}
+                                    <IconButton
+                                        edge="end"
+                                        onClick={() => handleRemovePlayer(player.id)}
+                                        title="Spieler entfernen"
+                                    >
+                                        <DeleteIcon/>
+                                    </IconButton>
+                                </Box>
                             </ListItemSecondaryAction>
                         </ListItem>
                     ))}
@@ -390,7 +479,12 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                 
                 {formData.players.some(p => p.isTemporary) && (
                     <Alert severity="info" sx={{ mt: 2 }}>
-                        Temporäre Spieler können später ersetzt werden, wenn sich die entsprechenden Benutzer registrieren.
+                        Temporäre Spieler können über das Austausch-Icon (↔) durch registrierte Benutzer ersetzt werden. Die Spielergebnisse werden dabei übernommen.
+                        {pendingSwaps.size > 0 && (
+                            <Typography variant="body2" sx={{ mt: 1 }}>
+                                {pendingSwaps.size} Austausch(e) zum Speichern ausstehend.
+                            </Typography>
+                        )}
                     </Alert>
                 )}
             </DialogContent>
@@ -414,9 +508,98 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                     fullWidth={isMobile}
                     sx={{ order: isMobile ? 1 : 2 }}
                 >
-                    Speichern
+                    {pendingSwaps.size > 0 ? `Austauschen & Speichern` : 'Speichern'}
                 </Button>
             </DialogActions>
+            
+            {/* Swap Menu */}
+            <Menu
+                anchorEl={swapMenuAnchor}
+                open={Boolean(swapMenuAnchor)}
+                onClose={handleCloseSwapMenu}
+                PaperProps={{
+                    style: {
+                        maxHeight: 300,
+                        width: '300px'
+                    }
+                }}
+            >
+                <MenuItem disabled>
+                    <Typography variant="subtitle2" color="text.secondary">
+                        Spieler austauschen: {selectedPlayerToSwap?.firstname} {selectedPlayerToSwap?.name}
+                    </Typography>
+                </MenuItem>
+                {availableUsers.filter(user => 
+                    !formData.players.some(player => player.id === user.uid)
+                ).map(user => (
+                    <MenuItem 
+                        key={user.uid} 
+                        onClick={() => handleSelectSwapPlayer(user)}
+                    >
+                        <ListItemIcon>
+                            <SwapIcon fontSize="small" />
+                        </ListItemIcon>
+                        <ListItemText 
+                            primary={user.firstName && user.lastName 
+                                ? `${user.firstName} ${user.lastName}` 
+                                : user.email?.split('@')[0] || 'Unbekannt'
+                            }
+                            secondary={user.email}
+                        />
+                    </MenuItem>
+                ))}
+                {availableUsers.filter(user => 
+                    !formData.players.some(player => player.id === user.uid)
+                ).length === 0 && (
+                    <MenuItem disabled>
+                        <ListItemText primary="Keine verfügbaren Spieler" />
+                    </MenuItem>
+                )}
+            </Menu>
+
+            {/* Bestätigungsdialog */}
+            <Dialog
+                open={confirmDialogOpen}
+                onClose={handleCancelSwaps}
+                maxWidth="sm"
+                fullWidth
+            >
+                <DialogTitle>Spieleraustausch bestätigen</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Sie sind dabei {pendingSwaps.size} temporäre Spieler durch registrierte Benutzer zu ersetzen.
+                    </Typography>
+                    <Typography sx={{ mt: 2, fontWeight: 'bold', color: 'warning.main' }}>
+                        ⚠️ Dieser Vorgang kann nicht rückgängig gemacht werden!
+                    </Typography>
+                    <Typography sx={{ mt: 2 }}>
+                        Alle Spielergebnisse in den betroffenen Spielen werden übernommen.
+                    </Typography>
+                    <List sx={{ mt: 2 }}>
+                        {Array.from(pendingSwaps.entries()).map(([tempId, user]) => {
+                            const tempPlayer = formData.players.find(p => p.id === tempId);
+                            return (
+                                <ListItem key={tempId}>
+                                    <ListItemText
+                                        primary={`${tempPlayer?.firstname} ${tempPlayer?.name}`}
+                                        secondary={`→ ${user.firstName} ${user.lastName}`}
+                                    />
+                                </ListItem>
+                            );
+                        })}
+                    </List>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={handleCancelSwaps}>Abbrechen</Button>
+                    <Button 
+                        onClick={handleExecuteSwaps} 
+                        variant="contained" 
+                        color="warning"
+                    >
+                        Austauschen & Speichern
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </Dialog>
     );
 };
