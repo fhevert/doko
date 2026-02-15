@@ -8,6 +8,7 @@ export interface GameGroup {
     players: Player[];
     rounds: Round[];
     games: Game[];
+    startFee: number; // Startgebühr in Euro
     createdAt: number;
     updatedAt: number;
 }

@@ -19,11 +19,13 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import {useGameContext} from "../../../model/context/GameContext";
+import {useGameGroups} from "../../../contexts/GameGroupsContext";
 import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 import {Player} from "../../../model/Player";
 
 function ErgebnisDialog() {
     const { game } = useGameContext();
+    const { gameGroups } = useGameGroups();
     const [open, setOpen] = React.useState(false);
 
     // Theme-Hooks für Responsive Design
@@ -33,7 +35,11 @@ function ErgebnisDialog() {
     const formatCurrency = (amount: number) =>
         new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount);
 
-    const getSpielerergebnis = (player: Player) => player.result * 0.1 + 5;
+    const getSpielerergebnis = (player: Player) => {
+        const gameGroup = gameGroups[game.gameGroupId];
+        const startFee = gameGroup?.startFee || 0;
+        return player.result * 0.1 + startFee;
+    };
 
     const getGesamtergebnis = () =>
         game.players.reduce((total, p) => total + getSpielerergebnis(p), 0);

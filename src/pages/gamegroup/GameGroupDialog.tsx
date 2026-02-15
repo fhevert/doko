@@ -37,7 +37,8 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
     const [formData, setFormData] = useState<GameGroupFormData>({
         name: '',
-        players: []
+        players: [],
+        startFee: 5
     });
     const [availableUsers, setAvailableUsers] = useState<UserProfile[]>([]);
     const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
@@ -68,12 +69,14 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
         if (group) {
             setFormData({
                 name: group.name || '',
-                players: [...group.players]
+                players: [...group.players],
+                startFee: group.startFee || 0
             });
         } else {
             setFormData({
                 name: '',
-                players: []
+                players: [],
+                startFee: 0
             });
         }
     }, [group]);
@@ -135,7 +138,8 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
     const handleSubmit = () => {
         onSave({
             name: formData.name,
-            players: formData.players.filter(p => p.aktiv)
+            players: formData.players.filter(p => p.aktiv),
+            startFee: formData.startFee
         });
     };
 
@@ -159,8 +163,21 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                     variant="outlined"
                     value={formData.name}
                     onChange={(e) => setFormData(prev => ({...prev, name: e.target.value}))}
+                    sx={{mb: 2}}
+                    size={isMobile ? 'small' : 'medium'}
+                />
+
+                <TextField
+                    margin="dense"
+                    label="Startgebühr (€)"
+                    type="number"
+                    fullWidth
+                    variant="outlined"
+                    value={formData.startFee}
+                    onChange={(e) => setFormData(prev => ({...prev, startFee: parseFloat(e.target.value) || 0}))}
                     sx={{mb: 3}}
                     size={isMobile ? 'small' : 'medium'}
+                    inputProps={{ min: 0, step: 0.5 }}
                 />
 
                 <Typography variant={isMobile ? 'subtitle1' : 'h6'} gutterBottom>
