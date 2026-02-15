@@ -4,7 +4,7 @@ import {Box, Button, Paper, Stack, Typography} from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import LocalFireDepartmentIcon from '@mui/icons-material/LocalFireDepartment';
 import SportsEsportsIcon from '@mui/icons-material/SportsEsports'; // Icon für den Geber
-import {useNavigate, useParams} from 'react-router-dom';
+import {useParams} from 'react-router-dom';
 import {getResult} from "../resultcell/ResultCell";
 import {useGameContext} from "../../../model/context/GameContext";
 import {ResultType, Round} from "../../../model/Round";
@@ -16,7 +16,6 @@ import {firebaseDB} from "../../../firebase/firebase-config";
 
 function GamePage() {
     const { game, setGame } = useGameContext();
-    const navigate = useNavigate();
     const { gameId, groupId } = useParams<{ gameId: string, groupId: string }>();
     const [selectedRoundId, setSelectedRoundId] = useState<number | null>(null);
     const [isLoading, setIsLoading] = useState(true);

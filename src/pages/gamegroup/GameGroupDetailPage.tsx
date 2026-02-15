@@ -210,7 +210,7 @@ const GameGroupDetailPage: React.FC = () => {
                 
                 // Navigate to the results page if there are rounds, otherwise to player selection
                 if (rounds.length > 0) {
-                    navigate('/game-groups/:groupId/games/:gameId');
+                    navigate(`/game-groups/${groupId}/games/${gameId}`);
                 } else {
                     navigate('/players');
                 }

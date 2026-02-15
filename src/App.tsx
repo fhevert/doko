@@ -4,7 +4,8 @@ import {
     AppBar,
     Avatar,
     Box,
-    Button, CircularProgress,
+    Button,
+    CircularProgress,
     createTheme,
     CssBaseline,
     IconButton,
@@ -76,15 +77,17 @@ const AuthStatusBar = memo(() => {
     useEffect(() => {
         // Update back button visibility based on current path
         const updateBackButton = () => {
-            setShowBackButton(window.location.pathname !== '/');
+            const currentPath = window.location.pathname;
+            // Zeige Zurück-Button auf allen Seiten außer der Gruppenliste
+            setShowBackButton(currentPath !== '/game-groups' && currentPath !== '/');
         };
-        
+
         // Initial check
         updateBackButton();
-        
+
         // Listen for browser back/forward navigation
         window.addEventListener('popstate', updateBackButton);
-        
+
         // Cleanup event listener on component unmount
         return () => {
             window.removeEventListener('popstate', updateBackButton);
@@ -92,7 +95,23 @@ const AuthStatusBar = memo(() => {
     }, []);
 
     const handleBack = () => {
-        navigate(-1); // Go back to previous page
+        const currentPath = location.pathname;
+
+        // Intelligente Navigation basierend auf aktueller Seite
+        if (currentPath.match(/\/game-groups\/[^\/]+\/games\/[^\/]+/)) {
+            // Von Spiel zur Gruppe - extrahiere groupId aus dem Pfad
+            const pathParts = currentPath.split('/');
+            const groupId = pathParts[2]; // /game-groups/{groupId}/games/{gameId}
+            navigate(`/game-groups/${groupId}`);
+        } else if (currentPath.match(/\/game-groups\/[^\/]+\/statistics/)) {
+            // Von Statistik zur Gruppe - extrahiere groupId aus dem Pfad
+            const pathParts = currentPath.split('/');
+            const groupId = pathParts[2]; // /game-groups/{groupId}/statistics
+            navigate(`/game-groups/${groupId}`);
+        } else {
+            // Sonst immer zur Gruppenauswahl
+            navigate('/game-groups');
+        }
     };
 
     const handleMenu = (event: React.MouseEvent<HTMLElement>) => {

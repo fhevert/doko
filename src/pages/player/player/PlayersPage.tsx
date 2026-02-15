@@ -186,7 +186,7 @@ function PlayersPage() {
                     {/* AKTIONEN UNTEN */}
                     <Box sx={{ mt: 5, display: 'flex', gap: 2 }}>
                         <Button
-                            component={Link} to="/game-groups/:groupId/games/:gameId"
+                            component={Link} to={`/game-groups/${game.gameGroupId}/games/${game.id}`}
                             variant="contained" 
                             fullWidth 
                             size="large"
