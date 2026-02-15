@@ -20,7 +20,7 @@ export function saveGameToFirebase(game: Game): Promise<void> {
             aktiv: player.aktiv
         })),
         averagePoints: game.averagePoints,
-        date: game.date ? game.date.toISOString() : new Date().toISOString(),  // Ensure date is included
+        date: game.date ? (typeof game.date === 'string' ? game.date : game.date.toISOString()) : new Date().toISOString(),  // Ensure date is included
         rounds: game.rounds.map(round => {
             // Convert Map to array of entries for Firebase, ensuring ResultType is properly handled
             const resultsArray = Array.from(round.results.entries()).map(([key, value]) => ({

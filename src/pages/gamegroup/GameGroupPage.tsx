@@ -153,6 +153,9 @@ const GameGroupPage: React.FC = () => {
     const handleGamesUpdate = async (updatedGames: Game[]) => {
         if (selectedGroup) {
             try {
+                console.log('Updating games in group:', selectedGroup.id);
+                console.log('Games to update:', updatedGames.length);
+                
                 // Speichere die aktualisierten Spiele direkt in der Gruppe
                 await updateGamesInGroup(selectedGroup.id, updatedGames);
                 
@@ -161,6 +164,9 @@ const GameGroupPage: React.FC = () => {
                 console.log('Games updated successfully in group:', selectedGroup.id);
             } catch (error) {
                 console.error('Error updating games in group:', error);
+                console.error('Error details:', JSON.stringify(error, null, 2));
+                // Zeige Fehlermeldung an
+                setError('Fehler beim Speichern der aktualisierten Spiele: ' + (error as Error).message);
             }
         }
     };

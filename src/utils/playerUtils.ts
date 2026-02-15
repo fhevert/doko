@@ -43,11 +43,21 @@ export function replacePlayerInAllGames(
             // Erstelle eine neue Map mit den aktualisierten Spieler-IDs
             const updatedResults = new Map<string, ResultType>();
             
-            // Kopiere alle Ergebnisse und ersetze die alte Spieler-ID
-            round.results.forEach((result, playerId) => {
-                const newPlayerIdForKey = playerId === oldPlayerId ? newPlayerId : playerId;
-                updatedResults.set(newPlayerIdForKey, result);
-            });
+            // Behandle beide Fälle: Map oder Array
+            const results = round.results as any;
+            if (results instanceof Map) {
+                results.forEach((result: ResultType, playerId: string) => {
+                    const newPlayerIdForKey = playerId === oldPlayerId ? newPlayerId : playerId;
+                    updatedResults.set(newPlayerIdForKey, result);
+                });
+            } else if (Array.isArray(results)) {
+                results.forEach((result: {key: string, value: number}) => {
+                    if (result && result.key !== undefined && result.value !== undefined) {
+                        const newPlayerIdForKey = result.key === oldPlayerId ? newPlayerId : result.key;
+                        updatedResults.set(newPlayerIdForKey, result.value as ResultType);
+                    }
+                });
+            }
 
             return {
                 ...round,
