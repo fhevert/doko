@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
     Autocomplete,
     Box,
@@ -29,9 +29,10 @@ import {Player} from '../../model/Player';
 import {GameGroup, GroupPlayer} from '../../model/GameGroup';
 import {Game} from '../../model/Game';
 import {Delete as DeleteIcon, PersonAdd as PersonAddIcon, SwapHoriz as SwapIcon} from '@mui/icons-material';
-import {getAllUsers, UserProfile} from '../../firebase/UserService';
+import {getAllUsers, UserProfile, deleteTemporaryUser} from '../../firebase/UserService';
 import {replaceTemporaryPlayerInGroup} from '../../utils/playerUtils';
 import PlayerDataService from '../../services/PlayerDataService';
+import {useAuth} from '../../firebase/AuthContext';
 
 type GameGroupFormData = Omit<GameGroup, 'id' | 'createdAt' | 'updatedAt' | 'games' | 'rounds'>;
 
@@ -47,6 +48,7 @@ interface GameGroupDialogProps {
 const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave, group, games = [], onGamesUpdate}) => {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+    const { currentUser } = useAuth();
     const [formData, setFormData] = useState<GameGroupFormData>({
         name: '',
         players: [],
@@ -63,6 +65,9 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
     const [selectedPlayerToSwap, setSelectedPlayerToSwap] = useState<GroupPlayer | null>(null);
     const [pendingSwaps, setPendingSwaps] = useState<Map<string, UserProfile>>(new Map());
     const [fullPlayers, setFullPlayers] = useState<Player[]>([]);
+    
+    // Ref für das Vornamen-Feld, um den Fokus nach dem Hinzufügen zu setzen
+    const firstNameInputRef = useRef<HTMLInputElement>(null);
 
     // Hilfsfunktion: Konvertiere GroupPlayer zu vollständigen Player für die Anzeige
     const getFullPlayers = async (): Promise<Player[]> => {
@@ -76,7 +81,9 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
             try {
                 setLoading(true);
                 const users = await getAllUsers();
-                setAvailableUsers(users);
+                // Temporäre Benutzer herausfiltern - sie sollen nicht zur Auswahl stehen
+                const nonTemporaryUsers = users.filter(user => !user.isTemporary);
+                setAvailableUsers(nonTemporaryUsers);
                 PlayerDataService.setRegisteredUsers(users);
                 setError(null);
             } catch (err) {
@@ -107,6 +114,27 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
             });
         }
     }, [group]);
+
+    // Füge aktuellen Benutzer bei neuen Gruppen automatisch hinzu
+    useEffect(() => {
+        if (open && !group && currentUser && availableUsers.length > 0) {
+            // Nur hinzufügen, wenn noch keine Spieler vorhanden sind
+            if (formData.players.length === 0) {
+                const currentUserProfile = availableUsers.find(user => user.uid === currentUser.uid);
+                if (currentUserProfile) {
+                    const newGroupPlayer: GroupPlayer = {
+                        id: currentUserProfile.uid,
+                        isTemporary: false
+                    };
+
+                    setFormData(prev => ({
+                        ...prev,
+                        players: [...prev.players, newGroupPlayer]
+                    }));
+                }
+            }
+        }
+    }, [open, group, currentUser, availableUsers, formData.players.length]);
 
     useEffect(() => {
         const updateFullPlayers = async () => {
@@ -166,9 +194,16 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
             players: [...prev.players, newGroupPlayer]
         }));
         
-        // Clear manual input fields
+        // Clear manual input fields und setze Fokus auf Vornamen-Feld
         setManualPlayerFirstName('');
         setManualPlayerLastName('');
+        
+        // Setze Fokus zurück auf das Vornamen-Feld nach kurzer Verzögerung
+        setTimeout(() => {
+            if (firstNameInputRef.current) {
+                firstNameInputRef.current.focus();
+            }
+        }, 100);
     };
 
     const handleOpenSwapMenu = (event: React.MouseEvent<HTMLElement>, player: GroupPlayer) => {
@@ -193,41 +228,46 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
         setConfirmDialogOpen(true);
     };
 
-    const handleExecuteSwaps = () => {
+    const handleExecuteSwaps = async () => {
         let updatedPlayers = [...formData.players];
         let updatedGames = [...games];
 
-        // Führe alle pending Swaps aus
-        pendingSwaps.forEach((user, tempPlayerId) => {
-            // Ersetze in der Spielerliste
-            const { updatedPlayers: newUpdatedPlayers, updatedGames: newUpdatedGames } = replaceTemporaryPlayerInGroup(
-                updatedPlayers,
-                updatedGames,
-                tempPlayerId,
-                user
-            );
+        try {
+            // Führe alle pending Swaps aus
+            for (const [tempPlayerId, user] of pendingSwaps.entries()) {
+                // Ersetze in der Spielerliste
+                const { updatedPlayers: newUpdatedPlayers, updatedGames: newUpdatedGames } = await replaceTemporaryPlayerInGroup(
+                    updatedPlayers,
+                    updatedGames,
+                    tempPlayerId,
+                    user
+                );
+                
+                updatedPlayers = newUpdatedPlayers;
+                updatedGames = newUpdatedGames;
+            }
+
+            setFormData(prev => ({ ...prev, players: updatedPlayers }));
             
-            updatedPlayers = newUpdatedPlayers;
-            updatedGames = newUpdatedGames;
-        });
+            // Informiere Eltern-Komponente über aktualisierte Spiele
+            if (onGamesUpdate) {
+                onGamesUpdate(updatedGames);
+            }
 
-        setFormData(prev => ({ ...prev, players: updatedPlayers }));
-        
-        // Informiere Eltern-Komponente über aktualisierte Spiele
-        if (onGamesUpdate) {
-            onGamesUpdate(updatedGames);
+            // Clear pending swaps
+            setPendingSwaps(new Map());
+            setConfirmDialogOpen(false);
+            
+            // Speichere die Gruppe nach dem Austausch
+            onSave({
+                name: formData.name,
+                players: updatedPlayers,
+                startFee: formData.startFee
+            });
+        } catch (error) {
+            console.error('Error executing player swaps:', error);
+            // Hier könnte man eine Fehlermeldung anzeigen
         }
-
-        // Clear pending swaps
-        setPendingSwaps(new Map());
-        setConfirmDialogOpen(false);
-        
-        // Speichere die Gruppe nach dem Austausch
-        onSave({
-            name: formData.name,
-            players: updatedPlayers,
-            startFee: formData.startFee
-        });
     };
 
     const handleCancelSwaps = () => {
@@ -239,12 +279,24 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
         setSelectedUser(value);
     };
 
-    const handleRemovePlayer = (id: string) => {
+    const handleRemovePlayer = async (id: string) => {
         // Only check for active players if it's an existing group
         if (group) {
             const activePlayers = fullPlayers.filter(p => p.aktiv);
             if (activePlayers.length === 1 && activePlayers[0].id === id) {
                 return; // Don't remove the last active player in an existing group
+            }
+        }
+
+        // Prüfe, ob es ein temporärer Spieler ist und lösche ihn aus Firebase
+        const playerToRemove = fullPlayers.find(p => p.id === id);
+        if (playerToRemove?.isTemporary) {
+            try {
+                await deleteTemporaryUser(id);
+                console.log(`Temporary player ${id} deleted from Firebase`);
+            } catch (error) {
+                console.error('Error deleting temporary player:', error);
+                // Trotzdem aus der lokalen Liste entfernen, auch wenn Firebase-Löschung fehlschlägt
             }
         }
 
@@ -365,6 +417,11 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                                         minWidth: isMobile ? '100%' : 300,
                                         width: isMobile ? '100%' : 'auto'
                                     }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && selectedUser) {
+                                            handleAddPlayer(selectedUser);
+                                        }
+                                    }}
                                 />
                             )}
                             renderOption={(props, user) => (
@@ -416,6 +473,12 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                                 width: isMobile ? '100%' : '150px'
                             }}
                             placeholder="Vorname"
+                            inputRef={firstNameInputRef}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && manualPlayerFirstName.trim() && manualPlayerLastName.trim()) {
+                                    handleAddManualPlayer();
+                                }
+                            }}
                         />
                         <TextField
                             label="Nachname"
@@ -427,6 +490,11 @@ const GameGroupDialog: React.FC<GameGroupDialogProps> = ({open, onClose, onSave,
                                 width: isMobile ? '100%' : '150px'
                             }}
                             placeholder="Nachname"
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && manualPlayerFirstName.trim() && manualPlayerLastName.trim()) {
+                                    handleAddManualPlayer();
+                                }
+                            }}
                         />
                         <Button
                             variant="contained"

@@ -1,6 +1,7 @@
 import {GameGroup} from '../../../model/GameGroup';
 import {Game} from '../../../model/Game';
 import {PlayerStats} from '../types/statistics.types';
+import PlayerDataService from '../../../services/PlayerDataService';
 
 const PLAYER_RESULT = {
   WINNER: 1,
@@ -372,11 +373,14 @@ export const calculateCashShare = (groupData: GameGroup): Map<string, number> =>
 };
 
 // Hauptfunktion, die alle Statistiken kombiniert
-export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
+export const calculatePlayerStats = async (groupData: GameGroup): Promise<PlayerStats[]> => {
   if (!groupData.players?.length || !groupData.games?.length) {
     return [];
   }
 
+  // Lade vollständige Spielerdaten aus PlayerDataService (inkl. temporäre Spieler aus Firebase)
+  const fullPlayers = await PlayerDataService.groupPlayersToFullPlayers(groupData.players);
+  
   const totalPoints = calculateTotalPoints(groupData);
   const roundsPlayed = calculateRoundsPlayed(groupData);
   const roundsWon = calculateRoundsWon(groupData);
@@ -387,11 +391,11 @@ export const calculatePlayerStats = (groupData: GameGroup): PlayerStats[] => {
   const avgPointsPerGame = calculateAveragePointsPerGame(groupData);
   const cashShare = calculateCashShare(groupData);
 
-  return groupData.players
+  return fullPlayers
       .filter(Boolean)
       .map(player => ({
         id: player.id,
-        name: getPlayerName(player),
+        name: `${player.firstname || ''} ${player.name || ''}`.trim() || `Spieler ${player.id}`,
         totalPoints: Math.round((totalPoints.get(player.id) || 0) * 10) / 10,
         roundsPlayed: roundsPlayed.get(player.id) || 0,
         roundsWon: roundsWon.get(player.id) || 0,

@@ -1,7 +1,9 @@
 import {DataSnapshot, get, onValue, push, ref, remove, set, update} from 'firebase/database';
 import {auth, firebaseDB} from './firebase-config';
 import {GameGroup} from '../model/GameGroup';
-import {updateUserProfile, getUserProfile} from './UserService';
+import {updateUserProfile, getUserProfile, deleteTemporaryUser} from './UserService';
+import { Game } from '../model/Game';
+import { saveGameToFirebase } from './DbFunctions';
 
 export const createGameGroup = async (group: Omit<GameGroup, 'id' | 'createdAt' | 'updatedAt' | 'games' | 'rounds'>) => {
     const user = auth.currentUser;
@@ -96,13 +98,22 @@ export const deleteGameGroup = async (groupId: string) => {
         throw new Error('Group not found');
     }
 
-    // Entferne die Gruppen-ID von allen Mitgliedern
+    // Entferne die Gruppen-ID von allen Mitgliedern und lösche temporäre Spieler
     const playerIds = group.players.map(player => player.id);
     for (const playerId of playerIds) {
         const profile = await getUserProfile(playerId);
         if (profile?.groupIds) {
             const updatedGroupIds = profile.groupIds.filter(id => id !== groupId);
             await updateUserProfile(playerId, { groupIds: updatedGroupIds });
+            
+            // Wenn es ein temporärer Spieler ist, lösche ihn vollständig
+            if (profile.isTemporary) {
+                try {
+                    await deleteTemporaryUser(playerId);
+                } catch (error) {
+                    console.error(`Failed to delete temporary user ${playerId}:`, error);
+                }
+            }
         }
     }
 
@@ -123,6 +134,16 @@ export const getGameGroup = async (groupId: string): Promise<GameGroup | null> =
     }
     
     return snapshot.val();
+};
+
+export const updateGamesInGroup = async (groupId: string, games: Game[]): Promise<void> => {
+    const user = auth.currentUser;
+    if (!user) throw new Error('User not authenticated');
+
+    // Aktualisiere jedes Spiel einzeln mit saveGameToFirebase für korrekte Map-Behandlung
+    for (const game of games) {
+        await saveGameToFirebase(game);
+    }
 };
 
 export const getUserGroups = async (): Promise<GameGroup[]> => {
@@ -159,30 +180,42 @@ export const subscribeToGameGroups = (
     }
 
     let unsubscribeFunctions: (() => void)[] = [];
+    let currentGroupIds: string[] = [];
+    const groups: Record<string, GameGroup> = {};
 
     // Hole die Gruppen-IDs des aktuellen Users und abonniere auch Änderungen am Profil
     const userProfileRef = ref(firebaseDB, `users/${user.uid}`);
     
     const profileUnsubscribe = onValue(userProfileRef, (profileSnapshot) => {
         const userProfile = profileSnapshot.val();
-        if (!userProfile?.groupIds || userProfile.groupIds.length === 0) {
+        const newGroupIds = userProfile?.groupIds || [];
+        
+        if (newGroupIds.length === 0) {
             onGameGroupsChanged({});
             // Alte Abonnements beenden
             unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
             unsubscribeFunctions = [];
+            currentGroupIds = [];
+            // Leere das groups Objekt
+            Object.keys(groups).forEach(key => delete groups[key]);
             return;
         }
 
-        const groups: Record<string, GameGroup> = {};
-        let completedRequests = 0;
-        const totalRequests = userProfile.groupIds.length;
+        // Beende Abonnements für Gruppen, die nicht mehr in der Liste sind
+        const groupsToRemove = currentGroupIds.filter((id: string) => !newGroupIds.includes(id));
+        groupsToRemove.forEach(groupId => {
+            const index = currentGroupIds.indexOf(groupId);
+            if (index !== -1) {
+                unsubscribeFunctions[index]?.();
+                unsubscribeFunctions.splice(index, 1);
+                currentGroupIds.splice(index, 1);
+                delete groups[groupId];
+            }
+        });
 
-        // Alte Abonnements beenden
-        unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
-        unsubscribeFunctions = [];
-
-        // Abonniere jede Gruppe des Users
-        userProfile.groupIds.forEach((groupId: string) => {
+        // Erstelle neue Abonnements für neue Gruppen
+        const groupsToAdd = newGroupIds.filter((id: string) => !currentGroupIds.includes(id));
+        groupsToAdd.forEach((groupId: string) => {
             const groupRef = ref(firebaseDB, `gameGroups/${groupId}`);
             
             const unsubscribe = onValue(groupRef, (snapshot) => {
@@ -201,9 +234,13 @@ export const subscribeToGameGroups = (
             });
 
             unsubscribeFunctions.push(unsubscribe);
+            currentGroupIds.push(groupId);
         });
 
-        // Nachdem alle Abonnements eingerichtet sind, einmalig die aktuellen Daten senden
+        // Aktualisiere die currentGroupIds
+        currentGroupIds = newGroupIds;
+        
+        // Sende die aktuellen Gruppen-Daten
         onGameGroupsChanged({...groups});
     }, (error) => {
         console.error('Error subscribing to user profile:', error);
@@ -212,7 +249,6 @@ export const subscribeToGameGroups = (
 
     unsubscribeFunctions.push(profileUnsubscribe);
 
-    // Return unsubscribe function
     return () => {
         unsubscribeFunctions.forEach(unsubscribe => unsubscribe());
     };

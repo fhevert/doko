@@ -67,20 +67,20 @@ export function replacePlayerInAllGames(
  * Ersetzt einen temporären Spieler vollständig in einer Spielgruppe
  * (Spielerliste + alle Spiele und Runden)
  */
-export function replaceTemporaryPlayerInGroup(
+export async function replaceTemporaryPlayerInGroup(
     players: GroupPlayer[],
     games: Game[],
     temporaryPlayerId: string,
     registeredUser: UserProfile
-): { updatedPlayers: GroupPlayer[], updatedGames: Game[] } {
+): Promise<{ updatedPlayers: GroupPlayer[], updatedGames: Game[] }> {
     // Ersetze in der Spielerliste
     const updatedPlayers = replaceTemporaryPlayer(players, temporaryPlayerId, registeredUser);
     
     // Ersetze in allen Spielen
     const updatedGames = replacePlayerInAllGames(games, temporaryPlayerId, registeredUser.uid);
 
-    // Aktualisiere den zentralen PlayerDataService
-    PlayerDataService.replaceTemporaryWithRegistered(temporaryPlayerId, registeredUser);
+    // Aktualisiere den zentralen PlayerDataService (jetzt async)
+    await PlayerDataService.replaceTemporaryWithRegistered(temporaryPlayerId, registeredUser);
 
     return { updatedPlayers, updatedGames };
 }

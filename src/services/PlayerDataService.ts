@@ -1,5 +1,5 @@
 import {Player} from '../model/Player';
-import {UserProfile, createTemporaryPlayer, getAllUsers} from '../firebase/UserService';
+import {UserProfile, createTemporaryPlayer, getAllUsers, deleteTemporaryUser} from '../firebase/UserService';
 import {GroupPlayer} from '../model/GameGroup';
 
 // Zentrale Speicherung für Spielerdaten
@@ -149,22 +149,30 @@ export class PlayerDataService {
     }
 
     // Beim Austausch: Temporären Spieler durch registrierten Benutzer ersetzen
-    replaceTemporaryWithRegistered(tempPlayerId: string, registeredUser: UserProfile): void {
+    async replaceTemporaryWithRegistered(tempPlayerId: string, registeredUser: UserProfile): Promise<void> {
         const tempPlayer = this.temporaryPlayers.get(tempPlayerId);
         if (tempPlayer) {
-            // Behalte die Spielerdaten, aber markiere als nicht mehr temporär
-            const updatedPlayer: Player = {
-                ...tempPlayer,
-                id: registeredUser.uid,
-                email: registeredUser.email || tempPlayer.email,
-                name: registeredUser.lastName || tempPlayer.name,
-                firstname: registeredUser.firstName || tempPlayer.firstname,
-                isTemporary: false
-            };
-            
-            // Entferne aus temporären Spielern und füge als registrierten Benutzer hinzu
-            this.temporaryPlayers.delete(tempPlayerId);
-            this.registeredUsers.set(registeredUser.uid, registeredUser);
+            try {
+                // Lösche den temporären User aus Firebase
+                await deleteTemporaryUser(tempPlayerId);
+                
+                // Behalte die Spielerdaten, aber markiere als nicht mehr temporär
+                const updatedPlayer: Player = {
+                    ...tempPlayer,
+                    id: registeredUser.uid,
+                    email: registeredUser.email || tempPlayer.email,
+                    name: registeredUser.lastName || tempPlayer.name,
+                    firstname: registeredUser.firstName || tempPlayer.firstname,
+                    isTemporary: false
+                };
+                
+                // Entferne aus temporären Spielern und füge als registrierten Benutzer hinzu
+                this.temporaryPlayers.delete(tempPlayerId);
+                this.registeredUsers.set(registeredUser.uid, registeredUser);
+            } catch (error) {
+                console.error('Error deleting temporary user from Firebase:', error);
+                throw error;
+            }
         }
     }
 }

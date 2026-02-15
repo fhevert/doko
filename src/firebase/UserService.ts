@@ -1,5 +1,5 @@
 import { User } from 'firebase/auth';
-import { getDatabase, ref, set, update, get, child } from 'firebase/database';
+import { getDatabase, ref, set, update, get, child, remove } from 'firebase/database';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { firebaseDB, firebaseApp } from './firebase-config';
 
@@ -130,6 +130,17 @@ export const getAllUsers = async (): Promise<UserProfile[]> => {
   } catch (error) {
     console.error('Error fetching users:', error);
     return [];
+  }
+};
+
+export const deleteTemporaryUser = async (userId: string): Promise<void> => {
+  try {
+    const userRef = ref(firebaseDB, `users/${userId}`);
+    await remove(userRef);
+    console.log(`Temporary user ${userId} deleted successfully`);
+  } catch (error) {
+    console.error('Error deleting temporary user:', error);
+    throw error;
   }
 };
 
