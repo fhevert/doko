@@ -33,15 +33,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const unsubscribe = onAuthStateChanged(auth, async (user) => {
             setCurrentUser(user);
             
-            if (user) {
+            // Nur Profil erstellen wenn der Benutzer wirklich eingeloggt ist
+            // (nicht während der Registrierung)
+            if (user && user.emailVerified) {
                 try {
                     const userProfile = await getUserProfile(user.uid);
                     if (!userProfile) {
+                        console.log('Creating user profile for verified user:', user.uid);
                         await createUserProfile(user);
+                    } else {
+                        console.log('User profile already exists for:', user.uid);
                     }
                 } catch (error) {
                     console.error('Error handling user profile:', error);
                 }
+            } else if (user) {
+                console.log('User not verified yet, skipping profile creation:', user.uid);
             }
             
             setLoading(false);

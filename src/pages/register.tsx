@@ -27,11 +27,13 @@ function Register() {
         try {
             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
             
+            // Profil direkt erstellen, da AuthContext nicht mehr stört
             await createUserProfile(userCredential.user, {
                 firstName,
                 lastName
             });
             
+            console.log('Registration completed for:', userCredential.user.email);
             navigate('/game-groups');
         } catch (err: any) {
             console.error('Registration error:', err);
