@@ -23,8 +23,9 @@ import CheckIcon from '@mui/icons-material/Check';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DragHandleIcon from '@mui/icons-material/DragHandle';
-import {Link} from "react-router-dom";
+import {useNavigate} from "react-router-dom";
 import Layout from "../../../layout/Layout";
+import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 
 interface PlayerCardProps {
     player: any;
@@ -39,6 +40,7 @@ interface PlayerCardProps {
 
 function PlayersPage() {
     const { game, setGame, isLoading } = useGameContext();
+    const navigate = useNavigate();
 
     // State für Dialoge
     const [isGuestDialogOpen, setIsGuestDialogOpen] = useState(false);
@@ -186,7 +188,10 @@ function PlayersPage() {
                     {/* AKTIONEN UNTEN */}
                     <Box sx={{ mt: 5, display: 'flex', gap: 2 }}>
                         <Button
-                            component={Link} to={`/game-groups/${game.gameGroupId}/games/${game.id}`}
+                            onClick={async () => {
+                                await saveGameToFirebase(game);
+                                navigate(`/game-groups/${game.gameGroupId}/games/${game.id}`);
+                            }}
                             variant="contained" 
                             fullWidth 
                             size="large"
