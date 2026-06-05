@@ -34,7 +34,7 @@ function ErgebnisDialog() {
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-    // Lade die GameGroup direkt, wenn sie nicht im Context ist
+    // Lade die GameGroup direkt, wenn sie nicht im Context ist - fehlerfix
     useEffect(() => {
         const loadGameGroup = async () => {
             if (game.gameGroupId && !gameGroups[game.gameGroupId]) {
