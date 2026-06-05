@@ -22,21 +22,35 @@ import {useGameContext} from "../../../model/context/GameContext";
 import {useGameGroups} from "../../../contexts/GameGroupsContext";
 import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 import {Player} from "../../../model/Player";
+import {useEffect, useState} from "react";
+import {getGameGroup} from "../../../firebase/GameGroupService";
 
 function ErgebnisDialog() {
     const { game } = useGameContext();
     const { gameGroups } = useGameGroups();
     const [open, setOpen] = React.useState(false);
+    const [loadedGameGroup, setLoadedGameGroup] = useState<any>(null);
 
     // Theme-Hooks für Responsive Design
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
+    // Lade die GameGroup direkt, wenn sie nicht im Context ist
+    useEffect(() => {
+        const loadGameGroup = async () => {
+            if (game.gameGroupId && !gameGroups[game.gameGroupId]) {
+                const group = await getGameGroup(game.gameGroupId);
+                setLoadedGameGroup(group);
+            }
+        };
+        loadGameGroup();
+    }, [game.gameGroupId, gameGroups]);
+
     const formatCurrency = (amount: number) =>
         new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(amount);
 
     const getSpielerergebnis = (player: Player) => {
-        const gameGroup = gameGroups[game.gameGroupId];
+        const gameGroup = gameGroups[game.gameGroupId] || loadedGameGroup;
         const startFee = gameGroup?.startFee || 0;
         return player.result * 0.1 + startFee;
     };
