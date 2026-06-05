@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     Avatar,
     Box,
@@ -22,7 +22,6 @@ import {useGameContext} from "../../../model/context/GameContext";
 import {useGameGroups} from "../../../contexts/GameGroupsContext";
 import {saveGameToFirebase} from "../../../firebase/DbFunctions";
 import {Player} from "../../../model/Player";
-import {useEffect, useState} from "react";
 import {getGameGroup} from "../../../firebase/GameGroupService";
 
 function ErgebnisDialog() {
