@@ -1,15 +1,15 @@
 {
   "files": {
     "main.css": "/doko/static/css/main.f855e6bc.css",
-    "main.js": "/doko/static/js/main.03688852.js",
+    "main.js": "/doko/static/js/main.77c4ef51.js",
     "static/js/453.50204370.chunk.js": "/doko/static/js/453.50204370.chunk.js",
     "index.html": "/doko/index.html",
     "main.f855e6bc.css.map": "/doko/static/css/main.f855e6bc.css.map",
-    "main.03688852.js.map": "/doko/static/js/main.03688852.js.map",
+    "main.77c4ef51.js.map": "/doko/static/js/main.77c4ef51.js.map",
     "453.50204370.chunk.js.map": "/doko/static/js/453.50204370.chunk.js.map"
   },
   "entrypoints": [
     "static/css/main.f855e6bc.css",
-    "static/js/main.03688852.js"
+    "static/js/main.77c4ef51.js"
   ]
 }
