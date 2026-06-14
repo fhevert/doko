@@ -15,6 +15,7 @@ import {
     Typography
 } from "@mui/material";
 import {
+    Close,
     DeleteOutline,
     EmojiEvents,
     LocalFireDepartment,
@@ -92,8 +93,13 @@ function RundenDialog(parameters: { round: Round, open?: boolean, onClose?: () =
                 maxWidth="xs"
             >
                 <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', pb: 1 }}>
-                    Runde {parameters.round.id + 1} bearbeiten
-                    {parameters.round.bock && <LocalFireDepartment color="error" />}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        Runde {parameters.round.id + 1} bearbeiten
+                        {parameters.round.bock && <LocalFireDepartment color="error" />}
+                    </Box>
+                    <IconButton onClick={handleClose} title="Schließen">
+                        <Close />
+                    </IconButton>
                 </DialogTitle>
 
                 <DialogContent dividers>
