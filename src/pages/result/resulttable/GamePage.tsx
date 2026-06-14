@@ -164,16 +164,26 @@ function GamePage() {
             {/* --- HEADER --- */}
             <Paper elevation={3} sx={{ borderRadius: 0, bgcolor: 'white', zIndex: 10, borderBottom: `3px solid ${headerBlue}` }}>
                 <Box sx={{ display: 'flex', width: '100%', px: padding, p: 2 }}>
-                    {activePlayers.map((player) => (
-                        <Box key={player.id} sx={{ flex: 1, textAlign: 'center', overflow: 'hidden' }}>
-                            <Typography noWrap sx={{ fontSize: fontSizeName, color: 'text.secondary', fontWeight: 'bold' }}>
-                                {player.firstname?.toUpperCase()}
-                            </Typography>
-                            <Typography sx={{ fontSize: fontSizeScore, fontWeight: '900', lineHeight: 1 }}>
-                                {player.result}
-                            </Typography>
-                        </Box>
-                    ))}
+                    {activePlayers.map((player) => {
+                        let playerindex = activePlayers.indexOf(player, 0);
+                        return (
+                            <Box key={player.id} sx={{flex: 1, textAlign: 'center', overflow: 'hidden'}}>
+                                <Typography noWrap
+                                            sx={{fontSize: fontSizeName, color: 'text.secondary', fontWeight: 'bold'}}>
+                                    <Stack direction="column" alignItems="center">
+                                        <Stack direction="row">
+                                            {player.firstname?.toUpperCase()}
+                                            {playerindex === getDealerIndex(game.rounds.length) &&
+                                                <SportsEsportsIcon sx={{fontSize: '1rem', color: headerBlue}}/>}
+                                        </Stack>
+                                    </Stack>
+                                </Typography>
+                                <Typography sx={{fontSize: fontSizeScore, fontWeight: '900', lineHeight: 1}}>
+                                    {player.result}
+                                </Typography>
+                            </Box>
+                        );
+                    })}
                 </Box>
             </Paper>
 
